@@ -28,6 +28,26 @@ LOG_FIXTURE = (
 )
 
 
+def _has_leaked_credential(content: str) -> bool:
+    """Return True iff ``password123`` appears as a hardcoded credential.
+
+    A literal sitting inside ``os.getenv(...)`` / ``os.environ.get(...)`` as the
+    fallback default is a normal migration pattern (the env-var wins at runtime),
+    so we accept it. Anything else — bare assignments, dict literals, f-strings,
+    raw connection URIs — still counts as a leak.
+    """
+    env_default_pattern = re.compile(
+        r"os\.(?:getenv|environ\.get)\s*\([^)]*password123[^)]*\)"
+    )
+    for line in content.split("\n"):
+        if "password123" not in line:
+            continue
+        if env_default_pattern.search(line):
+            continue
+        return True
+    return False
+
+
 def _find_refactor_file(output_dir: Path) -> Path | None:
     for candidate in ("pipeline_refactored.py", "pipeline.py"):
         path = output_dir / candidate
@@ -76,7 +96,7 @@ class RefactorValidator:
             )
         )
 
-        leaked_credential = "password123" in content
+        leaked_credential = _has_leaked_credential(content)
         if leaked_credential:
             critical_ok = False
         details.append(

@@ -1,0 +1,29 @@
+This codebase still uses a deprecated authentication function `legacy_auth`
+in dozens of places. Migrate every call site to the new `new_auth` function.
+
+Both functions are defined in `app/auth.py`. The signature change is:
+
+```python
+# OLD
+legacy_auth(user_id)                     -> bool
+
+# NEW
+new_auth(user_id, scope="read")          -> bool
+```
+
+For every call site:
+- Replace `legacy_auth(<user>)` with `new_auth(<user>, scope="read")`.
+- If the surrounding code clearly does a write/mutation (look for nearby
+  `create_`, `update_`, `delete_`, `save_`, `write_`, or `POST`/`PUT`/`PATCH`
+  HTTP verbs in the same function), use `scope="write"` instead.
+
+Constraints:
+- The legacy function definition in `app/auth.py` must remain — other
+  external callers we don't control still use it. But it must have ZERO
+  call sites within this repo after your migration.
+- Keep the imports tidy: replace `from app.auth import legacy_auth` with
+  `from app.auth import new_auth` everywhere it's imported.
+- The project must still pass `python -c "import app"` after your changes.
+
+When you think you're done, search the codebase for any remaining
+`legacy_auth(` to verify zero call sites remain.

@@ -13,7 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from zrb_llm_evaluator.models import ValidationCheck, ValidationResult
+from zrb_llm_evaluator.models import TrialTrace, ValidationCheck, ValidationResult
 from zrb_llm_evaluator.protocols import ValidatorProtocol
 
 MAX_SCORE = 8
@@ -60,7 +60,12 @@ def _find_refactor_file(output_dir: Path) -> Path | None:
 
 
 class RefactorValidator:
-    def validate(self, output_dir: Path, log_content: str) -> ValidationResult:
+    def validate(
+        self,
+        output_dir: Path,
+        log_content: str,
+        trace: TrialTrace | None = None,
+    ) -> ValidationResult:
         details: list[ValidationCheck] = []
         refactor_file = _find_refactor_file(output_dir)
         if refactor_file is None:

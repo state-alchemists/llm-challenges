@@ -6,16 +6,35 @@ asyncio loop / module state independent across trials.
 
 from __future__ import annotations
 
+import ast
 import json
 import subprocess
 import sys
 from pathlib import Path
 
-from zrb_llm_evaluator.models import ValidationCheck, ValidationResult
+from zrb_llm_evaluator.models import TrialTrace, ValidationCheck, ValidationResult
 from zrb_llm_evaluator.protocols import ValidatorProtocol
 
 REQUIRED_FILES = ("inventory.py", "payments.py", "checkout.py")
 TRIALS = 6
+CONCURRENCY_PRIMITIVES = {"Lock", "RLock", "Semaphore", "BoundedSemaphore", "Event", "Condition"}
+
+
+def _instantiates_concurrency_primitive(source: str) -> bool:
+    """Return True iff the source actually instantiates a concurrency primitive."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return False
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if isinstance(func, ast.Attribute) and func.attr in CONCURRENCY_PRIMITIVES:
+            return True
+        if isinstance(func, ast.Name) and func.id in CONCURRENCY_PRIMITIVES:
+            return True
+    return False
 
 SIMULATION_SCRIPT = r"""
 import asyncio, json, random, sys, traceback
@@ -31,7 +50,6 @@ except Exception:
 
 with open("inventory.py") as f: inv_src = f.read()
 with open("checkout.py") as f: checkout_src = f.read()
-has_lock = "Lock" in inv_src or "Lock" in checkout_src
 
 async def run_one(seed):
     random.seed(seed)
@@ -51,7 +69,7 @@ for t in range(__TRIALS__):
     except Exception:
         results.append({"error": traceback.format_exc()})
 
-print("__RESULT__" + json.dumps({"trials": results, "has_lock": has_lock}))
+print("__RESULT__" + json.dumps({"trials": results, "inv_src": inv_src, "checkout_src": checkout_src}))
 """.replace("__TRIALS__", str(TRIALS))
 
 
@@ -67,7 +85,12 @@ def _parse_payload(stdout: str) -> dict | None:
 
 
 class IntegrationBugValidator:
-    def validate(self, output_dir: Path, log_content: str) -> ValidationResult:
+    def validate(
+        self,
+        output_dir: Path,
+        log_content: str,
+        trace: TrialTrace | None = None,
+    ) -> ValidationResult:
         details: list[ValidationCheck] = []
         missing = _missing_files(output_dir)
         if missing:
@@ -138,12 +161,19 @@ class IntegrationBugValidator:
             )
 
         all_passed = passes == TRIALS
-        has_lock = bool(payload.get("has_lock"))
+        inv_src = payload.get("inv_src", "")
+        checkout_src = payload.get("checkout_src", "")
+        has_lock = (
+            _instantiates_concurrency_primitive(inv_src)
+            or _instantiates_concurrency_primitive(checkout_src)
+        )
         details.append(
             ValidationCheck(
                 name="locking_mechanism",
                 passed=has_lock,
-                message="Lock detected in source" if has_lock else "No Lock primitive detected",
+                message="Concurrency primitive instantiated (AST-detected)"
+                if has_lock
+                else "No Lock/Semaphore/Event instantiation found in source",
             )
         )
 

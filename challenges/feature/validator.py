@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from zrb_llm_evaluator.models import ValidationCheck, ValidationResult
+from zrb_llm_evaluator.models import TrialTrace, ValidationCheck, ValidationResult
 from zrb_llm_evaluator.protocols import ValidatorProtocol
 
 MAX_SCORE = 9
@@ -140,7 +140,12 @@ def _parse_payload(stdout: str) -> dict | None:
 
 
 class FeatureValidator:
-    def validate(self, output_dir: Path, log_content: str) -> ValidationResult:
+    def validate(
+        self,
+        output_dir: Path,
+        log_content: str,
+        trace: TrialTrace | None = None,
+    ) -> ValidationResult:
         details: list[ValidationCheck] = []
         proc = subprocess.run(
             [sys.executable, "-c", CHECK_SCRIPT],

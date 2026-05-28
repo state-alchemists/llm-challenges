@@ -299,8 +299,15 @@ class RefactorValidator:
             )
 
         normalized = score / MAX_SCORE
+        # Critical failures (hardcoded credential, SQL injection, script
+        # crashes, missing report) don't directly deduct from the raw
+        # non-critical-check score, so cap the FAIL score below the PASS
+        # threshold. Otherwise a model can fail a critical check and still
+        # report score=1.0, which misranks it on avg-score leaderboards.
         if not critical_ok:
-            return ValidationResult(status="FAIL", score=normalized, details=details)
+            return ValidationResult(
+                status="FAIL", score=min(normalized, 0.4), details=details
+            )
         if score >= 7:
             status = "EXCELLENT"
         elif score >= 5:

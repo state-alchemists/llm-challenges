@@ -69,33 +69,39 @@ def _code_block_starts(lines: list[str]) -> list[int]:
 def _topic_has_proximate_code(
     lines: list[str], code_starts: list[int], needles: tuple[str, ...]
 ) -> tuple[bool, bool]:
-    """Return (mentioned, has_proximate_code)."""
-    mentioned_line: int | None = None
+    """Return (mentioned, has_proximate_code).
+
+    A topic counts as "has proximate code" if *any* mention in the doc is
+    within ``CODE_PROXIMITY_LINES`` of a fenced code block. The earlier
+    revision locked onto the first mention, which penalized the common
+    "summary table up top, detailed sections below with code" structure —
+    the table row mentioned the topic but the matching code lived in a
+    deeper section, beyond the proximity window.
+    """
     needles_lower = [n.lower() for n in needles]
+    mention_lines: list[int] = []
+
+    # Strict pass: every needle present on the same line.
     for i, raw in enumerate(lines):
         lower = raw.lower()
-        if all(needle in lower for needle in needles_lower) or any(
-            needle in lower for needle in needles_lower
-        ):
-            # All-needles match wins; fall back to any-needle for single-word topics.
-            if len(needles_lower) == 1 or all(needle in lower for needle in needles_lower):
-                mentioned_line = i
-                break
-    if mentioned_line is None:
-        # Allow split across lines: each needle appears somewhere.
-        line_indices = []
+        if all(needle in lower for needle in needles_lower):
+            mention_lines.append(i)
+
+    # Loose fallback for split-across-lines mentions: take the first
+    # occurrence of each needle.
+    if not mention_lines:
         for needle in needles_lower:
             for i, raw in enumerate(lines):
                 if needle in raw.lower():
-                    line_indices.append(i)
+                    mention_lines.append(i)
                     break
-            else:
-                return False, False
-        if not line_indices:
-            return False, False
-        mentioned_line = min(line_indices)
+
+    if not mention_lines:
+        return False, False
+
     proximate = any(
-        abs(start - mentioned_line) <= CODE_PROXIMITY_LINES for start in code_starts
+        any(abs(start - mline) <= CODE_PROXIMITY_LINES for start in code_starts)
+        for mline in mention_lines
     )
     return True, proximate
 
@@ -169,7 +175,9 @@ class CopywritingValidator:
         )
 
         # Each breaking change must be mentioned AND have a code block nearby.
-        topics_passed = 0
+        # One point per topic — all 4 must pass to fully clear this section.
+        # (Earlier revision awarded a coarse 0/1/2-point bonus that capped the
+        # achievable score at 6/8, making EXCELLENT mathematically unreachable.)
         for topic, needles in BREAKING_CHANGES:
             mentioned, proximate = _topic_has_proximate_code(
                 lines, code_starts, needles
@@ -187,12 +195,7 @@ class CopywritingValidator:
                 )
             )
             if ok:
-                topics_passed += 1
-        # Award one bucket per two topics (so all 4 == 2 points; >=3 == 1 point).
-        if topics_passed >= 4:
-            score += 2
-        elif topics_passed >= 3:
-            score += 1
+                score += 1
 
         # Checklist (markdown list with leading "- [ ]" or numbered) AND an
         # explicit upgrade command in a code block. Both must be present and
@@ -203,8 +206,22 @@ class CopywritingValidator:
             re.search(r"^\s*-\s*\[", tail, re.MULTILINE)
             or re.search(r"^\s*\d+\.\s", tail, re.MULTILINE)
         )
+        # Recognize the common upgrade-command variants developers actually use:
+        # explicit --upgrade/-U flags, `pip upgrade`, `pipx install/upgrade`,
+        # `uv pip install`, `poetry add/update`, and the very common
+        # `pip install <pkg><version-constraint>` (e.g. `>=`, `~=`, `==`) which
+        # is the canonical "upgrade to at-least-N" pattern in Python.
         has_upgrade = bool(
-            re.search(r"pip\s+install\s+--upgrade|pip\s+install\s+-U|pip\s+upgrade", tail)
+            re.search(
+                r"pip\s+install\s+(?:--upgrade|-U)\b"
+                r"|pip\s+upgrade\b"
+                r"|pip\s+install\s+\S+\s*[><~=]=?"
+                r"|pipx\s+(?:install|upgrade)\b"
+                r"|uv\s+pip\s+install\b"
+                r"|poetry\s+(?:add|update)\b",
+                tail,
+                re.IGNORECASE,
+            )
         )
         finish_ok = has_checklist and has_upgrade
         score += int(finish_ok)

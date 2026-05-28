@@ -165,24 +165,25 @@ class GrepFestValidator:
         )
 
         new_calls = _new_auth_scope_args(output_dir)
-        write_hint_modules = [
-            rel for rel, _, _ in new_calls
-            if any(hint in rel for hint in WRITE_HINT_SUBSTRINGS)
-        ]
         scopes_in_write_modules = [
             scope for rel, _, scope in new_calls
             if any(hint in rel for hint in WRITE_HINT_SUBSTRINGS)
         ]
-        used_write_scope = any(s == "write" for s in scopes_in_write_modules)
-        write_modules_present = len(write_hint_modules) > 0
+        write_modules_present = len(scopes_in_write_modules) > 0
+        n_correct_write = sum(1 for s in scopes_in_write_modules if s == "write")
+        n_write = len(scopes_in_write_modules)
+        # EXCELLENT: every call in a write-like module uses scope="write".
+        # PASS: at least one does (mechanical migration that picked up some
+        # writes by luck or partial reasoning). FAIL: none.
+        all_write_correct = write_modules_present and n_correct_write == n_write
+        any_write_correct = n_correct_write > 0
         details.append(
             ValidationCheck(
                 name="scope_write_used_for_write_modules",
-                passed=used_write_scope if write_modules_present else True,
+                passed=all_write_correct if write_modules_present else True,
                 message=(
-                    f"{sum(1 for s in scopes_in_write_modules if s == 'write')}"
-                    f"/{len(scopes_in_write_modules)} new_auth calls in write-like "
-                    f"modules use scope=\"write\""
+                    f"{n_correct_write}/{n_write} new_auth calls in write-like "
+                    f"modules use scope=\"write\" (need {n_write}/{n_write} for EXCELLENT)"
                     if write_modules_present
                     else "no write-like modules detected"
                 ),
@@ -192,9 +193,11 @@ class GrepFestValidator:
         if not zero_residual or not imports_ok:
             return ValidationResult(status="FAIL", score=0.3, details=details)
 
-        if used_write_scope:
+        if all_write_correct or not write_modules_present:
             return ValidationResult(status="EXCELLENT", score=1.0, details=details)
-        return ValidationResult(status="PASS", score=0.8, details=details)
+        if any_write_correct:
+            return ValidationResult(status="PASS", score=0.8, details=details)
+        return ValidationResult(status="PASS", score=0.7, details=details)
 
 
 validator = GrepFestValidator()

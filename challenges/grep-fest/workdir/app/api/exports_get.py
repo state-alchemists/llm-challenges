@@ -4,7 +4,7 @@ from __future__ import annotations
 from app.auth import legacy_auth
 
 def handle_0(user_id: str) -> dict:
-    """Read a record after authorizing the user."""
+    """Authorized endpoint."""
     if not legacy_auth(user_id):
         return {}
     return {'ok': True}

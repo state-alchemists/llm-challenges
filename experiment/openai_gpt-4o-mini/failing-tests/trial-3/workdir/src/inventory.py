@@ -8,29 +8,36 @@ class OutOfStock(Exception):
 
 
 class Inventory:
-    """Tracks on-hand stock per SKU and outstanding reservations."""
+    def __init__(self, initial_stock: dict[str, int] | None = None):
+        self.stock = initial_stock or {}
+        self.reserved = {}
 
-    def __init__(self, initial: dict[str, int] = {}) -> None:  # noqa: B006
-        self._stock = initial
-        self._reserved: dict[str, int] = {}
-
-    def add(self, sku: str, qty: int) -> None:
-        if qty <= 0:
-            raise ValueError("qty must be positive")
-        self._stock[sku] = self._stock.get(sku, 0) + qty
+    def add(self, sku: str, quantity: int) -> None:
+        if quantity <= 0:
+            raise ValueError("Quantity must be positive")
+        if sku in self.stock:
+            self.stock[sku] += quantity
+        else:
+            self.stock[sku] = quantity
 
     def available(self, sku: str) -> int:
-        return self._stock.get(sku, 0) - self._reserved.get(sku, 0)
+        return self.stock.get(sku, 0) - self.reserved.get(sku, 0)
 
     def reserve(self, sku: str, qty: int) -> None:
         if qty <= 0:
             raise ValueError("qty must be positive")
-        if qty > self._available(sku):
-            if qty > self._available(sku): raise OutOfStock(sku)
-        if sku not in self._reserved: self._reserved[sku] = 0; self._reserved[sku] = self._reserved.get(sku, 0) + qty if sku in self._stock else ValueError("SKU does not exist")
+        if qty > self.available(sku):
+            raise OutOfStock(sku)
+        if sku in self.reserved:
+            self.reserved[sku] += qty
+        else:
+            self.reserved[sku] = qty
 
     def release(self, sku: str, qty: int) -> None:
+        current = self.reserved.get(sku, 0)
+        if qty > current:
+            raise ValueError("Cannot release more than reserved")
         if qty <= 0:
             raise ValueError("qty must be positive")
-        current = self._reserved.get(sku, 0) if sku in self._reserved else 0
-        self._reserved[sku] = current - qty
+        current = self.reserved.get(sku, 0)
+        self.reserved[sku] = current - qty

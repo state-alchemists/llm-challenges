@@ -42,22 +42,18 @@ async def get_task(task_id: int):
 
 
 @app.post("/tasks", response_model=Task, status_code=201)
-async def create_task(
-    task_in: TaskCreate,
-    username: str = Depends(require_api_key)
-):
-    project_exists = any(p.id == task_in.project_id for p in projects)
-    if not project_exists:
+async def create_task(task_data: TaskCreate, username: str = Depends(require_api_key)):
+    if not any(p.id == task_data.project_id for p in projects):
         raise HTTPException(status_code=404, detail="Project not found")
 
     new_id = max((t.id for t in tasks), default=0) + 1
     new_task = Task(
         id=new_id,
-        title=task_in.title,
-        status=task_in.status,
-        priority=task_in.priority,
-        project_id=task_in.project_id,
-        assigned_to=task_in.assigned_to,
+        title=task_data.title,
+        status=task_data.status,
+        priority=task_data.priority,
+        project_id=task_data.project_id,
+        assigned_to=task_data.assigned_to,
     )
     tasks.append(new_task)
     return new_task
@@ -66,36 +62,28 @@ async def create_task(
 @app.put("/tasks/{task_id}", response_model=Task)
 async def update_task(
     task_id: int,
-    task_in: TaskUpdate,
-    username: str = Depends(require_api_key)
+    task_data: TaskUpdate,
+    username: str = Depends(require_api_key),
 ):
-    target_task = None
     for task in tasks:
         if task.id == task_id:
-            target_task = task
-            break
-    if not target_task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    if task_in.title is not None:
-        target_task.title = task_in.title
-    if task_in.status is not None:
-        target_task.status = task_in.status
-    if task_in.priority is not None:
-        target_task.priority = task_in.priority
-    if task_in.assigned_to is not None:
-        target_task.assigned_to = task_in.assigned_to
-
-    return target_task
+            update_dict = task_data.dict(exclude_unset=True)
+            if "title" in update_dict:
+                task.title = update_dict["title"]
+            if "status" in update_dict:
+                task.status = update_dict["status"]
+            if "priority" in update_dict:
+                task.priority = update_dict["priority"]
+            if "assigned_to" in update_dict:
+                task.assigned_to = update_dict["assigned_to"]
+            return task
+    raise HTTPException(status_code=404, detail="Task not found")
 
 
-@app.delete("/tasks/{task_id}", status_code=204)
-async def delete_task(
-    task_id: int,
-    username: str = Depends(require_api_key)
-):
+@app.delete("/tasks/{task_id}")
+async def delete_task(task_id: int, username: str = Depends(require_api_key)):
     for idx, task in enumerate(tasks):
         if task.id == task_id:
             tasks.pop(idx)
-            return
+            return {"status": "success", "message": "Task deleted"}
     raise HTTPException(status_code=404, detail="Task not found")

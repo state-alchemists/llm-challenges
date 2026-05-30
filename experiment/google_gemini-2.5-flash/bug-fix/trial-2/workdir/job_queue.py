@@ -1,15 +1,13 @@
 import asyncio
-from typing import Any, Dict, Optional, Deque
-from collections import deque
+from typing import Any, Dict, Optional
 
 
 class JobQueue:
     def __init__(self, max_retries: int = 3):
         self._jobs: Dict[int, Dict[str, Any]] = {}
-        self._pending_jobs: Deque[int] = deque()
+        self._lock = asyncio.Lock()
         self._next_id = 1
         self.max_retries = max_retries
-        self._lock = asyncio.Lock()
 
     def enqueue(self, payload: dict) -> int:
         job_id = self._next_id
@@ -21,17 +19,15 @@ class JobQueue:
             "retries": 0,
             "result": None,
         }
-        self._pending_jobs.append(job_id)
         return job_id
 
     async def dequeue(self) -> Optional[Dict]:
         async with self._lock:
-            if not self._pending_jobs:
-                return None
-            job_id = self._pending_jobs.popleft()
-            job = self._jobs[job_id]
-            job["status"] = "processing"
-            return job
+            for job in self._jobs.values():
+                if job["status"] == "pending":
+                    job["status"] = "processing"
+                    return job
+            return None
 
     def complete(self, job_id: int, result: Any) -> None:
         self._jobs[job_id]["status"] = "done"
@@ -42,7 +38,6 @@ class JobQueue:
         if job["retries"] < self.max_retries:
             job["retries"] += 1
             job["status"] = "pending"
-            self._pending_jobs.append(job_id)
         else:
             job["status"] = "failed"
             job["result"] = error

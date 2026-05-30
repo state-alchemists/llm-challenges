@@ -1,9 +1,17 @@
 """Text normalization helpers."""
 
 from __future__ import annotations
+import re
+
+
 
 
 def slugify(text: str) -> str:
+    """Convert text to a URL-safe slug."""
+    text = text.lower()  # Ensure the slug is lowercase
+    # Replacing spaces and special characters with hyphens
+    text = re.sub(r'\W+', '-', text).strip('-')
+    return '-'.join(part for part in re.split(r'\W+', text) if part).strip('-')
     """Convert text to a URL-safe slug.
 
     Examples
@@ -18,16 +26,20 @@ def slugify(text: str) -> str:
         if char.isalnum():
             result_chars.append(char)
         elif char.isspace() or char == "-":
-            if not result_chars or result_chars[-1] != "-": result_chars.append("-")
+            result_chars.append("-")
     collapsed = "".join(result_chars)
-    return "-".join(filter(None, collapsed.split("-")))
+    return collapsed.strip("-").replace("--", "-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
+    """Truncate text to at most max_len characters including the suffix."""
+    if len(text) <= max_len:
+        return text
+    return text[:max_len-len(suffix)] + suffix
     """Truncate text to at most max_len characters including the suffix.
 
     If text is already short enough, return it unchanged.
     """
     if len(text) <= max_len:
         return text
-    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len] + suffix

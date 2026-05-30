@@ -1,6 +1,7 @@
 """Text normalization helpers."""
 
 from __future__ import annotations
+import re
 
 
 def slugify(text: str) -> str:
@@ -13,15 +14,19 @@ def slugify(text: str) -> str:
     >>> slugify("  multiple   spaces  ")
     'multiple-spaces'
     """
+    # Lowercase first
+    text = text.lower()
+    
+    # Keep alphanumeric, replace others with '-'
     result_chars: list[str] = []
     for char in text:
         if char.isalnum():
-            result_chars.append(char.lower())
+            result_chars.append(char)
         elif char.isspace() or char == "-":
             result_chars.append("-")
+            
     collapsed = "".join(result_chars)
-    
-    import re
+    # Collapse repeated dashes using regex to ensure any number of - are reduced to one
     return re.sub(r"-+", "-", collapsed).strip("-")
 
 
@@ -32,4 +37,11 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-    return text[:max_len - len(suffix)] + suffix
+    
+    # Subtract suffix length from available space
+    allowed_len = max_len - len(suffix)
+    if allowed_len < 0:
+        # Handle case where max_len is smaller than the suffix itself
+        return suffix[:max_len]
+        
+    return text[:allowed_len] + suffix

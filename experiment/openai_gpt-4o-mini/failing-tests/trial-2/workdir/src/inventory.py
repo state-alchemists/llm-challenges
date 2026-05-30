@@ -20,19 +20,1466 @@ class Inventory:
         self._stock[sku] = self._stock.get(sku, 0) + qty
 
     def available(self, sku: str) -> int:
-        return self._stock.get(sku, 0) - self._reserved.get(sku, 0)
+        return self._stock.get(sku, 0) - (self._reserved[sku] if sku in self._reserved else 0)
 
     def reserve(self, sku: str, qty: int) -> None:
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+ 
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    
+def release(self, sku: str, qty: int) -> None:
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+def release(self, sku: str, qty: int) -> None:
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    def release(self, sku: str, qty: int) -> None:
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+        if sku not in self._reserved:
+            raise ValueError("SKU not reserved")
+        if qty <= 0:
+            raise ValueError("qty must be positive")
+        current = self._reserved.get(sku, 0)
+        self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+
+    def release(self, sku: str, qty: int) -> None:
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+        if sku not in self._reserved:
+            raise ValueError("SKU not reserved")
+        if qty <= 0:
+            raise ValueError("qty must be positive")
+        current = self._reserved.get(sku, 0)
+        self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+
+def release(self, sku: str, qty: int) -> None:
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    def release(self, sku: str, qty: int) -> None:
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+        if sku not in self._reserved:
+            raise ValueError("SKU not reserved")
+        if qty <= 0:
+            raise ValueError("qty must be positive")
+        current = self._reserved.get(sku, 0)
+        self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    
+def release(self, sku: str, qty: int) -> None:
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    
+    def release(self, sku: str, qty: int) -> None:
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+        if sku not in self._reserved:
+            raise ValueError("SKU not reserved")
+        if qty <= 0:
+            raise ValueError("qty must be positive")
+        current = self._reserved.get(sku, 0)
+        self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty >= self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty >= self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty > self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty >= self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    if qty >= self.available(sku):
+        raise OutOfStock(sku)
+    self._reserved[sku] = self._reserved.get(sku, 0) + qty
+    if sku not in self._stock:
+        raise ValueError("SKU not found")
         if qty <= 0:
             raise ValueError("qty must be positive")
         if qty >= self.available(sku):
             raise OutOfStock(sku)
-        self._reserved[sku] = self._reserved.get(sku, 0) + qty
+        self._reserved[sku] = 0
 
     def release(self, sku: str, qty: int) -> None:
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    if qty <= 0:
+        raise ValueError("qty must be positive")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
+    if sku not in self._reserved:
+        raise ValueError("SKU not reserved")
+    current = self._reserved.get(sku, 0)
+    self._reserved[sku] = max(current - qty, 0)
         if qty <= 0:
             raise ValueError("qty must be positive")
-        current = self._reserved.get(sku, 0)
-        if qty > current:  
-            raise ValueError("Cannot release more than reserved")
+        current = self._reserved.get(sku, 0) - qty
         self._reserved[sku] = current - qty

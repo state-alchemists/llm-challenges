@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi import FastAPI, HTTPException, Depends
 from typing import List, Optional
-from .models import Task, TaskCreate, TaskUpdate, Project, TaskStatus, TaskPriority
+from .models import TaskStatus
+from .models import Task, TaskCreate, TaskUpdate, Project
 from .database import tasks, projects
 from .auth import require_api_key
 
@@ -14,11 +15,11 @@ async def list_projects():
 
 @app.get("/tasks", response_model=List[Task])
 async def list_tasks(
-    status: Optional[TaskStatus] = Query(None),
-    priority: Optional[TaskPriority] = Query(None),
-    assigned_to: Optional[str] = Query(None),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    status: Optional[TaskStatus] = None,
+    priority: Optional[int] = None,
+    assigned_to: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 20,
 ):
     filtered_tasks = tasks
     if status:
@@ -41,7 +42,16 @@ async def get_task(task_id: int):
     raise HTTPException(status_code=404, detail="Task not found")
 
 
-@app.post("/tasks", response_model=Task, status_code=201)
+@app.delete("/tasks/{task_id}", status_code=204)
+async def delete_task(task_id: int, api_key: str = Depends(require_api_key)):
+    for idx, task in enumerate(tasks):
+        if task.id == task_id:
+            del tasks[idx]
+            return {"message": "Task deleted successfully"}
+    raise HTTPException(status_code=404, detail="Task not found")
+
+
+@app.post("/tasks", response_model=Task)
 async def create_task(task: TaskCreate, api_key: str = Depends(require_api_key)):
     project_exists = any(p.id == task.project_id for p in projects)
     if not project_exists:
@@ -58,9 +68,9 @@ async def update_task(task_id: int, task_update: TaskUpdate, api_key: str = Depe
     for idx, task in enumerate(tasks):
         if task.id == task_id:
             updated_data = task_update.dict(exclude_unset=True)
-            for key, value in updated_data.items():
-                setattr(tasks[idx], key, value)
-            return tasks[idx]
+            updated_task = task.copy(update=updated_data)
+            tasks[idx] = updated_task
+            return updated_task
     raise HTTPException(status_code=404, detail="Task not found")
 
 
@@ -69,5 +79,5 @@ async def delete_task(task_id: int, api_key: str = Depends(require_api_key)):
     for idx, task in enumerate(tasks):
         if task.id == task_id:
             del tasks[idx]
-            return
+            return {"message": "Task deleted successfully"}
     raise HTTPException(status_code=404, detail="Task not found")

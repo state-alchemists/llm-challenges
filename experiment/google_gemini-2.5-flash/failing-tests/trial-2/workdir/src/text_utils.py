@@ -1,6 +1,7 @@
 """Text normalization helpers."""
 
 from __future__ import annotations
+import re
 
 
 def slugify(text: str) -> str:
@@ -14,15 +15,15 @@ def slugify(text: str) -> str:
     'multiple-spaces'
     """
     result_chars: list[str] = []
-    last_char_was_separator = False
-    for char in text.lower():
+    for char in text:
         if char.isalnum():
-            result_chars.append(char)
-            last_char_was_separator = False
-        elif not last_char_was_separator:
+            result_chars.append(char.lower())
+        elif char.isspace() or char == "-":
             result_chars.append("-")
-            last_char_was_separator = True
-    return "".join(result_chars).strip("-")
+    collapsed = "".join(result_chars).lower()
+    # Replace multiple hyphens with a single hyphen
+    collapsed = re.sub(r'-+', '-', collapsed)
+    return collapsed.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
@@ -32,6 +33,4 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-    if max_len < len(suffix):
-        return suffix[:max_len]
     return text[:max_len - len(suffix)] + suffix

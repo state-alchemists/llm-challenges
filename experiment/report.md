@@ -57,13 +57,58 @@
 
 **Root cause:** The model starts migrating but doesn't verify completeness. Successful runs (deepseek, glm-5.1, kimi-k2.6) used a verify-grep step post-migration. Failed runs didn't.
 
-### Pattern 4: Timeout on Complex Multi-File Tasks
+### Pattern 4: Timeouts — Three Distinct Stall Signatures
 
-- **gemini-3.5-flash** timed out on 10/36 trials (28%) — feature (3/3), refactor (2/3), bug-fix (2/3), plus others.
-- **gemma4:31b-cloud** timed out on 6/36 (17%) — refactor (3/3), plus bug-fix, grep-fest, integration-bug.
-- **gpt-4o-mini** timed out on 4/36 (11%) — failing-tests (2/3), grep-fest, feature.
+**21 timeouts (7.3%) across 288 trials. Every timeout cell recorded 0 tokens and 0 tool calls** — the subprocess was killed at 600s without producing measurable output. But stdout logs reveal three completely different stall mechanisms.
 
-**Root cause:** gemini-3.5-flash is intrinsically slow (avg 262.6s vs 56.5s for deepseek). For gemma4 and gpt-4o-mini, the issue is likely token-generation bottleneck on large context edits. The 600s timeout cap is generous but these models still hit it.
+#### Signature 4a: Plan Mode Gate Stall — 13/21 timeouts (62%)
+
+**Affected:** gemini-3.5-flash (8), gemma4:31b-cloud (5), gpt-4o-mini feature trial 2 (1).
+
+**Mechanism:**
+1. Model activates `core-research` skill
+2. `core-research`'s Safety Rules require: *"You must obtain explicit user approval of plans before implementing"*
+3. Model calls `EnterPlanMode` → investigates read-only
+4. Model calls `ExitPlanMode` with a detailed plan
+5. **Zaruba framework prompts:** "❓ Allow tool Execution? (✅ Y | 🛑 n | ✏️ e)?"
+6. Test runner uses `--interactive false` — no one presses Y
+7. **Process hangs for 600s until timeout**
+
+**Evidence:** All 13 logs show `EnterPlanMode`/`ExitPlanMode` calls. The last meaningful line before the long timeout gap is always the `ExitPlanMode` execution prompt. gemini-3.5-flash feature is especially decisive — **3/3 trials hit this gate**, making feature BROKEN for this model (0% EXCELLENT). gemma4 refactor is similarly **3/3 gate-stalled** (0% EXCELLENT).
+
+**Why unaffected models avoid this:** deepseek, kimi-k2.6, glm-5.1, and minimax-m2.7 either do not activate `core-research`, or when they plan, they present the plan inline in their response text and then proceed directly to Edit/Write tool calls — they never use the `EnterPlanMode`/`ExitPlanMode` tools, so the gate never triggers.
+
+**Impact on rankings:** This is a framework-test incompatibility, not a model quality issue. gemini-3.5-flash and gemma4 are proficient at multi-file coding tasks when they avoid Plan Mode (gemini-3.5-flash refactor trial 3: EXCELLENT in 176.6s; gemma4 feature: 3/3 EXCELLENT). The gate inflates their timeout count by 62%.
+
+#### Signature 4b: Tool-Prep Spinner Loop — 3/21 timeouts (14%)
+
+**Affected:** gpt-4o-mini failing-tests trials 2-3, grep-fest trial 2.
+
+**Mechanism:**
+1. The model generates tool calls successfully (228-427 tool call entries visible in logs)
+2. But the framework's parameter-serialization step never completes
+3. Stdout shows 9,000+ spinner lines ("🔄 Prepare tool parameters... ⠋⠙⠹...")
+4. Process consumes the full 600s spinning
+
+**Evidence:** stdout logs are 500KB+ — almost entirely spinner characters. The successful gpt-4o-mini failing-tests trial 1 took 586.1s (just 14s under the cap), confirming that the model's token-generation latency makes multi-edit tasks a near-timeout event.
+
+**Root cause:** gpt-4o-mini is slow enough at generating sequential tool calls that the 600s cap becomes a real constraint for tasks requiring 10+ Edit/Write operations. Two out of three failing-tests trials slipped past the cap. The tool-prep spinner (rather than clean completion failure) suggests a race condition in parameter serialization under high call volume.
+
+#### Signature 4c: Mid-Execution Thought Stall — 5/21 timeouts (24%)
+
+**Affected:** gemini-3.5-flash integration-bug t3, research t3; gemini-2.5-flash failing-tests t3; gemma4 integration-bug t2, refactor t1; gpt-4o-mini feature t2.
+
+**Mechanism:**
+1. Model makes initial progress — reads code, runs tests, diagnoses the issue
+2. Then goes silent. No further tool calls, no spinners, no errors
+3. Some logs show `Error executing command hook: 'int' object can't be awaited`
+4. Process hangs until 600s timeout
+
+**Evidence:** gemini-3.5-flash integration-bug t3 made 64 tool calls before stalling — the most of any timeout cell. gemini-2.5-flash failing-tests t3 ran pytest, got all failure output, then stalled while formulating the fix. Three logs contain Python framework exceptions (`'int' object can't be awaited`) that silently killed the processing loop without terminating the process.
+
+**Root cause:** Two sub-causes:
+- **Framework exception deadlock** — Python errors in command hooks leave the subprocess alive but unresponsive
+- **Extended thinking phase** — Gemini models (especially 3.5-flash with its 2M context window) may enter long internal reasoning periods that exceed 600s when processing large pytest output or multiple source files
 
 ### Pattern 5: Concurrency Primitive Omission (glm-5.1, minimax-m2.7)
 
@@ -109,10 +154,19 @@ Proposed addition: *"When writing an Architecture Decision Record, follow this e
 
 This directly addresses Pattern 6.
 
-### 6. Timeout Prevention for Complex Tasks (Priority: Low)
-For models that struggle with large refactors, add: *"For complex multi-file tasks, list all files requiring changes and plan the edit order before starting. Execute edits sequentially, running verification after each logical group."*
+### 6. Plan Mode Gate Fix — Non-Interactive Compatibility (Priority: High)
+The `core-research` skill's Safety Rules require explicit user approval of plans via `EnterPlanMode`/`ExitPlanMode`. In non-interactive evaluation (`--interactive false`), `ExitPlanMode` prompts for confirmation that never arrives, causing a 600s hang. **62% of all timeouts stem from this single interaction.**
 
-This may help with Pattern 4, though timeout is primarily a model throughput issue.
+Proposed fix (two options):
+- **Framework side:** Auto-confirm `ExitPlanMode` when running with `--interactive false`, or
+- **Prompt side:** Add: *"During automated evaluation, do not use `EnterPlanMode` or `ExitPlanMode` tools. Instead, present your plan in your response text and proceed directly to writing code."*
+
+This alone would eliminate 13 of the 21 timeouts (62%) and change BROKEN statuses (gemini-3.5-flash feature, gemma4 refactor) to viable.
+
+### 7. Tool-Prep Loop Mitigation for Slow Models (Priority: Medium)
+For slow-token-generation models (gpt-4o-mini) on multi-edit tasks, add: *"For tasks requiring many file edits, batch related changes into fewer, larger edits rather than many small ones. Each tool call incurs a serialization overhead."*
+
+This may help with Signature 4b by reducing the number of tool calls per task.
 
 ## Summary
 

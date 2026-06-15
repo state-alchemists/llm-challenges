@@ -2,10 +2,14 @@ import asyncio
 from typing import Any, Dict, Optional
 
 
+import asyncio
+from typing import Any, Dict, Optional
+
+
 class JobQueue:
     def __init__(self, max_retries: int = 3):
-        self._jobs: Dict[int, Dict[str, Any]] = {}
         self._lock = asyncio.Lock()
+        self._jobs: Dict[int, Dict[str, Any]] = {}
         self._next_id = 1
         self.max_retries = max_retries
 
@@ -27,7 +31,8 @@ class JobQueue:
                 if job["status"] == "pending":
                     job["status"] = "processing"
                     return job
-            return None
+        return None
+        return None
 
     def complete(self, job_id: int, result: Any) -> None:
         self._jobs[job_id]["status"] = "done"

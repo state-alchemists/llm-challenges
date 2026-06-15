@@ -20,6 +20,8 @@ def slugify(text: str) -> str:
         elif char.isspace() or char == "-":
             result_chars.append("-")
     collapsed = "".join(result_chars)
+    
+    # Collapse multiple hyphens into one and strip edges
     import re
     return re.sub(r"-+", "-", collapsed).strip("-")
 
@@ -31,4 +33,9 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-    return text[:max_len - len(suffix)] + suffix
+    
+    cutoff = max_len - len(suffix)
+    if cutoff < 0:
+        return suffix[:max_len]
+        
+    return text[:cutoff] + suffix

@@ -10,15 +10,19 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    reserved = await inventory.reserve(quantity)
+    # Reserve stock first — fail fast if unavailable.
+    # This eliminates the TOCTOU gap between check_stock and decrement
+    # that caused ghost charges (paying but getting no item).
+    reserved = await inventory.decrement(quantity)
     if not reserved:
         print(f"Order {order_id}: out of stock")
         return False
 
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
+        # Payment failed — release the reserved stock so other orders can proceed.
         await inventory.increment(quantity)
-        print(f"Order {order_id}: payment failed — reservation released")
+        print(f"Order {order_id}: payment failed")
         return False
 
     print(f"Order {order_id}: SUCCESS")

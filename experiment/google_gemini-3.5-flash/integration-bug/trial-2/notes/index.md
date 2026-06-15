@@ -1,10 +1,13 @@
-# Zaruba Journal
+# HUD
 
-Welcome to the HUD.
-
-## Recent Insights
-- [technical/checkout-concurrency](technical/checkout-concurrency.md) — Solved checkout overselling and ghost charges using `asyncio.Lock`.
+Persistent memory index for trial-2.
 
 ## Indexes
-- [activity-log/index](activity-log/index.md)
-- [technical/index](technical/index.md)
+- [Technical Notes](technical/index.md)
+- [Activity Log](activity-log/index.md)
+
+## Recent Insights
+- [Race condition in checkout flow](technical/checkout-race.md)
+
+## Activity Log
+- [2026-06-15 Log](activity-log/2026/2026-06/2026-06-15.md)

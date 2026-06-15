@@ -1,6 +1,8 @@
 """Text normalization helpers."""
 
 from __future__ import annotations
+
+
 import re
 
 
@@ -20,10 +22,8 @@ def slugify(text: str) -> str:
             result_chars.append(char.lower())
         elif char.isspace() or char == "-":
             result_chars.append("-")
-    collapsed = "".join(result_chars).lower()
-    # Replace multiple hyphens with a single hyphen
-    collapsed = re.sub(r'-+', '-', collapsed)
-    return collapsed.strip("-")
+    collapsed = "".join(result_chars).strip("-")
+    return re.sub(r"-+", "-", collapsed)
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
@@ -31,6 +31,8 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
 
     If text is already short enough, return it unchanged.
     """
+    if max_len < len(suffix):
+        raise ValueError("max_len must be greater than or equal to suffix length")
     if len(text) <= max_len:
         return text
     return text[:max_len - len(suffix)] + suffix

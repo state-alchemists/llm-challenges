@@ -11,10 +11,7 @@ class Inventory:
     """Tracks on-hand stock per SKU and outstanding reservations."""
 
     def __init__(self, initial: dict[str, int] | None = None) -> None:
-        if initial is None:
-            self._stock = {}
-        else:
-            self._stock = dict(initial)
+        self._stock = dict(initial) if initial is not None else {}
         self._reserved: dict[str, int] = {}
 
     def add(self, sku: str, qty: int) -> None:
@@ -37,5 +34,5 @@ class Inventory:
             raise ValueError("qty must be positive")
         current = self._reserved.get(sku, 0)
         if qty > current:
-            raise ValueError("cannot release more than reserved")
+            raise ValueError("Cannot release more than is currently reserved")
         self._reserved[sku] = current - qty

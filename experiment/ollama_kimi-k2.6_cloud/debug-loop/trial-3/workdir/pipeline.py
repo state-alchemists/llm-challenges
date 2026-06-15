@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from config import CONFIG as settings
+from config import settings
 
 
 def extract() -> list[int]:

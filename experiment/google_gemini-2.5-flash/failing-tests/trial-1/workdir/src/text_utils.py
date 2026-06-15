@@ -16,13 +16,11 @@ def slugify(text: str) -> str:
     result_chars: list[str] = []
     for char in text:
         if char.isalnum():
-            result_chars.append(char)
+            result_chars.append(char.lower())
         elif char.isspace() or char == "-":
-            result_chars.append("-")
-    collapsed = "".join(result_chars).lower()
-    # Replace multiple hyphens with a single one
-    while "--" in collapsed:
-        collapsed = collapsed.replace("--", "-")
+            if not result_chars or result_chars[-1] != "-":
+                result_chars.append("-")
+    collapsed = "".join(result_chars)
     return collapsed.strip("-").replace("--", "-")
 
 

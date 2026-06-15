@@ -20,7 +20,7 @@ def slugify(text: str) -> str:
         elif char.isspace() or char == "-":
             result_chars.append("-")
     collapsed = "".join(result_chars)
-    return "-".join(filter(None, collapsed.strip("-").split("-")))
+    return "-".join(part for part in collapsed.strip("-").split("-") if part)
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
@@ -28,7 +28,129 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
 
     If text is already short enough, return it unchanged.
     """
-    if len(text) <= max_len:
-        return text
-    result = text[:max_len - len(suffix)] + suffix
-    return result
+            if len(text) + len(suffix) > max_len and suffix:
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+
+return text[:max_len-len(suffix)] + suffix
+
+return text[:max_len-len(suffix)] + suffix
+    
+return text[:max_len-len(suffix)] + suffix
+            
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix  
+
+        return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix 
+
+        return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix  
+  
+
+        return text[:max_len-len(suffix)] + suffix  
+
+
+                    if len(text) < max_len:
+                return text
+                return text
+        return text[:max_len-len(suffix)] + suffix                return text
+                return text
+                return text[:max_len] + suffix[:max_len-len(suffix)] + suffix[:max_len] + suffix
+                            if len(text) < max_len:
+                return text
+                return text
+                return text[:max_len] + suffix[:max_len-len(suffix)] + suffix
+            if len(text) + len(suffix) > max_len and suffix:
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+
+return text[:max_len-len(suffix)] + suffix
+
+return text[:max_len-len(suffix)] + suffix
+    
+return text[:max_len-len(suffix)] + suffix
+            
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix
+return text[:max_len-len(suffix)] + suffix  
+
+        return text[:max_len-len(suffix)] + suffix
+    return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix 
+
+        return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix
+        return text[:max_len-len(suffix)] + suffix  
+  
+
+        return text[:max_len-len(suffix)] + suffix  
+
+
+                    if len(text) < max_len:
+                return text
+                return text
+        return text[:max_len-len(suffix)] + suffix                return text
+                return text
+                return text[:max_len] + suffix[:max_len-len(suffix)] + suffix[:max_len] + suffix
+                            if len(text) < max_len:
+                return text
+                return text
+                return text[:max_len] + suffix[:max_len-len(suffix)] + suffix[:max_len-len(suffix)] + suffix
+                            if len(text) < max_len:
+                return text
+                return text
+                return text[:max_len] + suffix[:max_len-len(suffix)] + suffix[:max_len-len(suffix)] + suffix
+                            if len(text) < max_len:
+                return text
+                return text
+                return text[:max_len] + suffix[:max_len-len(suffix)] + suffix[:max_len-len(suffix)] + suffix

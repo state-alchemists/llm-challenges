@@ -1,10 +1,8 @@
-# HUD Index
+# Zaruba Journal Root
 
-## Active Constraints & Goals
-- Completed migration of legacy authentication `legacy_auth` to `new_auth` with appropriate scope context ("read" or "write").
+## HUD (Heads-Up Display)
+- Active Project: Grep-Fest Migration
+- Current Goal: Complete migration of `legacy_auth` to `new_auth`.
 
-## Recent Insights
-- `new_auth` Migration: All write-related files (create, update, delete, sync, billing, etc.) now correctly specify `scope="write"`.
-
-## Directory Indexes
-- [Chronological Log Book](activity-log/index.md)
+## Navigation
+- [Activity Log](activity-log/index.md)

@@ -1,5 +1,3 @@
-# Technical Insights
+# Technical Notes Index
 
-Index of technical know-how, patterns, and decisions.
-
-- [checkout-concurrency](checkout-concurrency.md) — Checkout race conditions solved with `asyncio.Lock`
+- [Race condition in checkout flow](checkout-race.md)

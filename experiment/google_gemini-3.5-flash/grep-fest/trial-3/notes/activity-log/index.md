@@ -1,6 +1,6 @@
-# Chronological Log Book
+# Activity Log Index
 
-- [2026 activity log](2026/index.md)
+- [2026 Activity Log](2026/index.md)
 
 ## Backlinks
-- [HUD Index](../index.md)
+- [HUD](../index.md)

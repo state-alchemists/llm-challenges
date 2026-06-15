@@ -4,15 +4,16 @@ import sqlite3
 
 import os
 import re
-import sqlite3
 import datetime
+import sqlite3
 
-DB_PATH = os.environ.get('DB_PATH', 'metrics.db')
-LOG_FILE = os.environ.get('LOG_FILE', 'server.log')
-DB_HOST = os.environ.get('DB_HOST', 'localhost')
-DB_PORT = int(os.environ.get('DB_PORT', 5432))
-DB_USER = os.environ.get('DB_USER', 'admin')
-DB_PASS = os.environ.get('DB_PASS', 'password123')
+ 
+DB_PATH = os.getenv("DB_PATH", "metrics.db")
+LOG_FILE = os.getenv("LOG_FILE", "server.log")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", 5432))
+DB_USER = os.getenv("DB_USER", "admin")
+DB_PASS = os.getenv("DB_PASS", "password123")
 
 
 def proc_data():

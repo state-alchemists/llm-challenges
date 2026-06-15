@@ -10,24 +10,18 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Phase 1: Provisional stock check
-    available = await inventory.check_stock(quantity)
-    if not available:
+    # Reserve inventory first to prevent overselling and ghost charges
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
         print(f"Order {order_id}: out of stock")
         return False
 
-    # Phase 2: Charge payment
+    # Attempt payment now that we have secured the item
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
         print(f"Order {order_id}: payment failed")
-        return False
-
-    # Phase 3: Commit inventory
-    decremented = await inventory.decrement(quantity)
-    if not decremented:
-        print(f"Order {order_id}: inventory error after payment — item not delivered")
-        # Rollback payment to prevent ghost charges
-        await gateway.refund(order_id, quantity * price)
+        # Return the item to inventory since payment failed
+        await inventory.increment(quantity)
         return False
 
     print(f"Order {order_id}: SUCCESS")

@@ -1,30 +1,31 @@
 [2m
-  🧠 The[0m[2m user wants me to[0m[2m find a specific line[0m[2m in `[0m[2mserver.log` that[0m[2m contains an[0m[2m `ORDER_ID=[0m[2m...` token and[0m[2m a customer email,[0m[2m then write the[0m[2m answer to `answer[0m[2m.txt`. Let me[0m[2m search for that[0m[2m line.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_pe49o8u7 | Grep {'pattern': 'ORDER_ID=', 'path': '/Users/gofrendigunawan/llm ...', 'file_pattern': 'server.log'}
-[0m[2m
-  🔠 call_pe49o8u7 Executed
-[0m[2m
-  🧠 Found[0m[2m it. The[0m[2m line contains[0m[2m ORDER[0m[2m_ID=42-X[0m[2m9Q and customer[0m[2m="[0m[2malice@example.com".[0m[2m Note[0m[2m the instructions[0m[2m say no[0m[2m quotes, so I[0m[2m'll[0m[2m strip the quotes[0m[2m from the email.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_ao57a9vt | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': 'order_id=42-X9Q\ncustomer=a ...'}
-[0m[2m
-  🔠 call_ao57a9vt Executed
-[0m[2m
-  🧠 Done[0m[2m. The[0m[2m line[0m[2m at[0m[2m line[0m[2m 1559 had[0m[2m ORDER[0m[2m_ID=42-X[0m[2m9Q and customer[0m[2m email[0m[2m alice[0m[2m@example.com. Written[0m[2m to answer.txt.[0m[2m
-  Found the single[0m[2m matching line at `[0m[2mserver.log:155[0m[2m9`:[0m[2m
+  🧠 The[0m[2m user wants me to[0m[2m find a specific line[0m[2m in `[0m[2mserver.log` that[0m[2m contains a successful order[0m[2m with an `ORDER[0m[2m_ID`[0m[2m and a customer email[0m[2m, then write the[0m[2m answer to `answer[0m[2m.txt`.
      
-     ```
-     2026[0m[2m-04-15[0m[2mT11:23[0m[2m:07Z INFO[0m[2m order placed  ORDER[0m[2m_ID=42-X[0m[2m9Q  customer[0m[2m="alice@example.com[0m[2m"  amount=$[0m[2m1,283[0m[2m.45
+     Let me[0m[2m first[0m[2m look[0m[2m for[0m[2m the file and[0m[2m search[0m[2m for the relevant line[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_1rfn5jm2 | Grep {'pattern': 'ORDER_ID=', 'path': '/Users/gofrendigunawan/llm ...', 'file_pattern': 'server.log'}
+[0m[2m
+  🔠 call_1rfn5jm2 Executed
+[0m[2m
+  🧠 Found[0m[2m the line. The[0m[2m ORDER_ID is[0m[2m `42-X9[0m[2mQ` and the[0m[2m customer email is `[0m[2malice@example.com`.[0m[2m Let me write the[0m[2m answer file.[0m[2m
+  Found the line:[0m[2m `ORDER_ID=[0m[2m42-X9Q[0m[2m`[0m[2m and `customer="[0m[2malice@example.com"[0m[2m`.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_a38ztm7o | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': 'order_id=42-X9Q\ncustomer=a ...'}
+[0m[2m
+  🔠 call_a38ztm7o Executed
+[0m[2m
+  🧠 The[0m[2m file has been written[0m[2m successfully. The[0m[2m answer[0m[2m is:[0m[2m
+     - order[0m[2m_id=42-X[0m[2m9Q
+     -[0m[2m customer=alice@example[0m[2m.com[0m[2m
+  Written[0m[2m `answer.txt`[0m[2m with the extracted[0m[2m values:[0m[2m
+     
+     ``[0m[2m`
+     order_id=[0m[2m42-X9Q[0m[2m
+     customer=alice[0m[2m@example.com
      ``[0m[2m`
      
-     Written[0m[2m to[0m[2m `answer.txt`[0m[2m with[0m[2m the quotes[0m[2m stripped:[0m[2m
-     
-     ```
-     order_id[0m[2m=42-X9[0m[2mQ
-     customer=[0m[2malice@example.com[0m[2m
-     ```[0m[2m
-  💸 (Requests: 3 | Tool Calls: 2 | Total: 39414) Input: 39090 | Audio Input: 0 | Output: 324 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     The needle[0m[2m was on[0m[2m line 1559[0m[2m of `server.log[0m[2m` — a[0m[2m single `[0m[2mINFO order placed`[0m[2m line[0m[2m among thousands[0m[2m of noise[0m[2m entries[0m[2m.[0m[2m
+  💸 (Requests: 3 | Tool Calls: 2 | Total: 43624) Input: 43310 | Audio Input: 0 | Output: 314 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "The file `server.log` contains thousands of lines of server activity.
 
 Exactly one line in that file records a successful order being placed.
@@ -43,15 +44,11 @@ Use any tool you like — grep, Python, reading the file directly — but
 the answer must be exact. There is only one matching line.
 " --model ollama:glm-5.1:cloud --session ollama_glm-5.1_cloud-big-haystack-trial-3 --yolo true --attach "" --interactive false[0m
 [2m[2mSession[0m: [1;33mollama_glm-5.1_cloud-big-haystack-trial-3[0m[0m
-Found the single matching line at `server.log:1559`:
-
-```
-2026-04-15T11:23:07Z INFO order placed  ORDER_ID=42-X9Q  customer="alice@example.com"  amount=$1,283.45
-```
-
-Written to `answer.txt` with the quotes stripped:
+Written `answer.txt` with the extracted values:
 
 ```
 order_id=42-X9Q
 customer=alice@example.com
 ```
+
+The needle was on line 1559 of `server.log` — a single `INFO order placed` line among thousands of noise entries.

@@ -1,96 +1,112 @@
-# ADR-001: Notification Subsystem — Redis Streams over Apache Kafka
+# ADR-001: Notification Subsystem Architecture
 
 **Status:** Proposed
 
----
-
 ## Context
 
-The notifications module (emails, webhooks) currently runs synchronously inside the Flask HTTP request cycle. This causes request timeouts (800 ms average, 8 s spikes), silent failures with no retry, connection-pool exhaustion cascading into unrelated features, and zero delivery guarantees for billing-critical events.
+The notification subsystem in our project management SaaS sends emails and webhooks on task events (update, assignment, completion). It currently runs synchronously inside the HTTP request cycle, causing three concrete problems:
 
-The system serves 85,000 MAU creating ~2M tasks/month at a peak of 500 req/s. The team of six (three senior, three mid-level) must ship within two weeks, and the chosen solution must support 10× traffic growth.
+- **Request timeouts:** Average response latency of 800ms, spiking to 8s during peak hours, because the response waits for external API calls (email provider, webhook endpoints).
+- **Silent failures:** When an external provider is unreachable, the notification is dropped. No retry, no dead-letter queue.
+- **Cascading failures:** Two incidents in the past year where a slow webhook endpoint consumed all available connections in the pool, taking down unrelated features.
+- **No delivery guarantees:** Billing-critical notifications ("trial expired", "payment failed") must be delivered at least once (exactly once where feasible), but the current system provides none of these guarantees.
 
-We evaluated two candidate technologies for the async message broker layer.
+**Target requirements:**
+1. Decouple notification dispatch from the HTTP request cycle.
+2. Support retry with exponential backoff and a dead-letter mechanism.
+3. Guarantee at-least-once delivery for billing events; exactly-once where feasible.
+4. Support real-time WebSocket push within two quarters.
+5. Handle 10x traffic growth (~5,000 req/s peak, ~20M tasks/month) without re-architecting.
 
----
+**Team and infrastructure constraints:**
+- Engineering team of 6 (3 senior, 3 mid-level), no dedicated infrastructure engineer.
+- Redis is already deployed in production for session storage and rate limiting.
+- No team member has production Kafka experience.
+- The solution must deliver value within 2 weeks of setup and migration.
+- Budget is modest — managed Confluent Cloud is not an option at full scale.
+- The architecture must support exactly-once semantics for billing notifications.
 
 ## Decision
 
-**Use Redis Streams as the notification message broker.**
+**Use Redis Streams.**
 
-Redis Streams gives us async decoupling, consumer groups with at-least-once delivery, retry via pending-entry management (XPENDING/CLAIM), and a path to WebSocket push — all using infrastructure already running in production. The operational cost is negligible compared to standing up a separate Kafka cluster, and the team can ship within the two-week window.
+Adopt Redis Streams as the message backbone for the notification subsystem. Notifications produced during the HTTP request cycle are written into Redis Streams; one or more background worker processes consume from the stream, dispatch the email or webhook, and acknowledge the message on success. Failed messages are retried from the Pending Entry List (PEL) with exponential backoff and eventually moved to a separate dead-letter stream.
 
-### Why not Apache Kafka
+### Architecture Outline
 
-Kafka is the stronger technology on paper — durable log storage, strict partition ordering, replay from any offset, and higher throughput — but it is the wrong fit for this team, this timeline, and this traffic profile:
-
-1. **Operational overhead.** A production Kafka deployment requires at minimum a 3-broker cluster plus KRaft/ZooKeeper nodes. Every broker needs JVM tuning, disk sizing for retention, partition-rebalance monitoring, and consumer-lag alerting. A team of six with no dedicated infra engineer and no Kafka experience cannot absorb this burden while also building the notification service itself.
-
-2. **Two-week delivery constraint fails.** Provisioning, securing, tuning, and integrating Kafka in production takes two weeks minimum for an experienced team — longer for one learning it from scratch. Redis Streams can be production-ready in two days.
-
-3. **Overkill at current scale.** Kafka's sweet spot is 100k+ messages/second across multiple consumers with replay and long-term retention. At 500 req/s (5,000 at 10×), Redis Streams handles the load trivially. Redis benchmarks show 100k+ ops/s on modest hardware — a 20× safety margin over the 10× target.
-
-4. **Exactly-once is an application concern, not a broker concern.** Kafka's exactly-once semantics (EOS via transactions) guarantees exactly-once *within Kafka* — it does not guarantee that the email provider or webhook endpoint processes the event exactly once. The only practical path to exactly-once for billing notifications is idempotent consumers with a deduplication table, regardless of broker choice. Redis Streams + idempotent consumer + `event_id` dedup in PostgreSQL = effectively-once delivery, which is indistinguishable from Kafka EOS at the application layer.
-
-5. **Budget.** Managed Kafka (Confluent Cloud) is cost-prohibitive at this stage. Self-hosted Kafka trades budget for team time — the wrong trade when time is the tighter constraint.
-
-### Why Redis Streams fits
-
-*Already in the stack.* Redis runs in production for session storage and rate limiting. Adding Streams requires no new EC2 instances, no new credentials, no new monitoring dashboards, no new on-call runbooks. The team deploys code, not infrastructure.
-
-*Familiar primitives.* The Python team already uses `redis-py`. Redis Streams consumer groups map cleanly to `XREADGROUP`, `XPENDING`, `XCLAIM`, and `XACK` — a well-documented API with published patterns for retry logic and dead-letter queues. No JVM, no schema registry, no new client protocol.
-
-*Natural fit for WebSocket push.* Redis Pub/Sub is already available in the same Redis instance. A consumer worker reads from a notification stream and publishes to a WebSocket channel. Kafka would require either a separate WebSocket gateway service or Kafka Connect — both adding deployment complexity.
-
-*Memory is not the bottleneck people fear.* At 5,000 req/s with a 24-hour retention window and ~5 KB per notification message, the stream uses ~2 GB of RAM — a fraction of what a production Redis instance is typically provisioned for. Acknowledged messages are trimmed immediately via `XTRIM` or `MAXLEN`, keeping working memory low.
-
----
+```
+HTTP Request → Flask handler → XADD to Redis Stream (non-blocking, ~1ms)
+                                       │
+                              ┌────────▼────────┐
+                              │   Redis Stream   │
+                              │  (Consumer Group)│
+                              └────────┬────────┘
+                                       │
+                         ┌─────────────┴──────────────┐
+                         │  Worker (XREADGROUP)        │
+                         │  Dispatch email/webhook     │
+                         │  XACK on success            │
+                         │  PEL retry on failure       │
+                         └─────────────┬──────────────┘
+                                       │
+                              ┌────────▼────────┐
+                              │  Dead-Letter     │
+                              │  Stream (XADD)   │
+                              └─────────────────┘
+```
 
 ## Consequences
 
-### Positive
+### Advantages
 
-- **Async decoupling.** The HTTP handler writes a stream entry (low single-digit ms) and returns. Notification delivery is handled by background consumer workers. Request latency drops from 800 ms to <50 ms.
-- **At-least-once delivery.** Consumer groups with XPENDING and auto-claim give automatic retry. Workers that crash mid-processing are reassigned to another consumer after the pending-entry timeout elapses.
-- **Retry with exponential backoff.** A dead-letter stream (e.g., `notifications:dlq`) collects entries that exceed the retry limit. A scheduled job or manual process can inspect and replay them.
-- **Exactly-once for billing.** Each billing event carries a unique `event_id` (e.g., `UUIDv7`). The consumer checks a dedup table (`notification_dedup(event_id VARCHAR PRIMARY KEY, processed_at TIMESTAMP)`) before processing. Duplicate deliveries from auto-claim or consumer crashes are silently dropped. Combined with at-least-once delivery from the stream, this yields effectively-once semantics.
-- **No new infrastructure.** Single additional process (consumer worker). Same Redis, same deploy pipeline, same monitoring.
-- **WebSocket path.** Consumer can `XREAD` the notification stream and publish to Redis Pub/Sub, which a WebSocket server subscribes to. No new message broker needed.
-- **10× headroom.** Redis handles 100k+ ops/s on a 2 vCPU / 4 GB instance. Memory is the scaling axis — if needed, increase instance size or shard notification streams by tenant ID.
+- **Zero new infrastructure.** Redis is already running in production. Adding streams requires no new servers, no new deployment pipelines, no new credential management. This alone saves 1–2 weeks of setup time versus any solution requiring a new backing store.
 
-### Negative
+- **Familiarity.** The team already manages Redis. The `redis-py` library is a dependency today. Learning Redis Streams (`XADD`, `XREADGROUP`, `XACK`, `XPENDING`) requires understanding a few commands, not an entire distributed system paradigm. A senior engineer can spike a working prototype in a day.
 
-- **Memory-bound retention.** Unlike Kafka, which writes to disk, Redis Streams live in RAM. Long retention windows or bursty unacknowledged messages could pressure memory. Mitigation: set `MAXLEN ~ 100000` per stream, trim aggressively, and alert on pending-entry count exceeding a threshold.
-- **No built-in ordering across partitions.** Kafka guarantees strict order within a partition. Redis Streams guarantee order within a single stream, but if you shard across multiple streams (e.g., per tenant), cross-stream ordering is lost. For notifications this is acceptable — email ordering is not a correctness constraint. If it becomes one, route all events through one stream and scale consumers within that stream's consumer group.
-- **Smaller ecosystem.** Kafka has Kafka Connect, Kafka Streams, schema registry, and a vast connector ecosystem. Redis Streams has the core primitives and community patterns. For a team of six building one notification subsystem, the ecosystem gap is irrelevant — there is no plan to integrate with a data lake, run stream processing, or maintain a schema governance board.
-- **Billing-event gap window.** Between a consumer crashing and the auto-claim timeout reclaiming its pending entries, there is a configurable window (default: minutes) where a billing notification could be delayed. Mitigation: set `XPENDING` claim timeout to 30 seconds, and use a periodic background poll to retry pending entries proactively rather than waiting for the timeout.
-- **Learning curve.** Redis Streams are new to the team. However, the API surface is small (~10 commands) and the redis-py client documentation is good. This is a days-long learning curve versus the weeks-long Kafka learning curve.
+- **Fast path to value.** A minimal implementation (write to stream in the Flask handler, one worker reading the stream and dispatching) can ship to production within the first week. Retry logic, dead-letter, and monitoring can be added incrementally in subsequent weeks.
 
----
+- **Natural fit for WebSocket push.** The two-quarter roadmap for WebSocket push aligns well with Redis Pub/Sub, which can be layered on the same Redis instance alongside Streams. We can publish a WebSocket event on the same Redis connection that writes the stream entry. Frameworks like Socket.IO with a Redis adapter integrate directly.
+
+- **Consumer groups with PEL.** Redis consumer groups provide exactly the mechanism we need: workers pick up unclaimed messages, the PEL tracks unacknowledged deliveries, and `XPENDING` lets us detect stalled consumers. Combined with a retry counter in the message payload, this gives us retry with exponential backoff and a dead-letter threshold without writing a separate queuing system.
+
+- **Throughput headroom.** At 500 req/s peak (~1 notification per request average), we are well within Redis Streams' capability of 100k+ small messages per second. At 10x growth (~5,000 req/s), a single Redis instance still handles the load with room to spare. If needed, Redis Cluster extends that further.
+
+- **At-least-once delivery for billing.** The PEL guarantees that a message stays in the pending list until a consumer explicitly acknowledges it (XACK). If a consumer crashes mid-dispatch, another consumer picks it up after the pending-timeout. Combined with idempotency keys on the consumer side (checking a dedup index in Redis before sending), this achieves exactly-once processing for billing notifications.
+
+### Disadvantages
+
+- **Memory-bound retention.** Redis Streams live in memory (with optional persistence via RDB/AOF). Unlike Kafka's disk-based log, we cannot cheaply retain months of historical messages. At our current volume, even storing 7 days of notifications (2M × 7 = 14M entries at ~500 bytes each = ~7 GB) fits comfortably in a 16 GB Redis instance, but long-term archival requires a separate pipeline to PostgreSQL or S3. This is an acceptable trade-off: we need retention for replay and debugging, not for replaying months of data.
+
+- **No built-in exactly-once semantics.** Redis Streams do not have Kafka's transactional producer API for atomic writes across partitions. Exactly-once must be built at the application layer: idempotency keys + dedup + atomic updates. This is achievable and well-understood (we would implement it for Kafka too), but it is more code we own.
+
+- **Smaller ecosystem.** Kafka has a richer ecosystem of connectors, stream processors (Kafka Streams, ksqlDB), monitoring (Burrow, Cruise Control), and managed offerings. Redis Streams has fewer purpose-built tools. For a 6-person team building a notification subsystem, this matters less than operational simplicity — we don't need KSQL, we need a worker that reads a stream and sends HTTP requests.
+
+- **Scaling beyond a single Redis instance requires cluster mode.** At current and 10x projected load, a single Redis instance is sufficient. If growth exceeds that, switching to Redis Cluster adds operational complexity (client-side sharding, cross-slot limitations). In practice, this is a future concern well beyond the 10x target.
+
+- **No partition scaling model.** Kafka's partition model allows independent scale of parallelism (more consumers per partition) and data distribution (more partitions). Redis Streams distribute messages across consumers in a group, but the stream itself lives on a single Redis node in non-cluster mode. For a notification workload, this is not a bottleneck at our scale.
 
 ## Alternatives Considered
 
-### Apache Kafka (rejected)
+### Apache Kafka
 
-Kafka was rejected for the reasons detailed above: operational complexity exceeds the team's capacity, two-week deadline is unachievable, throughput is overkill for the traffic profile, and the budget for managed Kafka is unavailable. The sole technical advantage Kafka holds over Redis Streams — durable disk-based retention with unlimited replay — does not justify the operational cost for this use case. Notifications are ephemeral: they are delivered, acknowledged, and can be discarded. Long-term replay of weeks-old notifications has no product requirement today.
+Kafka is the industry standard for event streaming. It offers disk-based log retention, automatic consumer group rebalancing, partition-based parallelism, and a transactional API for exactly-once semantics. For a system processing millions of events per day with strong durability guarantees, Kafka is a proven choice.
 
-A future migration to Kafka is possible if the system outgrows Redis (e.g., >50,000 req/s or multi-TB retention needs), but that is a high-class problem the team does not face today.
+**Why Redis Streams wins for us:**
 
-### RabbitMQ (not formally evaluated)
+- **Operational complexity mismatch.** A production Kafka deployment requires at least 3 broker nodes and 3 ZooKeeper nodes (or KRaft controllers) for fault tolerance. This means standing up 6 new servers, configuring them, monitoring JMX metrics, managing partition rebalancing, and learning Kafka-specific failure modes (leader election, ISR management, log compaction). For a team of 6 with no Kafka experience and no dedicated infra engineer, this is a 4- to 6-week investment before delivering any value to users.
 
-RabbitMQ was not evaluated as a primary option because the team does not run it in production and the constraint to deliver within two weeks eliminates any technology requiring new infrastructure and operational training. RabbitMQ shares many of Kafka's disadvantages (new cluster, new on-call burden) while offering weaker ordering guarantees and no native stream replay. It would rank below both Redis Streams and Kafka for this use case.
+- **Setup timeline violates the 2-week constraint.** Even with managed Kafka (Confluent Cloud), the team would need to learn the Kafka API, `confluent-kafka-python` client semantics (delivery callbacks, exactly-once config, consumer rebalance listeners), and wire up monitoring from scratch. A self-hosted Kafka setup cannot realistically be production-ready within 2 weeks. Redis Streams, by contrast, can ship a working prototype in days because the infrastructure already exists.
 
----
+- **Cost.** Self-hosted Kafka requires a minimum of 6 EC2 instances (3 brokers + 3 ZooKeeper). At `m6i.large` (~$70/month each), that is ~$420/month in base infrastructure plus EBS storage. Confluent Cloud's basic tier starts at a few hundred dollars per month and scales up rapidly with throughput. Redis Streams costs zero incremental infrastructure — we already pay for the Redis instance.
 
-## Implementation Outline
+- **Throughput overprovisioning.** Kafka shines at 100k+ messages/second with sustained high throughput. Our workload is 500 req/s peak. Kafka's strengths (brokered storage, compaction, tiered storage) solve problems we do not have. Meanwhile, its weaknesses (client complexity, operational surface area, rebalancing-induced unavailability) are costs we would pay upfront.
 
-| Step | Effort | Detail |
-|------|--------|--------|
-| 1. Define stream schema | 1 day | Event envelope: `event_id`, `type`, `tenant_id`, `payload`, `retry_count`, `created_at` |
-| 2. Write producer integration | 2 days | Replace sync notification calls with `XADD` in the Flask handler |
-| 3. Write consumer worker | 3 days | Python process using `XREADGROUP` + `XPENDING` loop; dead-letter routing; exponential backoff |
-| 4. Add dedup table for billing events | 1 day | `notification_dedup(event_id PK, processed_at)` with idempotent consumer check |
-| 5. Deploy and monitor | 2 days | One additional process per web server; existing Redis monitoring alerts; add pending-entry metric |
-| **Total** | **9 days** | Within the 2-week constraint with buffer |
+- **WebSocket integration adds complexity.** Pairing Kafka with WebSocket push requires an additional bridging service (e.g., Kafka Connect + WebSocket sink, or a service consuming Kafka and publishing via a WebSocket server). With Redis, the stream and the pub/sub channel live on the same instance — a single `publish` call alongside the `XADD` gives us WebSocket push for free.
 
-The consumer worker runs as a background process on each of the four web servers (four consumers in the group). For 10× scale, spin up dedicated worker instances independent of the web tier — Redis Streams consumer groups support dynamic membership without downtime.
+- **Exactly-once via Kafka transactions is the wrong tool for this job.** Kafka's exactly-once semantics depend on transactional producers, idempotent consumers, and atomic writes to an output topic. Setting this up correctly is notoriously subtle (transactions time out, zombie fencing, coordinator failures). For a 6-person team, building idempotency in the application layer (a dedup key in Redis, a unique-notification-ID per event) is simpler and equally correct for our use case. We would implement idempotency regardless of the message broker choice — Kafka's transactions do not eliminate that need.
+
+**When Kafka would be the right choice:** If our requirements included (a) retaining a multi-year, replayable event log for auditing or analytics, (b) processing a sustained >50K events/second, or (c) integrating with Kafka-native stream processors (Kafka Streams, ksqlDB) for complex event processing. None of these are current or projected requirements.
+
+## Migration Path
+
+The decision for Redis Streams does not preclude Kafka later. We will abstract the message bus behind a `NotificationBroker` interface with `produce(event, topic)` and `consume(topic, handler)` methods. The initial implementation wraps Redis Streams; if growth or requirements eventually justify Kafka, a second implementation swaps the backend with no changes to the notification logic or HTTP handler.

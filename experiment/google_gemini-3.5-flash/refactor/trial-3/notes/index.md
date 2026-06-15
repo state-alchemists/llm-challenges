@@ -1,8 +1,10 @@
-# HUD Index
+# HUD
 
-Welcome to the persistent memory index of this challenge trial.
+## Active Constraints
+- None
 
-- [Activity Log Index](activity-log/index.md)
+## Recent Insights
+- None
 
-## Recent Activity Logs
-- [2026-05-30 Activity Log](activity-log/2026/2026-05/2026-05-30.md)
+## Navigation
+- [Activity Log](activity-log/index.md)

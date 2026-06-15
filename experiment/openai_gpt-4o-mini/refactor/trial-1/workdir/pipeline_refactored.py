@@ -1,149 +1,123 @@
 import os
 import re
-import sqlite3
 import datetime
-from typing import List, Dict
+import sqlite3
 
-DB_PATH = os.environ.get('DB_PATH', 'metrics.db')
-LOG_FILE = os.environ.get('LOG_FILE', 'server.log')
-DB_HOST = os.environ.get('DB_HOST', 'localhost')
-DB_PORT = int(os.environ.get('DB_PORT', '5432'))
-DB_USER = os.environ.get('DB_USER', 'admin')
-DB_PASS = os.environ.get('DB_PASS', 'password123')
+# Configuration constants
+DB_PATH = os.getenv("DB_PATH", "metrics.db")
+LOG_FILE = os.getenv("LOG_FILE", "server.log")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", 5432))
+DB_USER = os.getenv("DB_USER", "admin")
+DB_PASS = os.getenv("DB_PASS", "password123")
 
 
-def parse_log_line(line: str) -> Dict:
-    """
-    Parses a single log line.
-    Returns a dictionary with the log type and relevant information.
-    """
-    regex = r'^(?P<dt>\S+ \S+) (?P<lvl>\w+) (?P<msg>.*)$'
-    match = re.match(regex, line)
+def parse_log_line(line: str) -> dict:
+    """Parses a line from the log file and returns a structured entry."""
+    match = re.match(r'(?P<date>\d+-\d+-\d+ \d+:\d+:\d+) (?P<level>[A-Z]*) (?P<details>.+)', line)
     if match:
-        level = match.group('lvl')
-        timestamp = match.group('dt')
-        message = match.group('msg')
-        return {'level': level, 'timestamp': timestamp, 'message': message}
-    return {}
+        dt = match.group("date")
+        lvl = match.group("level")
+        details = match.group("details")
+        return {
+            "date": dt,
+            "level": lvl,
+            "details": details
+        }
+    return None
 
 
-def extract_data(log_file: str) -> (List[Dict], Dict[str, str], List[Dict]):
-    """
-    Extracts data from the log file.
-    Returns a list of dictionaries for errors, user sessions, and API calls.
-    """
-    d_list = []
-    sessions = {}
-    api_calls = []
-    
-    if os.path.exists(log_file):
-        with open(log_file, 'r') as f:
+def process_logs():
+    """Processes the server logs and returns a list of structured log entries."""
+    log_entries = []
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r") as f:
             for line in f:
-                parsed_line = parse_log_line(line)
-                if not parsed_line:
-                    continue
-                level = parsed_line['level']
-                dt = parsed_line['timestamp']
-                if level == 'ERROR':
-                    d_list.append({'d': dt, 't': 'ERR', 'm': parsed_line['message']})
-                elif level == 'INFO' and 'User' in parsed_line['message']:
-                    uid = re.search(r'User (\d+)', parsed_line['message']).group(1)
-                    action = parsed_line['message'].split('User ' + uid + ' ')[1].strip()
-                    if 'logged in' in action:
-                        sessions[uid] = dt
-                    elif 'logged out' in action:
-                        if uid in sessions:
-                            sessions.pop(uid)
-                    d_list.append({'d': dt, 't': 'USR', 'u': uid, 'a': action})
-                elif level == 'INFO' and 'API' in parsed_line['message']:
-                    endpoint = re.search(r'API (\\S+)', parsed_line['message']).group(1)
-                    dur = int(re.search(r'took (\d+)ms', parsed_line['message']).group(1)) if 'took' in parsed_line['message'] else 0
-                    api_calls.append({'d': dt, 'endpoint': endpoint, 'ms': dur})
-                elif level == 'WARN':
-                    d_list.append({'d': dt, 't': 'WARN', 'm': parsed_line['message']})
-    return d_list, sessions, api_calls
+                entry = parse_log_line(line)
+                if entry:
+                    log_entries.append(entry)
+    return log_entries
 
 
-def insert_errors(c: sqlite3.Cursor, d_list: List[Dict]) -> None:
-    """
-    Inserts error messages into the database.
-    """
-    error_count = {}
-    for x in d_list:
-        if x['t'] == 'ERR':
-            msg = x['m']
-            error_count[msg] = error_count.get(msg, 0) + 1
-    for msg, count in error_count.items():
+def extract_error_summary(entries: list) -> dict:
+    """Extracts error messages and their counts from log entries."""
+    error_summary = {}
+    for entry in entries:
+        if entry["level"] == "ERROR":
+            error_msg = entry["details"]
+            error_summary[error_msg] = error_summary.get(error_msg, 0) + 1
+    return error_summary
+
+
+def extract_api_metrics(entries: list) -> dict:
+    """Extracts API call metrics from log entries and returns a dictionary of API call latencies."""
+    api_metrics = {}
+    for entry in entries:
+        if entry["level"] == "INFO" and "API" in entry["details"]:
+            api_call = re.search(r'API (?P<endpoint>[^ ]+) took (?P<duration>\d+)ms', entry["details"])
+            if api_call:
+                endpoint = api_call.group("endpoint")
+                duration = int(api_call.group("duration"))
+                api_metrics.setdefault(endpoint, []).append(duration)
+    return api_metrics
+
+
+def persist_summary_to_db(error_summary: dict, api_metrics: dict):
+    """Persists error summary and API metrics to the SQLite database."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("CREATE TABLE IF NOT EXISTS errors (dt TEXT, message TEXT, count INTEGER)")
+    c.execute("CREATE TABLE IF NOT EXISTS api_metrics (dt TEXT, endpoint TEXT, avg_ms REAL)")
+
+    for msg, count in error_summary.items():
         c.execute("INSERT INTO errors VALUES (?, ?, ?)", (datetime.datetime.now(), msg, count))
 
+    for endpoint, durations in api_metrics.items():
+        avg_duration = sum(durations) / len(durations)
+        c.execute("INSERT INTO api_metrics VALUES (?, ?, ?)", (datetime.datetime.now(), endpoint, avg_duration))
 
-def insert_api_metrics(c: sqlite3.Cursor, api_calls: List[Dict]) -> None:
-    """
-    Inserts API call metrics into the database.
-    """
-    endpoint_stats = {}
-    for call in api_calls:
-        ep = call['endpoint']
-        endpoint_stats.setdefault(ep, []).append(call['ms'])
-    for ep, times in endpoint_stats.items():
-        avg = sum(times) / len(times)
-        c.execute("INSERT INTO api_metrics VALUES (?, ?, ?)", (datetime.datetime.now(), ep, avg))
+    conn.commit()
+    conn.close()
 
 
-def generate_report(d_list: List[Dict], sessions: Dict[str, str], api_calls: List[Dict]) -> str:
-    """
-    Generates the HTML report from the provided data.
-    """
-    out = "<html>\n<head><title>System Report</title></head>\n<body>\n"
-    out += "<h1>Error Summary</h1>\n<ul>\n"
-    error_count = {}
-    for x in d_list:
-        if x['t'] == 'ERR':
-            msg = x['m']
-            error_count[msg] = error_count.get(msg, 0) + 1
-    for err_msg, count in error_count.items():
-        out += f"<li><b>{err_msg}</b>: {count} occurrences</li>\n"
-    out += "</ul>\n"
+def generate_report(error_summary: dict, api_metrics: dict, active_users: int) -> str:
+    """Generates HTML report from error summary, API metrics, and active session count."""
+    report = "<html>\n<head><title>System Report</title></head>\n<body>\n"
+    report += "<h1>Error Summary</h1>\n<ul>\n"
+    for err_msg, count in error_summary.items():
+        report += f"<li><b>{err_msg}</b>: {count} occurrences</li>\n"
+    report += "</ul>\n"
 
-    out += "<h2>API Latency</h2>\n<table border='1'>\n"
-    out += "<tr><th>Endpoint</th><th>Avg (ms)</th></tr>\n"
-    endpoint_stats = {}
-    for call in api_calls:
-        ep = call['endpoint']
-        endpoint_stats.setdefault(ep, []).append(call['ms'])
-    for ep, times in endpoint_stats.items():
-        avg = sum(times) / len(times)
-        out += f"<tr><td>{ep}</td><td>{round(avg, 1)}</td></tr>\n"
-    out += "</table>\n"
+    report += "<h2>API Latency</h2>\n<table border='1'>\n"
+    report += "<tr><th>Endpoint</th><th>Avg (ms)</th></tr>\n"
+    for endpoint, durations in api_metrics.items():
+        avg_duration = sum(durations) / len(durations)
+        report += f"<tr><td>{endpoint}</td><td>{round(avg_duration, 1)}</td></tr>\n"
+    report += "</table>\n"
 
-    out += "<h2>Active Sessions</h2>\n"
-    out += f"<p>{len(sessions)} user(s) currently active</p>\n"
-    out += "</body>\n</html>"
-
-    return out
+    report += f"<h2>Active Sessions</h2>\n<p>{active_users} user(s) currently active</p>\n"
+    report += "</body>\n</html>"
+    return report
 
 
-def proc_data() -> None:
-    """
-    Main process that coordinates the data extraction, transformation, loading, and reporting.
-    """
-    d_list, sessions, api_calls = extract_data(LOG_FILE)
-    print(f"Connecting to {DB_HOST}:{DB_PORT} as {DB_USER}...")
-    with sqlite3.connect(DB_PATH) as conn:
-        c = conn.cursor()
-        c.execute("CREATE TABLE IF NOT EXISTS errors (dt TEXT, message TEXT, count INTEGER)")
-        c.execute("CREATE TABLE IF NOT EXISTS api_metrics (dt TEXT, endpoint TEXT, avg_ms REAL)")
-        insert_errors(c, d_list)
-        insert_api_metrics(c, api_calls)
-    report = generate_report(d_list, sessions, api_calls)
-    with open('report.html', 'w') as f:
-        f.write(report)
-    print(f"Job finished at {datetime.datetime.now()}")
+def proc_data():
+    """Main data processing function that coordinates the ETL pipeline."""
+    log_entries = process_logs()
+    error_summary = extract_error_summary(log_entries)
+    api_metrics = extract_api_metrics(log_entries)
+    active_users = len({entry['details'].split()[1] for entry in log_entries if "logged in" in entry['details']})
+    persist_summary_to_db(error_summary, api_metrics)
+    report_content = generate_report(error_summary, api_metrics, active_users)
+
+    with open("report.html", "w") as f:
+        f.write(report_content)
+
+    print("Job finished at " + str(datetime.datetime.now()))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if not os.path.exists(LOG_FILE):
-        with open(LOG_FILE, 'w') as f:
+        with open(LOG_FILE, "w") as f:
             f.write("2024-01-01 12:00:00 INFO User 42 logged in\n")
             f.write("2024-01-01 12:05:00 ERROR Database timeout\n")
             f.write("2024-01-01 12:05:05 ERROR Database timeout\n")

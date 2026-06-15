@@ -9,24 +9,22 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Phase 1: Reserve inventory (atomic check + decrement under lock)
-    async with inventory.lock:
-        available = await inventory.check_stock(quantity)
-        if not available:
-            print(f"Order {order_id}: out of stock")
-            return False
-        if not await inventory.decrement(quantity):
-            print(f"Order {order_id}: out of stock (race)")
-            return False
+    # Reserve stock first — atomic check-and-decrement under lock.
+    # This eliminates the TOCTOU race: no other coroutine can interleave
+    # between "do we have stock?" and "take the stock."
+    reserved = await inventory.reserve(quantity)
+    if not reserved:
+        print(f"Order {order_id}: out of stock")
+        return False
 
-    # Phase 2: Charge — outside the lock (I/O can proceed in parallel)
+    # Stock is held; now try to charge.
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        # Compensate: release reserved stock
-        async with inventory.lock:
-            await inventory.increment(quantity)
+        # Payment failed — release the reservation so other orders can use it.
+        await inventory.release(quantity)
         print(f"Order {order_id}: payment failed")
         return False
 
+    # Payment succeeded and stock was already reserved — clean delivery.
     print(f"Order {order_id}: SUCCESS")
     return True

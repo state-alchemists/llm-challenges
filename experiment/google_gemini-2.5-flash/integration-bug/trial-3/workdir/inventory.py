@@ -1,10 +1,11 @@
 import asyncio
+from asyncio import Lock
 
 
 class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
-        self._lock = asyncio.Lock()
+        self._lock = Lock()
 
     async def check_stock(self, quantity: int) -> bool:
         async with self._lock:

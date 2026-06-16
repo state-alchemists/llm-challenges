@@ -1,9 +1,6 @@
-# Zaruba's HUD & Journal Index
+# Zaruba's Journal Index
 
-Welcome to Zaruba's persistent memory.
+Welcome to Zaruba's LLM challenge experiment journal. This HUD tracks key active constraints, preferences, and recent insights.
 
-## Projects
-- [Projects Index](projects/index.md)
-
-## Activity Log
+## Navigation
 - [Activity Log](activity-log/index.md)

@@ -41,13 +41,13 @@ async def get_task(task_id: int):
     raise HTTPException(status_code=404, detail="Task not found")
 
 
-@app.post("/tasks", response_model=Task, status_code=201)
+@app.post("/tasks", response_model=Task)
 async def create_task(task_in: TaskCreate, user: str = Depends(require_api_key)):
     # Validate project exists
     if not any(p.id == task_in.project_id for p in projects):
         raise HTTPException(status_code=404, detail="Project not found")
-
-    # Auto-generate unique ID
+    
+    # Generate unique ID
     new_id = max([t.id for t in tasks], default=0) + 1
     
     new_task = Task(id=new_id, **task_in.model_dump())
@@ -66,10 +66,10 @@ async def update_task(task_id: int, task_update: TaskUpdate, user: str = Depends
     raise HTTPException(status_code=404, detail="Task not found")
 
 
-@app.delete("/tasks/{task_id}", status_code=204)
+@app.delete("/tasks/{task_id}")
 async def delete_task(task_id: int, user: str = Depends(require_api_key)):
     for i, task in enumerate(tasks):
         if task.id == task_id:
             tasks.pop(i)
-            return
+            return {"detail": "Task deleted"}
     raise HTTPException(status_code=404, detail="Task not found")

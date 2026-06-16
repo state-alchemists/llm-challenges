@@ -1,3 +1,3 @@
-# Technical Notes Index
+# Technical Index
 
-- [Race condition in checkout flow](checkout-race.md)
+- [Checkout Safety Patterns](checkout-safety.md)

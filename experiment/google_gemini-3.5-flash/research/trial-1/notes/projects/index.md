@@ -1,6 +1,6 @@
-# Projects
+# Projects Index
 
-- [Notification Subsystem Architecture Decoupling](notification-architecture.md)
+- [SaaS Platform](saas-platform.md)
 
 ## Backlinks
-- [Root Journal](../index.md)
+- [HUD Index](../index.md)

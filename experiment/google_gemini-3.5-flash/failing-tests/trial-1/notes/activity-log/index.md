@@ -1,6 +1,9 @@
-# Activity Logs
+# Activity Log
 
-- [2026 Activity Logs](2026/index.md)
+Chronological history of tasks and accomplishments.
+
+## Years
+- [2026](2026/index.md)
 
 ## Backlinks
-- [HUD Index](../index.md)
+- [Root Index](../index.md)

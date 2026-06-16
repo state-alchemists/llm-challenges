@@ -1,6 +1,6 @@
-# Projects Index
+# Projects
 
-*None*
+- [Debug Loop Project](debug-loop.md)
 
 ## Backlinks
-- [Root](../index.md)
+- [HUD](../index.md)

@@ -2,13 +2,17 @@
 
 CONFIG = {
     "source": "events.csv",
-    "batch_size": 0,
+    "batch_size": 1,
 }
-"""Configuration constants for the pipeline."""
 
+settings = CONFIG
 CONFIG = {
     "source": "events.csv",
     "batch_size": 1,
 }
 
 settings = CONFIG
+CONFIG = {
+    "source": "events.csv",
+    "batch_size": 1,
+}

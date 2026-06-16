@@ -1,89 +1,212 @@
 [2m
-  🧠 The[0m[2m user wants me to[0m[2m read `system_context[0m[2m.md` and then[0m[2m write an ADR[0m[2m based[0m[2m on its[0m[2m contents. Let me[0m[2m start[0m[2m by reading that[0m[2m file,[0m[2m then activate the appropriate[0m[2m skills,[0m[2m and then[0m[2m write the ADR[0m[2m.[0m[2m
+  🧠 The[0m[2m user wants me to[0m[2m read `system_context[0m[2m.md` first[0m[2m, then write an[0m[2m ADR based[0m[2m on its[0m[2m contents. Let me[0m[2m start by reading that[0m[2m file.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_kxpgd95l | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🔠 call_kxpgd95l Executed
+[0m[2m
+  🧠 Now[0m[2m I have the full[0m[2m context. Let me[0m[2m activate the appropriate[0m[2m skills before[0m[2m writing the ADR[0m[2m.[0m[2m
+     
+     The[0m[2m deliverable is an[0m[2m Architecture[0m[2m Decision Record —[0m[2m this is a design[0m[2m document,[0m[2m so I should[0m[2m activate `core-design[0m[2m` and `core[0m[2m-writing`.[0m[2m
+     
+     Let me analyze[0m[2m the context[0m[2m and write the[0m[2m ADR.
+     
+     Key[0m[2m facts[0m[2m from system[0m[2m_context.md:
+     -[0m[2m S[0m[2maaS project management platform[0m[2m
+     - 85K[0m[2m MAU, ~[0m[2m2M tasks/month[0m[2m, ~500 req[0m[2m/s peak
+     -[0m[2m Python/Flask[0m[2m monolith, PostgreSQL[0m[2m, Redis ([0m[2msession[0m[2m/rate limiting)[0m[2m
+     - S[0m[2mynchronous notifications causing[0m[2m timeouts[0m[2m, silent[0m[2m failures, cascading[0m[2m failures
+     - Need[0m[2m: async[0m[2m processing, retry[0m[2m w[0m[2m/[0m[2m backoff, at[0m[2m-least-on[0m[2mce for billing,[0m[2m exactly-once where[0m[2m feasible, WebSocket[0m[2m push in[0m[2m 2 quarters,[0m[2m 10x growth[0m[2m
+     - Team[0m[2m: 6 people[0m[2m (3 senior,[0m[2m 3 mid),[0m[2m no dedicated infra[0m[2m engineer
+     - Already[0m[2m run[0m[2m Redis in production[0m[2m
+     - No Kafka experience[0m[2m
+     -[0m[2m 2 weeks max[0m[2m setup/migration before[0m[2m delivering value
+     -[0m[2m Modest budget ([0m[2mno[0m[2m managed Confluent[0m[2m Cloud)
+     - Must[0m[2m maintain exactly-once[0m[2m for[0m[2m billing notifications
+     
+     Let[0m[2m me think[0m[2m about the[0m[2m two options:
+     
+     **[0m[2mApache Kafka:[0m[2m**
+     - Through[0m[2mput: very[0m[2m high (mill[0m[2mions of[0m[2m msgs[0m[2m/s[0m[2m)
+     - Ordering[0m[2m: per[0m[2m-partition ordering[0m[2m
+     - Message retention[0m[2m: configurable[0m[2m, long[0m[2m-term[0m[2m retention[0m[2m
+     - Consumer[0m[2m groups: native[0m[2m, robust[0m[2m
+     - Exactly-on[0m[2mce semantics: supported[0m[2m via id[0m[2mempotent producers[0m[2m and transaction[0m[2mal APIs[0m[2m
+     - Operational[0m[2m complexity: HIGH[0m[2m -[0m[2m requires ZooKeeper or[0m[2m KRaft,[0m[2m broker management, partition[0m[2m planning[0m[2m
+     - Team[0m[2m readiness[0m[2m: no experience[0m[2m
+     - Setup[0m[2m time: weeks[0m[2m to[0m[2m months for[0m[2m a small[0m[2m team
+     - Cost[0m[2m: self[0m[2m-host[0m[2med requires significant ops[0m[2m; managed is[0m[2m expensive
+     
+     **Redis[0m[2m Streams:**
+     -[0m[2m Throughput: high[0m[2m enough[0m[2m for current[0m[2m scale ([0m[2mmillions of msgs[0m[2m/s on[0m[2m single instance[0m[2m)
+     - Ordering[0m[2m: per-stream[0m[2m ordering
+     - Message[0m[2m retention: configurable ([0m[2mMAXLEN, time[0m[2m-based trimming[0m[2m)
+     - Consumer groups[0m[2m: supported[0m[2m ([0m[2mXGROUP[0m[2m, XREADGROUP[0m[2m,[0m[2m X[0m[2mACK)
+     - Exactly[0m[2m-once semantics:[0m[2m not n[0m[2matively supported; requires[0m[2m application[0m[2m-level deduplication[0m[2m
+     - Operational[0m[2m complexity: LOW[0m[2m - team[0m[2m already runs[0m[2m Redis
+     - Team[0m[2m readiness: already familiar[0m[2m with Redis
+     -[0m[2m Setup time: days[0m[2m
+     - Cost[0m[2m: already[0m[2m paying[0m[2m for Redis
+     
+     The[0m[2m key[0m[2m tension[0m[2m:[0m[2m exactly-once semantics[0m[2m for billing.[0m[2m Kafka has[0m[2m it[0m[2m n[0m[2matively; Redis Streams[0m[2m doesn't. However[0m[2m:[0m[2m
+     1[0m[2m. Exactly[0m[2m-once in[0m[2m Kafka requires[0m[2m careful[0m[2m transactional[0m[2m producer/con[0m[2msumer configuration[0m[2m and[0m[2m is notoriously[0m[2m hard[0m[2m to get right[0m[2m
+     2. For[0m[2m billing notifications, you[0m[2m can achieve effective[0m[2m exactly-once with[0m[2m Redis Streams using[0m[2m idempotent[0m[2m consumers[0m[2m (ded[0m[2mup by[0m[2m notification ID[0m[2m) + PostgreSQL[0m[2m as[0m[2m the[0m[2m source of truth[0m[2m
+     3. The team[0m[2m has no Kafka experience[0m[2m and no[0m[2m dedicated infra engineer[0m[2m
+     4. The[0m[2m 2-week constraint is[0m[2m critical[0m[2m
+     5. Redis[0m[2m Streams[0m[2m consumer[0m[2m groups handle[0m[2m fan[0m[2m-out and[0m[2m load[0m[2m balancing[0m[2m
+     
+     Given[0m[2m the constraints[0m[2m (6-person[0m[2m team, no Kafka[0m[2m experience[0m[2m, no[0m[2m dedicated infra,[0m[2m 2-week[0m[2m deadline[0m[2m, modest[0m[2m budget, already running[0m[2m Redis), Redis[0m[2m Streams is the right[0m[2m choice. The[0m[2m exactly-once concern[0m[2m for[0m[2m billing can be addressed[0m[2m through[0m[2m id[0m[2mempotent processing[0m[2m ([0m[2mstore[0m[2m processed[0m[2m notification IDs in PostgreSQL[0m[2m, skip[0m[2m duplicates).[0m[2m
+     
+     Let me write the[0m[2m ADR.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_o6dx4jrn | ActivateSkill {'name': 'core-design'}
+[0m[2m
+  🧰 call_lva4fn6r | ActivateSkill {'name': 'core-writing'}
+[0m[2m
+  🔠 call_o6dx4jrn Executed
+[0m[2m
+  🔠 call_lva4fn6r Executed
+[0m[2m
+  🧠 Now[0m[2m I have both[0m[2m skills activated. Let[0m[2m me also[0m[2m read the decision-record[0m[2m template from the core[0m[2m-design skill directory[0m[2m, as[0m[2m the ADR is[0m[2m a design decision that[0m[2m should follow[0m[2m that[0m[2m template.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_o7yuf99x | Read {'path': '/Users/gofrendigunawan/.lo ...'}
+[0m[2m
+  🔠 call_o7yuf99x Executed
+[0m[2m
+  🧠 Now[0m[2m I have the template[0m[2m and the system[0m[2m context. Let me[0m[2m apply[0m[2m the design[0m[2m workflow:
+     
+     **Constraints[0m[2m &[0m[2m Requirements**[0m[2m (from system_context[0m[2m.md):
+     - S[0m[2maaS project management platform[0m[2m:[0m[2m 85K MA[0m[2mU, ~2[0m[2mM tasks/month,[0m[2m ~500 req/s[0m[2m peak
+     - Python[0m[2m/Flask mon[0m[2molith, PostgreSQL,[0m[2m Redis (session/r[0m[2mate limiting[0m[2m),[0m[2m 4 web servers[0m[2m,[0m[2m AWS[0m[2m
+     - Problem[0m[2m: synchronous notifications →[0m[2m timeouts[0m[2m (800ms avg[0m[2m, 8s[0m[2m spikes), silent failures[0m[2m, casc[0m[2mading failures[0m[2m, no delivery guarantees[0m[2m
+     - Need[0m[2m: async processing,[0m[2m retry w[0m[2m/ exponential backoff[0m[2m, at-least[0m[2m-once for billing[0m[2m, exactly-once[0m[2m where feasible, WebSocket[0m[2m push in 2[0m[2m quarters, 10[0m[2mx growth
+     -[0m[2m Team[0m[2m: 6 people[0m[2m (3 senior,[0m[2m 3 mid),[0m[2m no dedicated infra engineer[0m[2m
+     - Already[0m[2m run Redis in production[0m[2m
+     - No Kafka[0m[2m experience
+     -[0m[2m 2 weeks max[0m[2m setup/migration before[0m[2m delivering value
+     -[0m[2m Modest budget ([0m[2mno managed Confl[0m[2muent Cloud at[0m[2m scale)
+     - Must[0m[2m maintain exactly-once[0m[2m for[0m[2m billing notifications
+     
+     **[0m[2mArchitecture Exploration:[0m[2m**
+     
+     Option[0m[2m 1: Apache[0m[2m Kafka
+     Option[0m[2m 2: Redis[0m[2m Streams
+     
+     Let[0m[2m me compare[0m[2m them against[0m[2m the constraints:
+     
+     **[0m[2mThroughput:**[0m[2m
+     - Kafka: designed[0m[2m for millions of msgs[0m[2m/s across[0m[2m clusters[0m[2m. Current[0m[2m peak[0m[2m is ~[0m[2m500 req/s;[0m[2m even 10x[0m[2m =[0m[2m 5,000[0m[2m req/s. Kafka[0m[2m is over[0m[2mkill.
+     - Redis[0m[2m Streams: single[0m[2m Redis[0m[2m instance handles millions[0m[2m of ops[0m[2m/s[0m[2m.[0m[2m 5,000 req[0m[2m/s is trivial[0m[2m.[0m[2m At[0m[2m 10x growth[0m[2m ([0m[2m5[0m[2m,000 req/s[0m[2m), still[0m[2m well within single[0m[2m-instance[0m[2m Redis[0m[2m capacity.
+     
+     **Order[0m[2ming guarantees:**[0m[2m
+     - Kafka: per[0m[2m-partition ordering.[0m[2m Requires[0m[2m careful partition key[0m[2m design.[0m[2m
+     - Redis Streams[0m[2m: per-stream[0m[2m strict[0m[2m ordering ([0m[2mappend[0m[2m-only log[0m[2m). Sim[0m[2mpler mental[0m[2m model for[0m[2m notification[0m[2m ordering.
+     
+     **Message[0m[2m retention:**
+     -[0m[2m Kafka: configurable,[0m[2m supports[0m[2m long-term[0m[2m retention (days to[0m[2m weeks[0m[2m by[0m[2m default). Can[0m[2m replay from[0m[2m any point.
+     -[0m[2m Redis Streams: supports[0m[2m MAX[0m[2mLEN trimming[0m[2m or[0m[2m time-based eviction[0m[2m. Messages[0m[2m are retained until[0m[2m explicitly trimmed[0m[2m.[0m[2m For[0m[2m notification[0m[2m use[0m[2m cases, we don[0m[2m't need long[0m[2m retention —[0m[2m process[0m[2m and archive[0m[2m to[0m[2m PostgreSQL.
+     
+     **Consumer[0m[2m groups:**
+     -[0m[2m Kafka: mature[0m[2m consumer groups with partition[0m[2m-based[0m[2m reb[0m[2malancing,[0m[2m offset[0m[2m management[0m[2m,[0m[2m cooperative[0m[2m sticky[0m[2m assign[0m[2mor.
+     - Redis[0m[2m Streams: X[0m[2mGROUP/X[0m[2mREADGROUP/XACK[0m[2m.[0m[2m Consumer groups work[0m[2m well[0m[2m for notification[0m[2m fan-out. Less[0m[2m sophisticated[0m[2m rebalancing than[0m[2m Kafka, but sufficient[0m[2m for our scale[0m[2m.
+     
+     **Exactly[0m[2m-once semantics:[0m[2m**
+     - Kafka:[0m[2m supports exactly[0m[2m-once via id[0m[2mempotent producers[0m[2m and transactional APIs[0m[2m (Kafka[0m[2m 0.11[0m[2m+). However[0m[2m, exactly[0m[2m-once in[0m[2m Kafka requires careful configuration[0m[2m ([0m[2mtransactional.id[0m[2m, isolation[0m[2m.level[0m[2m=read_committed)[0m[2m and is complex[0m[2m to get[0m[2m right.[0m[2m
+     - Redis[0m[2m Streams: no[0m[2m native exactly-once[0m[2m. At[0m[2m-least-once[0m[2m by[0m[2m default (messages[0m[2m remain[0m[2m until[0m[2m XACK[0m[2m). Achie[0m[2mving exactly-once[0m[2m requires application-level ded[0m[2muplication.[0m[2m
+     
+     Key[0m[2m insight: for[0m[2m billing notifications, we[0m[2m need[0m[2m exactly-once *[0m[2mdelivery* —[0m[2m not just exactly[0m[2m-once processing.[0m[2m Even[0m[2m with[0m[2m Kafka transactions[0m[2m, the[0m[2m consumer[0m[2m side still[0m[2m needs idempot[0m[2mency ([0m[2mwhat[0m[2m if the consumer[0m[2m crashes[0m[2m after processing but[0m[2m before committing[0m[2m the[0m[2m offset?). So[0m[2m regardless[0m[2m of the[0m[2m broker, we need[0m[2m application-level id[0m[2mempotency for[0m[2m billing.[0m[2m Redis[0m[2m Streams'[0m[2m lack[0m[2m of native[0m[2m EOS[0m[2m is less[0m[2m of a gap[0m[2m than it appears[0m[2m.[0m[2m
+     
+     **Oper[0m[2mational complexity:**[0m[2m
+     - Kafka: HIGH[0m[2m. Zoo[0m[2mKeeper or KRa[0m[2mft mode, broker[0m[2m management, partition planning[0m[2m, topic[0m[2m configuration[0m[2m, monitoring[0m[2m ([0m[2mUnder[0m[2mReplicated[0m[2mPartitions, ISR[0m[2m lag[0m[2m). No[0m[2m dedicated infra[0m[2m engineer on the team[0m[2m. Self[0m[2m-host[0m[2med Kafka is[0m[2m a significant operational burden[0m[2m.[0m[2m Managed Confluent[0m[2m Cloud is outside[0m[2m budget.
+     - Redis[0m[2m Streams: LOW.[0m[2m Team already operates[0m[2m Redis in[0m[2m production. Adding[0m[2m Streams[0m[2m is[0m[2m adding[0m[2m commands[0m[2m to an[0m[2m existing system[0m[2m, not a new[0m[2m distributed[0m[2m system. Redis[0m[2m persistence[0m[2m ([0m[2mR[0m[2mDB +[0m[2m AOF) already[0m[2m configured.[0m[2m
+     
+     **Team[0m[2m readiness:**
+     -[0m[2m Kafka: no experience[0m[2m. Learning[0m[2m curve includes[0m[2m partitions[0m[2m, consumer[0m[2m groups, reb[0m[2malancing, offset[0m[2m management, Kafka[0m[2m Connect[0m[2m, schema[0m[2m registry.
+     - Redis[0m[2m Streams: team[0m[2m already knows[0m[2m Redis. X[0m[2mADD[0m[2m/XREADGROUP[0m[2m/XACK[0m[2m are straightforward[0m[2m commands[0m[2m.[0m[2m
+     
+     **Setup[0m[2m time:**
+     -[0m[2m Kafka: weeks[0m[2m to months for[0m[2m a small team with[0m[2m no experience. Broker[0m[2m provisioning, configuration[0m[2m, testing[0m[2m, monitoring setup[0m[2m, team[0m[2m training.
+     - Redis[0m[2m Streams: days[0m[2m. Existing[0m[2m Redis instance, new[0m[2m commands, Python[0m[2m client[0m[2m library[0m[2m already in[0m[2m use[0m[2m.
+     
+     **Budget[0m[2m:**
+     - Kafka[0m[2m: self-hosted[0m[2m requires[0m[2m 3+ brokers[0m[2m for production ([0m[2mrep[0m[2mlication factor[0m[2m 3).[0m[2m AWS[0m[2m EC[0m[2m2 costs[0m[2m,[0m[2m or[0m[2m managed Con[0m[2mfluent Cloud[0m[2m ($[0m[2m/[0m[2mGB[0m[2m ing[0m[2mested +[0m[2m $[0m[2m/partition[0m[2m). Mod[0m[2mest budget constraint[0m[2m makes[0m[2m this difficult[0m[2m.
+     - Redis[0m[2m Streams: already paying[0m[2m for Redis. Single[0m[2m instance[0m[2m handles[0m[2m current[0m[2m and[0m[2m 10x projected[0m[2m load.[0m[2m Optional[0m[2m:[0m[2m Redis Cluster for HA[0m[2m,[0m[2m still[0m[2m cheaper than Kafka[0m[2m cluster[0m[2m.
+     
+     **Decision:[0m[2m Redis Streams**
+     
+     The[0m[2m decision[0m[2m is clear given[0m[2m the constraints. Let[0m[2m me write the A[0m[2mDR now[0m[2m,[0m[2m following both[0m[2m the user[0m[2m's required[0m[2m structure and[0m[2m incorporating[0m[2m the template's best[0m[2m practices.
+     
+     The user[0m[2m specified[0m[2m this[0m[2m exact structure:
+     -[0m[2m Title
+     - Status[0m[2m
+     - Context
+     -[0m[2m Decision
+     - Con[0m[2msequences ([0m[2mpros AND cons)[0m[2m
+     - Alternatives Consider[0m[2med
+     
+     I'll[0m[2m merge[0m[2m the template's rigor[0m[2m with[0m[2m the user's required[0m[2m sections[0m[2m.[0m[2m
+  Now I[0m[2m have the system[0m[2m context and[0m[2m the A[0m[2mDR template. Let[0m[2m me work through the[0m[2m design workflow[0m[2m and write the A[0m[2mDR.
+     
+     **Constraints[0m[2m extracted[0m[2m from[0m[2m `system_context.md[0m[2m`:**
+     -[0m[2m 85K MAU[0m[2m, ~2M[0m[2m tasks/month, ~[0m[2m500 req/s peak[0m[2m →[0m[2m 10x growth[0m[2m target = ~[0m[2m5,000 req[0m[2m/s
+     -[0m[2m 6-person team,[0m[2m no dedicated infra engineer[0m[2m, no Kafka experience[0m[2m
+     - Redis[0m[2m already in production ([0m[2msession/rate limiting[0m[2m)
+     -[0m[2m 2-week hard[0m[2m deadline before[0m[2m delivering value
+     -[0m[2m Modest budget ([0m[2mno managed Confl[0m[2muent Cloud)
+     -[0m[2m Exactly-once delivery[0m[2m required for billing notifications[0m[2m
+     
+     **Decision[0m[2m: Redis Streams**[0m[2m — it[0m[2m meets[0m[2m the[0m[2m throughput,[0m[2m satisfies[0m[2m exactly[0m[2m-once via application[0m[2m-level id[0m[2mempotency ([0m[2mwhich Kafka[0m[2m would[0m[2m also require in[0m[2m practice), and avoids[0m[2m introducing[0m[2m a new distributed[0m[2m system that[0m[2m the[0m[2m team cannot[0m[2m operate within[0m[2m the constraints[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_p8lt8ms6 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# ADR 001 — Notification S ...'}
+[0m[2m
+  🔠 call_p8lt8ms6 Executed
+[0m[2m
+  🧠 The[0m[2m ADR has been[0m[2m written. Let me[0m[2m now log[0m[2m this[0m[2m as[0m[2m a journal activity[0m[2m entry[0m[2m, since[0m[2m this[0m[2m is significant[0m[2m work.[0m[2m
+  Now[0m[2m let me log[0m[2m this work[0m[2m to[0m[2m the journal.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_bkfxjchz | SearchJournal {'query': 'ADR notification architecture'}
+[0m[2m
+  🔠 call_bkfxjchz Executed
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_l3oxvt6v | ActivateSkill {'name': 'core-journaling'}
+[0m[2m
+  🔠 call_l3oxvt6v Executed
+[0m[2m
+  🧠 Now[0m[2m I need to write[0m[2m a[0m[2m journal activity[0m[2m entry for[0m[2m this work. Let[0m[2m me read the activity[0m[2m-entry[0m[2m template first, then[0m[2m create the entry[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_gd1km24u | Read {'path': '/Users/gofrendigunawan/.lo ...'}
+[0m[2m
+  🔠 call_gd1km24u Executed
+[0m[2m
+  🧠 Now[0m[2m let[0m[2m me create the activity[0m[2m log entry. Today[0m[2m is[0m[2m 2026-[0m[2m06-16.[0m[2m The journal root[0m[2m is `/[0m[2mUsers/gofrend[0m[2migunawan/[0m[2mllm-challenges[0m[2m/experiment/oll[0m[2mama_glm-[0m[2m5.1_cloud[0m[2m/research/trial[0m[2m-2/notes[0m[2m`. I[0m[2m need to create the[0m[2m directory[0m[2m structure and the day[0m[2m file.
+     
+     Let me[0m[2m check if the journal[0m[2m directory structure[0m[2m exists already[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_w3m7or6k | LS {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🔠 call_w3m7or6k Executed
+[0m[2m
+  🧠 The[0m[2m journal directory is empty[0m[2m. I need to[0m[2m create the full directory[0m[2m structure. Let me[0m[2m create:[0m[2m
+     1. `index[0m[2m.md` ([0m[2mroot HUD[0m[2m)
+     2. `[0m[2mactivity-log/index[0m[2m.md`[0m[2m
+     3. `activity[0m[2m-log/2026[0m[2m/index.md`
+     4[0m[2m. `activity-log[0m[2m/2026/[0m[2m2026-06[0m[2m/index.md`
+     5[0m[2m. `activity-log[0m[2m/2026/[0m[2m2026-06[0m[2m/2026-[0m[2m06-16.md[0m[2m` (today[0m[2m's entry[0m[2m)
+     6. `[0m[2mtechnical/index.md`[0m[2m
+     7. `projects[0m[2m/index.md`[0m[2m
+     8. `user[0m[2m/index.md`
+     9[0m[2m. `preferences/index[0m[2m.md`
+     
+     And[0m[2m also[0m[2m an insight note for[0m[2m the A[0m[2mDR decision in[0m[2m `technical/`.[0m[2m Let me create all[0m[2m of these.[0m[2m
+     
+     Actually, let[0m[2m me also create a[0m[2m technical insight note about[0m[2m the Redis[0m[2m Streams vs Kafka decision[0m[2m since it's a[0m[2m durable finding.[0m[2m And[0m[2m the[0m[2m project note[0m[2m about the LLM[0m[2m challenges work[0m[2m.
+     
+     Let me create[0m[2m all the necessary files[0m[2m. I[0m[2m'll batch[0m[2m the[0m[2m independent directory[0m[2m structures[0m[2m first[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_xkuqwlxw | Read {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🧰 call_ycngrg6q | ActivateSkill {'name': 'core-writing'}
-[0m[2m
-  🧰 call_fw9gd6hl | ActivateSkill {'name': 'core-design'}
-[0m[2m
-  🔠 call_xkuqwlxw Executed
-[0m[2m
-  🔠 call_ycngrg6q Executed
-[0m[2m
-  🔠 call_fw9gd6hl Executed
-[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_70vny17f | Read {'path': '/Users/gofrendigunawan/.lo ...'}
-[0m[2m
-  🔠 call_70vny17f Executed
-[0m[2m
-  Now I have the[0m[2m system[0m[2m context and[0m[2m both[0m[2m skill templates loaded[0m[2m. Let me write[0m[2m the ADR.[0m[2m
-     
-     **[0m[2mBrief &[0m[2m Audience**: Engineering[0m[2m team ([0m[2m6 people,[0m[2m mixed[0m[2m seniority[0m[2m) making a critical[0m[2m infrastructure choice[0m[2m. Technical[0m[2m-[0m[2mprecise tone[0m[2m, FE[0m[2mBC structure[0m[2m for[0m[2m the decision reasoning[0m[2m.[0m[2m The A[0m[2mDR must follow[0m[2m the exact[0m[2m structure the[0m[2m user specified[0m[2m,[0m[2m supplemented[0m[2m by the decision[0m[2m-record template's rigor[0m[2m.
-     
-     **Key constraints[0m[2m from[0m[2m the context[0m[2m**:
-     -[0m[2m 6-person team,[0m[2m no infra[0m[2m engineer[0m[2m
-     - Redis[0m[2m already in production;[0m[2m no[0m[2m Kafka experience
-     -[0m[2m 2-week setup[0m[2m/m[0m[2migration deadline
-     -[0m[2m Modest budget ([0m[2mrules[0m[2m out managed Confl[0m[2muent Cloud[0m[2m)
-     - Exactly[0m[2m-once semantics required[0m[2m for billing notifications[0m[2m
-     - Must[0m[2m handle 10x[0m[2m traffic growth ([0m[2mi[0m[2m.e., ~[0m[2m5,000 req[0m[2m/s peak)
-     -[0m[2m WebSocket push notifications coming[0m[2m in[0m[2m 2 quarters[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_xu9lxrni | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# ADR 001 — Notification S ...'}
-[0m[2m
-  🔠 call_xu9lxrni Executed
-[0m[2m
-  🧠 The[0m[2m ADR has[0m[2m been written. Let[0m[2m me now log this[0m[2m to the journal as[0m[2m an[0m[2m activity entry[0m[2m, then[0m[2m confirm[0m[2m to the user.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_yw6sp711 | SearchJournal {'query': 'ADR notification architecture'}
-[0m[2m
-  🔠 call_yw6sp711 Executed
-[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_fq7ii7sa | ActivateSkill {'name': 'core-journaling'}
-[0m[2m
-  🔠 call_fq7ii7sa Executed
-[0m[2m
-  🧠 Now[0m[2m I need to journal[0m[2m this activity. Let[0m[2m me read the activity[0m[2m entry template first[0m[2m, then write[0m[2m the journal[0m[2m entry.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_dlttzeo7 | Read {'path': '/Users/gofrendigunawan/.lo ...'}
-[0m[2m
-  🔠 call_dlttzeo7 Executed
-[0m[2m
-  🧠 Now[0m[2m I need to write[0m[2m the activity log entry[0m[2m. The journal root[0m[2m is `/[0m[2mUsers/gofrend[0m[2migunawan/[0m[2mllm-challenges[0m[2m/experiment/oll[0m[2mama_glm-[0m[2m5.1_cloud[0m[2m/research/trial[0m[2m-2/notes[0m[2m`. Today is[0m[2m 2026-[0m[2m06-15.[0m[2m The[0m[2m activity[0m[2m log file[0m[2m path[0m[2m would be `activity[0m[2m-log/[0m[2m2026/202[0m[2m6-06/[0m[2m2026-06[0m[2m-15.md`.[0m[2m
-     
-     Let me create[0m[2m the necessary[0m[2m directory structure and files[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_lwaz6tju | LS {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🔠 call_lwaz6tju Executed
-[0m[2m
-  🧠 The[0m[2m notes[0m[2m directory is empty.[0m[2m I need to create[0m[2m the journal[0m[2m structure from scratch.[0m[2m Let me create the[0m[2m activity log entry for[0m[2m today, the[0m[2m index files, and[0m[2m any necessary structure.[0m[2m
-     
-     Today[0m[2m's date[0m[2m: 2026[0m[2m-06-15[0m[2m
-     Time: approximately[0m[2m 19:40[0m[2m
-     
-     Activity[0m[2m log path: `[0m[2mactivity-log/202[0m[2m6/2026[0m[2m-06/202[0m[2m6-06-[0m[2m15.md`
-     
-     I[0m[2m need to create:[0m[2m
-     1. Root[0m[2m `index.md`[0m[2m
-     2. `[0m[2mactivity-log/index[0m[2m.md`
-     3.[0m[2m `activity-log/[0m[2m2026/index.md[0m[2m`
-     4. `[0m[2mactivity-log/202[0m[2m6/2026[0m[2m-06/index.md[0m[2m`
-     5. `[0m[2mactivity-log/202[0m[2m6/2026[0m[2m-06/202[0m[2m6-06-[0m[2m15.md`[0m[2m
-     6. Also[0m[2m a technical[0m[2m insight note about the[0m[2m notification architecture decision[0m[2m
-     
-     Let me also create[0m[2m a[0m[2m technical insight note[0m[2m for[0m[2m the ADR decision[0m[2m since it's a[0m[2m durable finding.
-     
-     Actually[0m[2m, let me keep[0m[2m it focused. The[0m[2m main deliverable is[0m[2m the ADR file[0m[2m which[0m[2m was[0m[2m already written. For[0m[2m the journal, I[0m[2m need[0m[2m:[0m[2m
-     -[0m[2m Activity log entry for[0m[2m today
-     - The[0m[2m relevant[0m[2m index files
-     
-     Let[0m[2m me create these[0m[2m efficiently[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
@@ -91,105 +214,223 @@
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_3yqircei | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Journal Index\n\n## Recent ...'}
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_ajc2mgtq | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Journal HUD\n\n## Recent I ...'}
 [0m[2m
-  🧰 call_muoj7a3j | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Notification Architectur ...'}
+  🧰 call_yfukq4ar | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# User Notes\n\n(No entries yet)'}
 [0m[2m
-  🧰 call_gptdou0g | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Technical Notes Index\n\n- ...'}
+  🧰 call_8ygmq7xj | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Preferences\n\n(No entries ...'}
 [0m[2m
-  🧰 call_bwd0zj66 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Activity Log Index\n\n- [2 ...'}
+  🧰 call_31dxvr6a | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Projects\n\n- [llm-challen ...'}
 [0m[2m
-  🧰 call_c2jspzgj | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# 2026 Activity Log\n\n- [Ju ...'}
+  🧰 call_7hudxxqj | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# LLM Challenges\n\nBenchmar ...'}
 [0m[2m
-  🧰 call_gvy5wf6q | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# 2026-06 Activity Log\n\n-  ...'}
+  🧰 call_8gbpff1z | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Technical Notes\n\n- [noti ...'}
 [0m[2m
-  🧰 call_j21iocvh | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# 2026-06-15\n\n## 19:40 — W ...'}
+  🧰 call_v9btk7g0 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Notification Broker: Red ...'}
 [0m[2m
-  🔠 call_j21iocvh Executed
+  🧰 call_lko6qkgc | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Activity Log\n\n- [2026](2 ...'}
 [0m[2m
-  🔠 call_3yqircei Executed
+  🧰 call_pmn9on74 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# 2026\n\n- [June](2026-06/i ...'}
 [0m[2m
-  🔠 call_gvy5wf6q Executed
+  🧰 call_tgoqakc0 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# 2026-06\n\n- [2026-06-16]( ...'}
 [0m[2m
-  🔠 call_c2jspzgj Executed
+  🧰 call_nghxl9qa | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# 2026-06-16\n\n## 18:37 — W ...'}
 [0m[2m
-  🔠 call_muoj7a3j Executed
+  🔠 call_8ygmq7xj Executed
 [0m[2m
-  🔠 call_gptdou0g Executed
+  🔠 call_8gbpff1z Executed
 [0m[2m
-  🔠 call_bwd0zj66 Executed
+  🔠 call_tgoqakc0 Executed
 [0m[2m
-  🧠 The[0m[2m activity[0m[2m log index[0m[2m file for[0m[2m 2026 needs[0m[2m to reference[0m[2m "[0m[2m06" not[0m[2m "06" —[0m[2m wait, I[0m[2m need[0m[2m to double[0m[2m check[0m[2m. The path[0m[2m structure[0m[2m should[0m[2m be:[0m[2m
+  🔠 call_pmn9on74 Executed
+[0m[2m
+  🔠 call_nghxl9qa Executed
+[0m[2m
+  🔠 call_yfukq4ar Executed
+[0m[2m
+  🔠 call_ajc2mgtq Executed
+[0m[2m
+  🔠 call_v9btk7g0 Executed
+[0m[2m
+  🔠 call_lko6qkgc Executed
+[0m[2m
+  🔠 call_31dxvr6a Executed
+[0m[2m
+  🔠 call_7hudxxqj Executed
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_zpasupk6 | Shell {'command': 'cd /Users/gofrendigunawan/ ...'}
+[0m  [2m6 issue(s) in journal at .:
+[0m  [2m  [missing-backlink] technical/notification-broker.md: no backlink to index.md
+[0m  [2m  [missing-backlink] projects/llm-challenges.md: no backlink to index.md
+[0m  [2m  [missing-backlink] projects/llm-challenges.md: no backlink to projects/index.md
+[0m  [2m  [missing-backlink] technical/notification-broker.md: no backlink to technical/index.md
+[0m  [2m  [orphan] preferences/index.md: unreachable from root index.md
+[0m  [2m  [orphan] user/index.md: unreachable from root index.md
+[0m[2m
+  🔠 call_zpasupk6 Executed
+[0m[2m
+  🧠 I[0m[2m need to fix the[0m[2m journal lint issues:[0m[2m
      
-     ``[0m[2m`
-     activity-log/[0m[2m2026/index[0m[2m.md →[0m[2m links to 202[0m[2m6/06/index[0m[2m.md (or[0m[2m 2026-[0m[2m06/)[0m[2m
-     activity[0m[2m-log/2026[0m[2m/06/index.md[0m[2m → links to day[0m[2m files in[0m[2m 2026/06[0m[2m/
-     ```
+     1. `[0m[2mtechnical/notification-broker[0m[2m.md` needs back[0m[2mlinks to `index[0m[2m.md` and[0m[2m `technical/index.md[0m[2m`
+     2. `[0m[2mprojects/llm[0m[2m-challenges.md`[0m[2m needs backlinks to[0m[2m `index.md`[0m[2m and `projects/index[0m[2m.md`
+     3.[0m[2m `preferences/index.md[0m[2m` needs[0m[2m to be reachable[0m[2m from root `index[0m[2m.md`
+     4.[0m[2m `user/index.md[0m[2m` needs to be[0m[2m reachable from root `[0m[2mindex.md`
      
-     Wait[0m[2m, looking at the[0m[2m journal structure spec[0m[2m:
+     Let[0m[2m me fix these[0m[2m:[0m[2m
      
-     ```
-     activity[0m[2m-log/[0m[2m
-         ├──[0m[2m index.md[0m[2m                        # links each year[0m[2m
-         └[0m[2m── YYYY/[0m[2m
-             ├── index.md[0m[2m                    # links each month[0m[2m
-             └[0m[2m── YYYY[0m[2m-MM/
-                 ├──[0m[2m index.md                #[0m[2m links each day[0m[2m
-                 └──[0m[2m YYYY-MM-DD.md[0m[2m           # all entries[0m[2m for that day[0m[2m
-     ```
+     1. Add links[0m[2m from[0m[2m root `index.md[0m[2m` to `user[0m[2m/index.md` and[0m[2m `preferences/index.md[0m[2m`
+     2. Add[0m[2m backlinks in[0m[2m `technical/notification-b[0m[2mroker.md` to[0m[2m root `index.md[0m[2m` and `technical[0m[2m/index.md`
+     3[0m[2m. Add backlinks[0m[2m in `projects/[0m[2mllm-challenges[0m[2m.md` to root[0m[2m `index.md`[0m[2m and `projects/index[0m[2m.md`[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_udymz66t | Edit {'path': '/Users/gofrendigunawan/llm ...', 'old_text': '## Quick Links\n\n- [Activit ...', 'new_text': '## Quick Links\n\n- [Activit ...'}
+[0m[2m
+  🧰 call_63mmizam | Edit {'path': '/Users/gofrendigunawan/llm ...', 'old_text': '## Backlinks\n\n- [2026-06-1 ...', 'new_text': '## Backlinks\n\n- [2026-06-1 ...'}
+[0m[2m
+  🧰 call_7p9bm5ug | Edit {'path': '/Users/gofrendigunawan/llm ...', 'old_text': '## Backlinks\n\n- [2026-06-1 ...', 'new_text': '## Backlinks\n\n- [2026-06-1 ...'}
+[0m[2m
+  🔠 call_udymz66t Executed
+[0m[2m
+  🔠 call_63mmizam Executed
+[0m[2m
+  🔠 call_7p9bm5ug Executed
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_qk6euuyh | Shell {'command': 'cd /Users/gofrendigunawan/ ...'}
+[0m  [2m2 issue(s) in journal at .:
+[0m  [2m  [missing-backlink] technical/notification-broker.md: no backlink to index.md
+[0m  [2m  [missing-backlink] projects/llm-challenges.md: no backlink to index.md
+[0m[2m
+  🔠 call_qk6euuyh Executed
+[0m[2m
+  🧠 The[0m[2m lint[0m[2m is still complaining[0m[2m about missing backlinks[0m[2m to `index[0m[2m.md` —[0m[2m but it[0m[2m says[0m[2m `[0m[2mindex.md`,[0m[2m not `technical[0m[2m/index.md`[0m[2m or `projects/index[0m[2m.md`. Let me[0m[2m check what the lint[0m[2m tool considers[0m[2m "index.md"[0m[2m — it might[0m[2m be checking[0m[2m that these[0m[2m files have back[0m[2mlinks pointing[0m[2m to the *[0m[2mroot* `index[0m[2m.md`.[0m[2m But[0m[2m they[0m[2m do[0m[2m — I[0m[2m added `[root index[0m[2m](../../index.md[0m[2m)` and[0m[2m `[root index]([0m[2m../../index.md)`[0m[2m.[0m[2m
      
-     So[0m[2m the structure[0m[2m is[0m[2m:
-     - `activity[0m[2m-log/2026[0m[2m/index.md` →[0m[2m links to `[0m[2m2026-[0m[2m06/index.md`[0m[2m
-     - `activity-log[0m[2m/2026/[0m[2m2026-06[0m[2m/index.md` →[0m[2m links to `202[0m[2m6-06-[0m[2m15.md`
-     -[0m[2m `activity-log/[0m[2m2026/202[0m[2m6-06/[0m[2m2026-06[0m[2m-15.md`[0m[2m
+     Wait, let me[0m[2m re-read the lint[0m[2m output[0m[2m. It says:[0m[2m
+     - `technical/notification[0m[2m-broker.md:[0m[2m no backlink to[0m[2m index.md`
+     -[0m[2m `projects/ll[0m[2mm-challenges.md[0m[2m: no backlink[0m[2m to index.md`[0m[2m
      
-     But I wrote[0m[2m the[0m[2m files to:
-     -[0m[2m `activity-log/[0m[2m2026/index[0m[2m.md` → links[0m[2m to `06/index[0m[2m.md`[0m[2m
-     - `activity-log[0m[2m/2026/[0m[2m06/index.md`[0m[2m → links to `[0m[2m2026-06[0m[2m-15.md`[0m[2m
-     - `activity-log[0m[2m/2026/[0m[2m06/2026[0m[2m-06-15[0m[2m.md`
+     The "index.md[0m[2m" here likely refers[0m[2m to the root `[0m[2mindex.md`. But[0m[2m I did[0m[2m add backlinks to[0m[2m `[0m[2m../../index.md`[0m[2m (the root index[0m[2m). Let me check[0m[2m the actual content of[0m[2m the[0m[2m files.[0m[2m
      
-     This[0m[2m is wrong! The[0m[2m spec[0m[2m says the month directory[0m[2m should be named[0m[2m `YYYY-MM`[0m[2m (e.g.,[0m[2m `2026-[0m[2m06`), not[0m[2m just[0m[2m `MM`[0m[2m (e.g.,[0m[2m `06`[0m[2m).
+     Actually, wait[0m[2m — the lint[0m[2m might[0m[2m be looking[0m[2m for a[0m[2m link[0m[2m where[0m[2m the path[0m[2m resolves[0m[2m to the[0m[2m root `index.md[0m[2m`[0m[2m but the text of[0m[2m the back[0m[2mlink doesn[0m[2m't match what[0m[2m it expects. Or[0m[2m maybe it[0m[2m's checking that there[0m[2m's a forward[0m[2m link FROM[0m[2m `[0m[2mindex.md` TO[0m[2m the[0m[2m file, and a[0m[2m backlink FROM the[0m[2m file BACK[0m[2m to[0m[2m `index.md`.[0m[2m The[0m[2m forward links[0m[2m exist (I[0m[2m added them in the[0m[2m root index[0m[2m). The backlinks[0m[2m exist[0m[2m too.[0m[2m
      
-     Let me fix[0m[2m this. I need[0m[2m to:
-     1.[0m[2m Move the files[0m[2m from `202[0m[2m6/06/[0m[2m` to `202[0m[2m6/202[0m[2m6-06/[0m[2m`
-     2. Update[0m[2m the index links[0m[2m accordingly[0m[2m
+     Let me re[0m[2m-read the lint[0m[2m tool.[0m[2m It says "no[0m[2m backlink to index[0m[2m.md" — maybe[0m[2m it's checking for[0m[2m a[0m[2m backlink to the[0m[2m *directory[0m[2m's*[0m[2m `[0m[2mindex.md` ([0m[2mi.e., `[0m[2mtechnical/index[0m[2m.md` for `[0m[2mtechnical/notification-broker[0m[2m.md` and[0m[2m `projects/index[0m[2m.md` for `[0m[2mprojects/llm[0m[2m-challenges.md`).[0m[2m But I already have[0m[2m those:[0m[2m `[technical index[0m[2m](index.md)`[0m[2m and `[projects index[0m[2m](index.md)`[0m[2m.
      
-     Actually wait[0m[2m, let me re[0m[2m-read my[0m[2m writes[0m[2m. I[0m[2m wrote:
-     - `[0m[2mnotes[0m[2m/activity-log/202[0m[2m6/index.md`[0m[2m with[0m[2m content `[[0m[2mJune[0m[2m](06/index.md[0m[2m)`[0m[2m 
-     - `notes[0m[2m/activity-log/202[0m[2m6/06/index[0m[2m.md` with content[0m[2m `[2026-[0m[2m06-15]([0m[2m2026-06[0m[2m-15.md)`[0m[2m
-     - `notes/activity[0m[2m-log/2026[0m[2m/06/202[0m[2m6-06-[0m[2m15.md`[0m[2m —[0m[2m the actual entry[0m[2m
+     Hmm, let[0m[2m me check[0m[2m the actual file[0m[2m content to make[0m[2m sure the edits[0m[2m applied[0m[2m correctly.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_lqr0ixpy | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🧰 call_icmlplkq | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🔠 call_icmlplkq Executed
+[0m[2m
+  🔠 call_lqr0ixpy Executed
+[0m[2m
+  🧠 The[0m[2m files look correct -[0m[2m they both[0m[2m have backlinks to[0m[2m `index.md`[0m[2m (their[0m[2m directory index[0m[2m) and `[0m[2m../../index.md`[0m[2m (the root index[0m[2m). The lint is[0m[2m reporting[0m[2m "no backlink[0m[2m to index.md"[0m[2m — maybe it's[0m[2m looking[0m[2m for the[0m[2m root `index.md[0m[2m` specifically and[0m[2m the relative[0m[2m path `../../index[0m[2m.md` isn't[0m[2m matching[0m[2m.[0m[2m Let me check what[0m[2m the lint tool expects[0m[2m.[0m[2m
      
-     But[0m[2m the spec says the[0m[2m directory should be `[0m[2mYYYY/YYYY[0m[2m-MM/YYYY[0m[2m-MM-DD.md`,[0m[2m meaning[0m[2m:
-     - `notes[0m[2m/activity-log/202[0m[2m6/[0m[2m2026-06[0m[2m/index.md`[0m[2m
-     - `notes/activity[0m[2m-log/2026[0m[2m/2026-[0m[2m06/2026[0m[2m-06-15[0m[2m.md`
+     Actually, looking more[0m[2m carefully at the lint[0m[2m output:[0m[2m it says `technical[0m[2m/notification-broker.md[0m[2m: no backlink[0m[2m to index.md`[0m[2m —[0m[2m the[0m[2m "index.md"[0m[2m here likely means[0m[2m the *[0m[2mroot* `[0m[2mindex.md`. But[0m[2m I have[0m[2m `[[0m[2mroot index](../../[0m[2mindex.md)` which[0m[2m links[0m[2m to `../../[0m[2mindex.md`.[0m[2m Let[0m[2m me check if maybe[0m[2m the lint tool resolves[0m[2m paths[0m[2m differently.
      
-     And[0m[2m the back[0m[2mlink[0m[2m in the day file[0m[2m should reference[0m[2m the[0m[2m month index which[0m[2m is in the same[0m[2m directory, so `[[0m[2mmonth[0m[2m index](index.md[0m[2m)`.
+     Wait[0m[2m, actually[0m[2m I[0m[2m think the issue is[0m[2m simpler[0m[2m. The lint might[0m[2m be checking that[0m[2m `[0m[2mindex.md` ([0m[2mthe root)[0m[2m has a forward link[0m[2m TO[0m[2m the[0m[2m file AND[0m[2m the[0m[2m file has a back[0m[2mlink pointing[0m[2m BACK[0m[2m specifically[0m[2m to `index.md[0m[2m` (root[0m[2m). Let[0m[2m me check the root[0m[2m index.[0m[2m
      
-     Also[0m[2m,[0m[2m the year[0m[2m index at[0m[2m `202[0m[2m6/index[0m[2m.md` should link[0m[2m to `[2026[0m[2m-06](202[0m[2m6-06/index[0m[2m.md)`.
+     Actually, looking[0m[2m at the root `[0m[2mindex.md`, I[0m[2m have:
+     - `[[0m[2mnotification-broker]([0m[2mtechnical/notification-broker[0m[2m.md)` under[0m[2m "[0m[2mRecent Insights"
+     -[0m[2m `[ll[0m[2mm-challenges]([0m[2mprojects/llm[0m[2m-challenges.md)`[0m[2m under "Active Projects[0m[2m"
      
-     And[0m[2m the `[0m[2mactivity-log/index.md[0m[2m` should link to[0m[2m `[2026]([0m[2m2026/index.md[0m[2m)`.
+     And[0m[2m the back[0m[2mlinks in those[0m[2m files point[0m[2m to `../../index[0m[2m.md`.[0m[2m That[0m[2m should work[0m[2m.
      
-     I[0m[2m need to fix the[0m[2m directory structure. Let[0m[2m me do[0m[2m this properly[0m[2m.
+     Let[0m[2m me look at the[0m[2m lint tool to[0m[2m understand what "[0m[2mno backlink to[0m[2m index.md" means[0m[2m. It[0m[2m might be checking that[0m[2m the file[0m[2m has a back[0m[2mlink to `[0m[2mindex.md` —[0m[2m specifically[0m[2m the root `index[0m[2m.md`. Or[0m[2m maybe[0m[2m the[0m[2m checker[0m[2m is looking for back[0m[2mlinks where[0m[2m the path[0m[2m resolves to `index[0m[2m.md` in[0m[2m the same[0m[2m directory.
      
-     Actually, I[0m[2m realize[0m[2m the[0m[2m files were[0m[2m already written[0m[2m to[0m[2m the wrong paths.[0m[2m Let me delete[0m[2m the wrong[0m[2m ones and create the[0m[2m correct ones.[0m[2m
-  The ADR is[0m[2m saved[0m[2m at `ADR[0m[2m-001-notification-[0m[2marchitecture.md`.[0m[2m Here's a summary[0m[2m of the decision and[0m[2m its[0m[2m grounding[0m[2m in[0m[2m the constraints[0m[2m from[0m[2m `system_context.md[0m[2m`:
+     Actually,[0m[2m I think the lint[0m[2m might be checking for[0m[2m a link[0m[2m in[0m[2m the backlinks section[0m[2m that literally[0m[2m resolves[0m[2m to the[0m[2m root `index.md[0m[2m`. The path `[0m[2m../../index.md`[0m[2m from `technical/notification[0m[2m-broker.md`[0m[2m would[0m[2m resolve to `notes[0m[2m/index.md` which[0m[2m is the root.[0m[2m That should be correct[0m[2m.
      
-     **Recommend[0m[2mation: Redis Streams[0m[2m over Apache[0m[2m Kafka**[0m[2m
+     Let[0m[2m me just[0m[2m look[0m[2m at what[0m[2m the lint script[0m[2m does more[0m[2m carefully. Actually[0m[2m, the[0m[2m remaining[0m[2m 2 issues are[0m[2m:[0m[2m
+     - `technical/notification[0m[2m-broker.md:[0m[2m no backlink to[0m[2m index.md`
+     -[0m[2m `projects/ll[0m[2mm-challenges.md[0m[2m: no backlink[0m[2m to index.md`[0m[2m
      
-     The[0m[2m key argument[0m[2m hinges[0m[2m on five[0m[2m constraints from the system[0m[2m context:
+     Hmm, maybe the[0m[2m lint considers[0m[2m a[0m[2m "[0m[2mbacklink to index[0m[2m.md" specifically[0m[2m as a link to[0m[2m the ROOT[0m[2m `index.md`,[0m[2m and[0m[2m it[0m[2m's not[0m[2m finding my[0m[2m `[0m[2m../../index.md`[0m[2m link. Or maybe[0m[2m the[0m[2m lint[0m[2m is expecting[0m[2m the backlink target[0m[2m's[0m[2m filename[0m[2m to be exactly `[0m[2mindex.md` ([0m[2mthe[0m[2m root one).[0m[2m
      
-     1[0m[2m. **Operational[0m[2m reality[0m[2m** — Redis[0m[2m is already in production[0m[2m; the team has[0m[2m zero Kafka experience and[0m[2m no infra[0m[2m engineer. Redis[0m[2m Streams adds three[0m[2m commands to[0m[2m an existing system[0m[2m; Kafka adds a[0m[2m new distributed[0m[2m platform[0m[2m with[0m[2m broker[0m[2m clusters, partition[0m[2m management, and[0m[2m JVM tuning.
+     Wait[0m[2m, actually[0m[2m I think the issue[0m[2m might be that these[0m[2m two[0m[2m notes[0m[2m have forward[0m[2m links to `index[0m[2m.md` (their[0m[2m respective[0m[2m directory indexes),[0m[2m and[0m[2m the lint[0m[2m is[0m[2m checking that for[0m[2m each[0m[2m forward link,[0m[2m there's a corresponding[0m[2m backlink. But[0m[2m the `[0m[2mindex.md` files[0m[2m themselves[0m[2m don't have back[0m[2mlinks pointing back[0m[2m to these notes.[0m[2m
      
-     2[0m[2m. **Time[0m[2m to value** —[0m[2m The[0m[2m 2-week deadline[0m[2m is[0m[2m met[0m[2m by Redis[0m[2m Streams (functional[0m[2m in[0m[2m ~3[0m[2m days, full[0m[2m migration in ~10[0m[2m).[0m[2m Kafka can[0m[2m't ship[0m[2m application[0m[2m code before[0m[2m week[0m[2m 2[0m[2m because infrastructure provisioning[0m[2m and[0m[2m security[0m[2m hardening consume that[0m[2m window first[0m[2m.
+     Let[0m[2m me check[0m[2m: the[0m[2m `[0m[2mtechnical/index.md`[0m[2m has a[0m[2m link `[[0m[2mnotification-broker]([0m[2mnotification-broker.md[0m[2m)`. For[0m[2m this[0m[2m to be a bid[0m[2mirectional link, `[0m[2mnotification-broker.md[0m[2m` needs[0m[2m a backlink pointing[0m[2m back[0m[2m to `technical/index[0m[2m.md`. I[0m[2m have `[technical index[0m[2m](index.md)`[0m[2m —[0m[2m which[0m[2m from `technical/notification[0m[2m-broker.md`,[0m[2m `index.md`[0m[2m resolves to `[0m[2mtechnical/index.md`.[0m[2m That should[0m[2m work[0m[2m.
      
-     3. **[0m[2mThroughput head[0m[2mroom** — The[0m[2m 10× target[0m[2m is ~5,[0m[2m000 req/s peak[0m[2m. Redis Streams handles[0m[2m 100K+[0m[2m msgs/s on[0m[2m a single node.[0m[2m We[0m[2m'd[0m[2m need Kafka[0m[2m's[0m[2m millions[0m[2m-of-messages[0m[2m-per[0m[2m-second ceiling only[0m[2m at[0m[2m 200[0m[2m× current[0m[2m scale.[0m[2m
+     Actually[0m[2m, maybe[0m[2m the lint tool[0m[2m considers[0m[2m `index.md`[0m[2m files as[0m[2m exempt from the back[0m[2mlink rule (as[0m[2m stated in the skill[0m[2m: "Every note[0m[2m (except `index[0m[2m.md` files)[0m[2m must have a `[0m[2m## Backlinks`[0m[2m section"). And[0m[2m the "[0m[2mno backlink to[0m[2m index.md" message[0m[2m means[0m[2m the[0m[2m non[0m[2m-index note[0m[2m file[0m[2m doesn't have a[0m[2m backlink pointing to[0m[2m the root `index[0m[2m.md`.
      
-     4. **Exactly[0m[2m-once for billing[0m[2m** — Achieved[0m[2m via application-layer id[0m[2mempotency keys[0m[2m in Postgres ([0m[2mhash[0m[2m of `[0m[2mtenant_id +[0m[2m event_type + entity[0m[2m_id + timestamp_bucket[0m[2m`), the[0m[2m same pattern Stripe uses[0m[2m.[0m[2m This doesn[0m[2m't depend[0m[2m on Kafka's transaction[0m[2mal producer,[0m[2m which is easy[0m[2m to misconfigure without[0m[2m prior[0m[2m experience[0m[2m.
+     Wait[0m[2m, but[0m[2m I DO[0m[2m have `[root[0m[2m index](../../index[0m[2m.md)` in[0m[2m both files. Let[0m[2m me re[0m[2m-read the lint more[0m[2m carefully.[0m[2m
      
-     5. **[0m[2mReversibility**[0m[2m — Choosing Redis now[0m[2m doesn't foreclose[0m[2m Kafka later. A[0m[2m Redis-to[0m[2m-Kafka side[0m[2mcar is a well[0m[2m-documented pattern[0m[2m for[0m[2m when[0m[2m traffic[0m[2m or[0m[2m requirements justify the[0m[2m operational[0m[2m cost.[0m[2m Choosing[0m[2m Kafka first[0m[2m commits to[0m[2m that cost immediately.[0m[2m
+     Hmm[0m[2m, maybe the lint[0m[2m is[0m[2m specifically[0m[2m checking[0m[2m that for[0m[2m each forward link FROM[0m[2m root[0m[2m `index.md`[0m[2m TO these[0m[2m files[0m[2m, there should[0m[2m be a backlink[0m[2m FROM the[0m[2m file TO root[0m[2m `index.md`.[0m[2m The[0m[2m root index[0m[2m links to these[0m[2m files as[0m[2m:
+     - `[[0m[2mnotification-broker]([0m[2mtechnical/notification-broker[0m[2m.md)`[0m[2m
+     - `[ll[0m[2mm-challenges]([0m[2mprojects/llm[0m[2m-challenges.md)[0m[2m`
      
-     The ADR also[0m[2m documents the accepted[0m[2m risks (single-node[0m[2m Redis SPOF[0m[2m, no[0m[2m multi-DC replication[0m[2m, stream[0m[2m memory management) and[0m[2m concrete follow-ups[0m[2m (Redis Sentinel/[0m[2mCluster, `[0m[2mws[0m[2m-pusher` consumer[0m[2m group, id[0m[2mempotency table[0m[2m).[0m[2m
-  💸 (Requests: 9 | Tool Calls: 16 | Total: 212592) Input: 207258 | Audio Input: 0 | Output: 5334 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     And the back[0m[2mlinks in those files[0m[2m are:
+     - `[[0m[2mroot index](../../[0m[2mindex.md)` in[0m[2m both[0m[2m
+     
+     The path[0m[2m `../../index.md[0m[2m` from `technical[0m[2m/notification-broker.md[0m[2m` resolves to `[0m[2mnotes/index.md`[0m[2m which is the root[0m[2m. That should[0m[2m be correct.
+     
+     Unless[0m[2m the lint tool is[0m[2m specifically[0m[2m looking for the[0m[2m text[0m[2m "index.md"[0m[2m appearing[0m[2m in the backlinks[0m[2m section of[0m[2m the[0m[2m note[0m[2m, and it[0m[2m's matching[0m[2m against the WRONG[0m[2m `[0m[2mindex.md`.[0m[2m Let me think[0m[2m...
+     
+     Actually, I[0m[2m wonder[0m[2m if the lint is[0m[2m checking that `[0m[2mtechnical[0m[2m/notification-broker.md[0m[2m` has a back[0m[2mlink to `[0m[2mindex.md` and[0m[2m it's finding[0m[2m `[technical index[0m[2m](index.md)`[0m[2m but[0m[2m that[0m[2m resolves[0m[2m to `technical/index[0m[2m.md`,[0m[2m not to[0m[2m the root `index[0m[2m.md`. And `[[0m[2mroot index](../../[0m[2mindex.md)` —[0m[2m maybe the lint doesn[0m[2m't understand[0m[2m `[0m[2m../[0m[2m` resolution[0m[2m.[0m[2m
+     
+     Or maybe the lint[0m[2m is checking[0m[2m that for[0m[2m every forward link FROM[0m[2m any[0m[2m `index.md`[0m[2m that[0m[2m points TO the note[0m[2m, there's[0m[2m a corresponding[0m[2m backlink. The[0m[2m root `index.md[0m[2m` has[0m[2m a[0m[2m link to `[0m[2mtechnical/notification-broker[0m[2m.md`, and `[0m[2mtechnical/index.md`[0m[2m also has a link[0m[2m to `notification[0m[2m-broker.md`.[0m[2m The lint may[0m[2m be finding[0m[2m:[0m[2m
+     1. `[technical[0m[2m index](index.md[0m[2m)` resolves[0m[2m to `technical/index[0m[2m.md` ✓[0m[2m ([0m[2mmatches[0m[2m `[0m[2mtechnical/index.md`[0m[2m's forward link[0m[2m)
+     2. `[[0m[2mroot index](../../[0m[2mindex.md)` —[0m[2m if[0m[2m the lint resolves[0m[2m this correctly[0m[2m, it matches[0m[2m the root `index[0m[2m.md`'s[0m[2m forward link ✓[0m[2m
+     
+     But maybe[0m[2m the lint can[0m[2m't resolve `../../[0m[2m`[0m[2m properly[0m[2m,[0m[2m or there[0m[2m's a different issue[0m[2m.
+     
+     Let me just[0m[2m run[0m[2m the lint with[0m[2m more debug[0m[2m info[0m[2m,[0m[2m or I[0m[2m can just check[0m[2m if the files[0m[2m are[0m[2m correct by manual[0m[2m inspection.[0m[2m The files look correct[0m[2m to me. The[0m[2m remaining 2 issues[0m[2m might be a[0m[2m lint[0m[2m tool qu[0m[2mirk or I[0m[2m might be[0m[2m misunderstanding what[0m[2m "[0m[2mback[0m[2mlink to index.md[0m[2m" means in[0m[2m the[0m[2m context of[0m[2m the lint.[0m[2m
+     
+     Actually, let[0m[2m me re-read the[0m[2m lint output more carefully[0m[2m:[0m[2m `[[0m[2mmissing-backlink][0m[2m technical/notification-broker[0m[2m.md: no back[0m[2mlink to index.md[0m[2m`. The[0m[2m "index.md"[0m[2m here is[0m[2m probably[0m[2m the root `index[0m[2m.md`. And[0m[2m the[0m[2m file[0m[2m does have `[root[0m[2m index](../../index[0m[2m.md)`. Hmm[0m[2m.[0m[2m
+     
+     Let[0m[2m me just check[0m[2m —[0m[2m maybe the lint tool[0m[2m resolves[0m[2m paths[0m[2m differently[0m[2m and[0m[2m `[0m[2m../../index.md`[0m[2m doesn[0m[2m't work[0m[2m from[0m[2m `[0m[2mtechnical/[0m[2m`. Let me try[0m[2m with[0m[2m `[0m[2m../index.md`[0m[2m instead.[0m[2m Wait[0m[2m no[0m[2m, from `technical[0m[2m/notification-broker.md[0m[2m`, going[0m[2m up one level gets[0m[2m to `notes/[0m[2m`,[0m[2m and `[0m[2m../[0m[2mindex.md` would[0m[2m be `notes/index[0m[2m.md` ([0m[2mthe root). That[0m[2m's correct[0m[2m with[0m[2m `../../index.md[0m[2m`...[0m[2m no wait.[0m[2m
+     
+     `[0m[2mtechnical/notification[0m[2m-broker.md`[0m[2m is[0m[2m at depth[0m[2m 1[0m[2m from the journal[0m[2m root (`[0m[2mnotes/`). So[0m[2m from[0m[2m this[0m[2m file:
+     - `[0m[2mindex[0m[2m.md` →[0m[2m `notes[0m[2m/technical/index.md[0m[2m` (same directory[0m[2m)
+     - `../[0m[2mindex.md` →[0m[2m `notes/index.md[0m[2m` (root)[0m[2m ✓[0m[2m
+     - `../../index[0m[2m.md` → `[0m[2mindex[0m[2m.md` (parent[0m[2m of notes)[0m[2m ✗ —[0m[2m this[0m[2m goes too far up[0m[2m!
+     
+     That[0m[2m's the bug![0m[2m From[0m[2m `technical/notification-b[0m[2mroker.md`, the[0m[2m root[0m[2m `[0m[2mindex.md` should[0m[2m be `../index[0m[2m.md`, not `[0m[2m../../index.md`.[0m[2m Similarly, from `[0m[2mprojects/llm[0m[2m-challenges.md`,[0m[2m the root should[0m[2m be `../index[0m[2m.md`.[0m[2m
+     
+     The[0m[2m `[0m[2m../../index.md`[0m[2m would[0m[2m go up from[0m[2m `technical[0m[2m/` to `[0m[2mnotes/` and[0m[2m then up again to[0m[2m the parent of `[0m[2mnotes/`, which[0m[2m is NOT[0m[2m the root index[0m[2m.
+     
+     Similarly[0m[2m for[0m[2m the activity[0m[2m log entries[0m[2m — from `activity[0m[2m-log/2026[0m[2m/2026-[0m[2m06/2026[0m[2m-06-16[0m[2m.md`, going[0m[2m up[0m[2m 3 levels with[0m[2m `../../../[0m[2m` gets[0m[2m to `notes/[0m[2m`, so[0m[2m `../../../[0m[2mindex.md` would[0m[2m be the root `[0m[2mindex.md`.[0m[2m But[0m[2m that[0m[2m's[0m[2m 3 levels deep,[0m[2m which is correct for[0m[2m activity[0m[2m log day[0m[2m files.
+     
+     But[0m[2m for `technical/notification[0m[2m-broker.md`[0m[2m (1 level deep[0m[2m), the[0m[2m correct[0m[2m path[0m[2m to root is `[0m[2m../index.md`.[0m[2m
+     
+     Let me fix both[0m[2m files.[0m[2m
+  The[0m[2m paths[0m[2m to[0m[2m root[0m[2m `index.md`[0m[2m are wrong — from[0m[2m `technical/notification-b[0m[2mroker.md` the[0m[2m root is one[0m[2m level up (`../[0m[2mindex.md`),[0m[2m not two.[0m[2m Same for `projects[0m[2m/llm-ch[0m[2mallenges.md`.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_l8yilhzf | Edit {'path': '/Users/gofrendigunawan/llm ...', 'old_text': '- [root index](../../index ...', 'new_text': '- [root index](../index.md ...'}
+[0m[2m
+  🧰 call_ln1vv1k2 | Edit {'path': '/Users/gofrendigunawan/llm ...', 'old_text': '- [root index](../../index ...', 'new_text': '- [root index](../index.md ...'}
+[0m[2m
+  🔠 call_ln1vv1k2 Executed
+[0m[2m
+  🔠 call_l8yilhzf Executed
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_19y6h2hu | Shell {'command': 'cd /Users/gofrendigunawan/ ...'}
+[0m  [2mOK — journal at . is clean
+[0m[2m
+  🔠 call_19y6h2hu Executed
+[0m[2m
+  Journal is clean.[0m[2m Here[0m[2m's a[0m[2m summary of what was[0m[2m done[0m[2m:
+     
+     **ADR written[0m[2m**:[0m[2m `ADR-001[0m[2m-notification-architecture.md[0m[2m` — recommends[0m[2m **Redis Streams**[0m[2m over Apache Kafka for[0m[2m the notification subsystem.[0m[2m
+     
+     **The[0m[2m core[0m[2m argument**: Redis Streams[0m[2m wins because of[0m[2m the team[0m[2m constraints[0m[2m,[0m[2m not because it[0m[2m's the[0m[2m technically[0m[2m superior broker[0m[2m. The decisive[0m[2m factors:[0m[2m
+     
+     1[0m[2m. **Oper[0m[2mational complexity** —[0m[2m The[0m[2m 6-person team with[0m[2m no Kafka experience and[0m[2m no dedicated infra engineer[0m[2m cannot safely[0m[2m operate a Kafka cluster[0m[2m within a[0m[2m 2-week window[0m[2m. Redis Streams add[0m[2m zero new infrastructure;[0m[2m the[0m[2m team already runs Redis[0m[2m.[0m[2m
+     
+     2. **Through[0m[2mput head[0m[2mroom** — Current[0m[2m peak is[0m[2m 500 req/s[0m[2m; 10×[0m[2m target is 5[0m[2m,000 req/s[0m[2m. Single[0m[2m-instance[0m[2m Redis handles[0m[2m millions of ops/s[0m[2m. Kafka's[0m[2m design[0m[2m center (partition[0m[2med, multi[0m[2m-b[0m[2mroker,[0m[2m millions of msgs/s[0m[2m) is 2[0m[2m–3 orders of[0m[2m magnitude beyond the[0m[2m need.
+     
+     3.[0m[2m **Exactly-once[0m[2m is a[0m[2m red[0m[2m herring** —[0m[2m Kafka's transaction[0m[2mal exactly-once[0m[2m semantics still require id[0m[2mempotent consumers ([0m[2ma[0m[2m crash after[0m[2m processing but[0m[2m before offset[0m[2m commit causes[0m[2m redelivery). The[0m[2m same PostgreSQL idemp[0m[2motency-key[0m[2m table (`INSERT ...[0m[2m ON CONFLICT DO[0m[2m NOTHING`) that[0m[2m achieves[0m[2m effective exactly-once[0m[2m on[0m[2m Redis Streams is[0m[2m also needed[0m[2m on Kafka.[0m[2m The gap[0m[2m is[0m[2m smaller than it[0m[2m appears.
+     
+     4.[0m[2m **Time[0m[2m to value** —[0m[2m Redis[0m[2m Streams integration[0m[2m in[0m[2m days;[0m[2m Kafka provisioning[0m[2m,[0m[2m training, and production[0m[2m hardening in weeks[0m[2m-to[0m[2m-months.
+     
+     **[0m[2mTrade[0m[2m-offs documented[0m[2m**: memory[0m[2m-bounded retention ([0m[2mmit[0m[2migated by[0m[2m MAXLEN +[0m[2m PostgreSQL archival), no[0m[2m native stream[0m[2m processing[0m[2m ecosystem (acceptable[0m[2m for simple[0m[2m consume-process[0m[2m-ack),[0m[2m single[0m[2m-instance[0m[2m S[0m[2mPOF (same[0m[2m risk[0m[2m already[0m[2m exists[0m[2m for sessions),[0m[2m and a[0m[2m clear revisit[0m[2m trigger at[0m[2m ~[0m[2m50,000 msgs[0m[2m/s or[0m[2m when[0m[2m the team gains[0m[2m infra[0m[2m capacity.[0m[2m
+  💸 (Requests: 16 | Tool Calls: 30 | Total: 457075) Input: 447040 | Audio Input: 0 | Output: 10035 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "Read `system_context.md`. It describes a real production system and a specific architectural problem we need to solve.
 
 Write an Architecture Decision Record (ADR) evaluating two options for the notification subsystem:
@@ -209,20 +450,18 @@ Make a definitive recommendation. Use specific technical properties (throughput,
 Save as `ADR-001-notification-architecture.md`.
 " --model ollama:glm-5.1:cloud --session ollama_glm-5.1_cloud-research-trial-2 --yolo true --attach "" --interactive false[0m
 [2m[2mSession[0m: [1;33mollama_glm-5.1_cloud-research-trial-2[0m[0m
-The ADR is saved at `ADR-001-notification-architecture.md`. Here's a summary of the decision and its grounding in the constraints from `system_context.md`:
+Journal is clean. Here's a summary of what was done:
 
-**Recommendation: Redis Streams over Apache Kafka**
+**ADR written**: `ADR-001-notification-architecture.md` — recommends **Redis Streams** over Apache Kafka for the notification subsystem.
 
-The key argument hinges on five constraints from the system context:
+**The core argument**: Redis Streams wins because of the team constraints, not because it's the technically superior broker. The decisive factors:
 
-1. **Operational reality** — Redis is already in production; the team has zero Kafka experience and no infra engineer. Redis Streams adds three commands to an existing system; Kafka adds a new distributed platform with broker clusters, partition management, and JVM tuning.
+1. **Operational complexity** — The 6-person team with no Kafka experience and no dedicated infra engineer cannot safely operate a Kafka cluster within a 2-week window. Redis Streams add zero new infrastructure; the team already runs Redis.
 
-2. **Time to value** — The 2-week deadline is met by Redis Streams (functional in ~3 days, full migration in ~10). Kafka can't ship application code before week 2 because infrastructure provisioning and security hardening consume that window first.
+2. **Throughput headroom** — Current peak is 500 req/s; 10× target is 5,000 req/s. Single-instance Redis handles millions of ops/s. Kafka's design center (partitioned, multi-broker, millions of msgs/s) is 2–3 orders of magnitude beyond the need.
 
-3. **Throughput headroom** — The 10× target is ~5,000 req/s peak. Redis Streams handles 100K+ msgs/s on a single node. We'd need Kafka's millions-of-messages-per-second ceiling only at 200× current scale.
+3. **Exactly-once is a red herring** — Kafka's transactional exactly-once semantics still require idempotent consumers (a crash after processing but before offset commit causes redelivery). The same PostgreSQL idempotency-key table (`INSERT ... ON CONFLICT DO NOTHING`) that achieves effective exactly-once on Redis Streams is also needed on Kafka. The gap is smaller than it appears.
 
-4. **Exactly-once for billing** — Achieved via application-layer idempotency keys in Postgres (hash of `tenant_id + event_type + entity_id + timestamp_bucket`), the same pattern Stripe uses. This doesn't depend on Kafka's transactional producer, which is easy to misconfigure without prior experience.
+4. **Time to value** — Redis Streams integration in days; Kafka provisioning, training, and production hardening in weeks-to-months.
 
-5. **Reversibility** — Choosing Redis now doesn't foreclose Kafka later. A Redis-to-Kafka sidecar is a well-documented pattern for when traffic or requirements justify the operational cost. Choosing Kafka first commits to that cost immediately.
-
-The ADR also documents the accepted risks (single-node Redis SPOF, no multi-DC replication, stream memory management) and concrete follow-ups (Redis Sentinel/Cluster, `ws-pusher` consumer group, idempotency table).
+**Trade-offs documented**: memory-bounded retention (mitigated by MAXLEN + PostgreSQL archival), no native stream processing ecosystem (acceptable for simple consume-process-ack), single-instance SPOF (same risk already exists for sessions), and a clear revisit trigger at ~50,000 msgs/s or when the team gains infra capacity.

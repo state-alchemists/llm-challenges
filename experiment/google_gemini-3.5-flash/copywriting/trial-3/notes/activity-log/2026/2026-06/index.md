@@ -1,10 +1,7 @@
-# June 2026 Activity Log
-
-Daily entries for June 2026.
+# June 2026 Activity Log Index
 
 ## Days
-
-- [2026-06-15](2026-06-15.md)
+- [2026-06-16](2026-06-16.md)
 
 ## Backlinks
-- [2026 Index](../index.md)
+- [2026 Year Index](../index.md)

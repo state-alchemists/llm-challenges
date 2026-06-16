@@ -1,3 +1,3 @@
-# June 2026 Activity Logs
+# June 2026 Activity Log Day Index
 
-- [2026-06-15](2026-06-15.md)
+- [2026-06-16](2026-06-16.md)

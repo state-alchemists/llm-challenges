@@ -1,13 +1,13 @@
-# HUD
+# Zaruba HUD
 
-Persistent memory index for trial-2.
+## Active Constraints & Preferences
+- Focus on correctness over speed
+- Never charge an order more than once
+- Ensure inventory never drops below zero
+- Match exactly successful orders and payment amounts (no ghost charges)
 
-## Indexes
-- [Technical Notes](technical/index.md)
-- [Activity Log](activity-log/index.md)
-
-## Recent Insights
-- [Race condition in checkout flow](technical/checkout-race.md)
+## Technical Insight Notes
+- [Technical Index](technical/index.md)
 
 ## Activity Log
-- [2026-06-15 Log](activity-log/2026/2026-06/2026-06-15.md)
+- [Activity Log](activity-log/index.md)

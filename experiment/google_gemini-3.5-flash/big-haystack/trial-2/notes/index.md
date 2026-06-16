@@ -1,8 +1,12 @@
-# Journal Index
+# HUD
 
-Welcome to the LLM challenge journal.
+Welcome to the HUD index for this session.
 
-## Sections
+## Activity Log
 - [Activity Log](activity-log/index.md)
 
+## Recent Insights
+None
+
 ## Backlinks
+(none)

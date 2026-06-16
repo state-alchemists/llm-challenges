@@ -1,3 +1,3 @@
-# Technical Notes Index
+# Technical Notes
 
-- [Notification architecture decision — Redis Streams over Kafka](notification-architecture.md)
+- [notification-broker](notification-broker.md)

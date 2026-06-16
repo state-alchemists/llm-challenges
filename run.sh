@@ -6,4 +6,4 @@ zrb-llm-evaluator run \
   --timeout 600 \
   --output-dir ./experiment
 
-zrb chat "Analyze @experiment/ result, provide executive summary and failure analysis, including what probably can be improved in the system prompt, insert your analysis at the top section of  @experiment/report.md"
+zrb chat "Analyze @experiment/ result, provide executive summary and failure/timeout analysis, including what probably can be improved in the system prompt, insert your analysis at the top section of  @experiment/report.md"

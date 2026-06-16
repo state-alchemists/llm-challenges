@@ -4,38 +4,40 @@ import asyncio
 class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
+        self._lock = asyncio.Lock()
 
     async def check_stock(self, quantity: int) -> bool:
-        await asyncio.sleep(0.02)
-        return self._stock >= quantity
+        async with self._lock:
+            return self._stock >= quantity
 
     async def decrement(self, quantity: int) -> bool:
-        await asyncio.sleep(0.02)
-        if self._stock >= quantity:
-            self._stock -= quantity
-            return True
-        return False
+        async with self._lock:
+            if self._stock >= quantity:
+                self._stock -= quantity
+                return True
+            return False
+
+    async def increment(self, quantity: int) -> None:
+        async with self._lock:
+            self._stock += quantity
 
     async def reserve(self, quantity: int) -> bool:
         """Atomically check stock and decrement if available.
 
-        No yield between check and decrement, so no other coroutine
-        can interleave and steal the reservation.
+        Unlike calling check_stock then decrement separately, this holds
+        the lock across both operations so no other coroutine can race
+        between the check and the mutation.
         """
-        await asyncio.sleep(0.02)
-        if self._stock >= quantity:
-            self._stock -= quantity
-            return True
-        return False
+        async with self._lock:
+            if self._stock >= quantity:
+                self._stock -= quantity
+                return True
+            return False
 
     async def release(self, quantity: int) -> None:
-        """Return reserved stock after a failed charge."""
-        await asyncio.sleep(0.01)
-        self._stock += quantity
-
-    async def increment(self, quantity: int) -> None:
-        await asyncio.sleep(0.01)
-        self._stock += quantity
+        """Restore reserved stock when a downstream step (e.g. payment) fails."""
+        async with self._lock:
+            self._stock += quantity
 
     @property
     def stock(self) -> int:

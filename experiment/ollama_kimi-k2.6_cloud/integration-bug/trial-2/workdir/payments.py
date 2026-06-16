@@ -12,8 +12,8 @@ class PaymentGateway:
         self._lock = asyncio.Lock()
 
     async def charge(self, order_id: str, amount: float) -> bool:
+        await asyncio.sleep(0.03)
         async with self._lock:
-            await asyncio.sleep(0.03)
             if order_id in self._charged_orders:
                 return True
             if random.random() < self._failure_rate:

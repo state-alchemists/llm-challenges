@@ -1,3 +1,6 @@
-# Technical Notes
+# Technical Directory
 
-- [Asyncio Checkout Concurrency](asyncio-checkout-concurrency.md)
+- [Checkout Transaction Isolation](checkout-transaction-isolation.md)
+
+## Backlinks
+- [HUD](../index.md)

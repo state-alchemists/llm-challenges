@@ -1,4 +1,9 @@
-# Journal Index
+# Journal — LLM Challenges
 
-## Activity Log
-- [2026](activity-log/2026/index.md)
+Heads-Up Display for the deepseek-v4-flash / refactor challenge trial.
+
+## Projects
+- [llm-challenges](projects/llm-challenges.md)
+
+## Activity
+- [2026-06-16](activity-log/2026/2026-06/2026-06-16.md) — Pipeline refactor: ETL, env vars, parameterized queries, regex parsing

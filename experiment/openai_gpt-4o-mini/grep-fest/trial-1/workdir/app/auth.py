@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-def legacy_auth(user_id: str) -> bool:
+# def legacy_auth(user_id: str) -> bool:
     """DEPRECATED: use new_auth(user_id, scope=...) instead.
 
     Still exposed for external consumers we don't control. Internal call

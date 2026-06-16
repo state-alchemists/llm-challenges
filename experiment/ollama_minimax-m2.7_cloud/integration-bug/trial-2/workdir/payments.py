@@ -16,11 +16,3 @@ class PaymentGateway:
         self.total_charged += amount
         self.charges.append({"order_id": order_id, "amount": amount})
         return True
-
-    async def refund(self, order_id: str) -> bool:
-        for charge in self.charges:
-            if charge["order_id"] == order_id:
-                self.total_charged -= charge["amount"]
-                self.charges.remove(charge)
-                return True
-        return False

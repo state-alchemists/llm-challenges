@@ -1,6 +1,6 @@
-# Activity Log
+# Activity Log Index
 
-- [2026](2026/index.md)
+- [2026 Activity Logs](2026/index.md)
 
 ## Backlinks
-- [Root Journal](../index.md)
+- [HUD Index](../index.md)

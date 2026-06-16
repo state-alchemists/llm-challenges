@@ -1,10 +1,8 @@
-# Zaruba Notes Index
+# Zaruba Journal Root
 
-Welcome to your notes index.
+## HUD
 
-## Directory Structure
+Welcome to the Zaruba Knowledge Graph and Chronological Log.
 
+## Active Indexes
 - [Activity Log](activity-log/index.md)
-
-## Backlinks
-- (None)

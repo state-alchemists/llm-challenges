@@ -1,6 +1,7 @@
-# Zrb Migration Journal Index
+# Zrb Migration Journal
 
-Welcome to the Zrb v1 to v2 migration documentation journal.
+## Active Projects
+- [Zrb v2 Migration Guide](projects/zrb-v2.md)
 
-## Sections
-- [Activity Log](activity-log/index.md)
+## Recent Activity
+- [2026-06-16 Log](activity-log/2026/2026-06/2026-06-16.md)

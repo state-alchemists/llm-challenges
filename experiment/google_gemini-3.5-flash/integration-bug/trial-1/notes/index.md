@@ -1,10 +1,15 @@
-# Journal
+# Zaruba Session Journal
 
-Welcome to the HUD for this checkout simulation trial.
+## Active Constraints & Preferences
+- Avoid changing public interfaces of existing classes (e.g., `Inventory`, `PaymentGateway`).
+- Ensure no negative stock, no charge mismatches, and no double charges.
+- Use `asyncio.Lock` for concurrency-safe state transitions in asynchronous environments.
 
 ## Recent Insights
-- [Asyncio Checkout Concurrency](technical/asyncio-checkout-concurrency.md) — preventing overselling and ghost charges with serialization
-- [Technical Notes](technical/index.md)
+- **[Checkout Transaction Isolation](technical/checkout-transaction-isolation.md)**: Solved concurrent race conditions via reserve-then-charge-or-rollback pattern.
 
-## Activity Log
-- [Activity Log Root](activity-log/index.md)
+## Projects
+- **[Checkout Service](projects/checkout-service.md)**
+
+## Backlinks
+(none)

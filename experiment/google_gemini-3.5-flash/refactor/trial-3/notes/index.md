@@ -1,10 +1,9 @@
-# HUD
+# Journal Index
 
-## Active Constraints
-- None
+Heads-up display and navigation for persistent memory across turns.
 
 ## Recent Insights
-- None
+*None*
 
-## Navigation
-- [Activity Log](activity-log/index.md)
+## Activity Logs
+- [2026 activity log](activity-log/index.md)

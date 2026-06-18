@@ -3,7 +3,10 @@ import asyncio
 
 async def process_job(queue, worker_id: int) -> None:
     while True:
-        job = await queue.dequeue()
+        job = job = await queue.dequeue()
+        if job is None:
+            return
+        job['status'] = 'processing'
         if job is None:
             return
 

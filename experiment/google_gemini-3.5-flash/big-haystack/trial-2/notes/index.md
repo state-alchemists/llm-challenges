@@ -1,12 +1,6 @@
-# HUD
+# Journal Index
 
-Welcome to the HUD index for this session.
+Welcome to the HUD index.
 
 ## Activity Log
 - [Activity Log](activity-log/index.md)
-
-## Recent Insights
-None
-
-## Backlinks
-(none)

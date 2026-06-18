@@ -1,12 +1,8 @@
-# Journal Index
+# Zaruba Journal Root
 
-Welcome to Zaruba's persistent memory.
+## HUD
+- Active constraints: Exact formatting on outputs.
+- Recent insights: None.
 
-## Navigation
+## Directories
 - [Activity Log](activity-log/index.md)
-
-## Recent Insights
-- (None yet)
-
-## Backlinks
-- (None)

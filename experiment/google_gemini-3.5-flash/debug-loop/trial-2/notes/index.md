@@ -1,10 +1,11 @@
-# Zaruba Journal Root
+# HUD
 
-Welcome to the HUD for Zaruba.
+Welcome to the Zaruba journal HUD.
 
-## Recent Activity Logs
-- [All Activity Logs](activity-log/index.md)
-- [2026 Activity Log](activity-log/2026/index.md)
+- [Activity Log](activity-log/index.md)
+
+## Recent Activity
+- [2026-06-19 log](activity-log/2026/2026-06/2026-06-19.md) — Fixed pipeline execution issues.
 
 ## Backlinks
-- None
+(empty)

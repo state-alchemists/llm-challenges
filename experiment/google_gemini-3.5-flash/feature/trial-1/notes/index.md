@@ -1,11 +1,10 @@
-# Zaruba Journal Root
+# Zaruba's Journal Index
 
-## HUD Dashboard
-Welcome to Zaruba's persistent memory.
+## Technical Insights
+None.
 
-## Active Projects
-- [Projects Index](projects/index.md)
-- [Project Management API](projects/project-management-api.md)
+## Activity Log
+- [2026-06-19 Activity Log](activity-log/2026/2026-06/2026-06-19.md)
 
-## Navigation
-- [Activity Log](activity-log/index.md)
+## Backlinks
+None.

@@ -1,7 +1,9 @@
-# Journal HUD
+# Journal Index
 
-## Recent Activity
-- [2026-06-16 Log](activity-log/2026/2026-06/2026-06-16.md)
+## Heads-Up Display
 
-## Directories
+Welcome to the persistent journal.
+
+### Navigation
+- [Projects](projects/index.md)
 - [Activity Log](activity-log/index.md)

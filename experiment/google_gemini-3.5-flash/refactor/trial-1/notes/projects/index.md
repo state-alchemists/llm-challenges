@@ -1,3 +1,3 @@
-# Projects
+# Projects Index
 
-- [Log Parser Refactor Project](log_parser.md)
+- [Pipeline Refactoring](pipeline-refactoring.md)

@@ -2,17 +2,12 @@
 
 CONFIG = {
     "source": "events.csv",
-    "batch_size": 1,
+    "batch_size": 10,
 }
 
 settings = CONFIG
-CONFIG = {
-    "source": "events.csv",
-    "batch_size": 1,
-}
 
-settings = CONFIG
-CONFIG = {
+settings = {
     "source": "events.csv",
-    "batch_size": 1,
+    "batch_size": 0,
 }

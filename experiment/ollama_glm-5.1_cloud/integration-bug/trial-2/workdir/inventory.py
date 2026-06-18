@@ -22,11 +22,11 @@ class Inventory:
         self._stock += quantity
 
     async def reserve(self, quantity: int) -> bool:
-        """Atomically check stock and decrement under a lock.
+        """Atomically reserve stock. Decrements immediately under a lock.
 
-        Prevents overselling by ensuring the check-then-decrement
-        sequence cannot be interleaved with other coroutines.
-        Returns True if reservation succeeded, False if insufficient stock.
+        Returns True if stock was available and decremented, False otherwise.
+        Use ``release`` to undo the reservation if a subsequent step (e.g.
+        payment) fails.
         """
         async with self._lock:
             if self._stock >= quantity:
@@ -35,7 +35,7 @@ class Inventory:
             return False
 
     async def release(self, quantity: int) -> None:
-        """Return reserved stock back to inventory (e.g. after payment failure)."""
+        """Return previously reserved stock back to available inventory."""
         async with self._lock:
             self._stock += quantity
 

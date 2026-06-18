@@ -2,22 +2,24 @@ import datetime
 import os
 import sqlite3
 
-DB_PATH = "metrics.db"
-LOG_FILE = "server.log"
-DB_HOST = "localhost"
-DB_PORT = 5432
-DB_USER = "admin"
-DB_PASS = "password123"
+import os
+
+DB_PATH = os.getenv("DB_PATH", "metrics.db")
+LOG_FILE = os.getenv("LOG_FILE", "server.log")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", 5432))
+DB_USER = os.getenv("DB_USER", "admin")
+DB_PASS = os.getenv("DB_PASS", "password123")
 
 
-def proc_data():
-    d_list = []
-    sessions = {}
-    api_calls = []
+def proc_data() -> None:
+    d_list: list[dict] = []
+    sessions: dict[str, str] = {}
+    api_calls: list[dict] = []
 
     if os.path.exists(LOG_FILE):
-        f = open(LOG_FILE, "r")
-        for line in f:
+        with open(LOG_FILE, "r") as f:
+                    for line in f:
             s = line.split(" ")
             if len(s) > 3:
                 lvl = s[2]
@@ -46,14 +48,14 @@ def proc_data():
                 elif lvl == "WARN":
                     m = " ".join(s[3:]).strip()
                     d_list.append({"d": dt, "t": "WARN", "m": m})
-        f.close()
+        
 
     print("Connecting to " + DB_HOST + ":" + str(DB_PORT) + " as " + DB_USER + "...")
 
     conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("CREATE TABLE IF NOT EXISTS errors (dt TEXT, message TEXT, count INTEGER)")
-    c.execute("CREATE TABLE IF NOT EXISTS api_metrics (dt TEXT, endpoint TEXT, avg_ms REAL)")
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS errors (dt TEXT, message TEXT, count INTEGER)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS api_metrics (dt TEXT, endpoint TEXT, avg_ms REAL)")
 
     r = {}
     for x in d_list:
@@ -62,11 +64,7 @@ def proc_data():
             r[msg] = r.get(msg, 0) + 1
 
     for msg, count in r.items():
-        c.execute(
-            "INSERT INTO errors VALUES ('%s', '%s', %d)"
-            % (datetime.datetime.now(), msg, count)
-        )
-
+        insert_error_data(cursor, str(datetime.datetime.now()), msg, count)
     endpoint_stats = {}
     for call in api_calls:
         ep = call["endpoint"]
@@ -74,15 +72,30 @@ def proc_data():
 
     for ep, times in endpoint_stats.items():
         avg = sum(times) / len(times)
-        c.execute(
-            "INSERT INTO api_metrics VALUES ('%s', '%s', %f)"
-            % (datetime.datetime.now(), ep, avg)
-        )
+        def insert_api_metrics(cursor: sqlite3.Cursor, dt: str, ep: str, avg: float) -> None:
+        cursor.execute(
+        "INSERT INTO api_metrics VALUES (?, ?, ?)",
+        (dt, ep, avg)
+    )
+    conn.commit()
+    conn.close()
+    endpoint_stats = {}
+    for call in api_calls:
+        ep = call["endpoint"]
+        endpoint_stats.setdefault(ep, []).append(call["ms"])
 
+    for ep, times in endpoint_stats.items():
+        avg = sum(times) / len(times)
+        def insert_api_metrics(cursor: sqlite3.Cursor, dt: str, ep: str, avg: float) -> None:
+        cursor.execute(
+        "INSERT INTO api_metrics VALUES (?, ?, ?)",
+        (dt, ep, avg)
+    )
     conn.commit()
     conn.close()
 
     out = "<html>\n<head><title>System Report</title></head>\n<body>\n"
+    out += "<h1>Error Summary</h1>\n<ul>\n"
     out += "<h1>Error Summary</h1>\n<ul>\n"
     for err_msg, count in r.items():
         out += "<li><b>" + err_msg + "</b>: " + str(count) + " occurrences</li>\n"

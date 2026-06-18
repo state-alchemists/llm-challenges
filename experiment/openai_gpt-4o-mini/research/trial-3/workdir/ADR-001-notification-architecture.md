@@ -4,25 +4,25 @@
 Proposed
 
 ## Context
-Our SaaS project management platform currently handles notifications synchronously within the HTTP request cycle, leading to request timeouts, silent failures, cascading failures, and a lack of delivery guarantees. We need a solution that can decouple notifications from this cycle, offer reliable message delivery (at least once for most notifications, exactly once for billing-critical ones), support retries with exponential backoff, and scale to handle a tenfold increase in traffic. Our engineering team consists of six members with varying experience, and we currently utilize Redis, but lack Kafka experience. Budget constraints limit us from using managed solutions like Confluent Cloud.
+The need has arisen to improve the notification subsystem of our SaaS project management platform. The current implementation, which sends notifications synchronously within the HTTP request cycle, leads to significant latency issues, silent failures, and cascading failures that disrupt service. As the user base grows (with a peak load of ~500 req/s), we require a robust solution that can handle at least 10x traffic growth without architectural overhaul. Additionally, the platform needs features such as retry mechanisms with exponential backoff, guaranteed delivery (at-least-once for all notifications, exactly-once for billing-critical notifications), and real-time WebSocket push notifications within two quarters. The team consists of six engineers with a budget constraint and no prior experience with Apache Kafka.
 
 ## Decision
-We will adopt **Redis Streams** for the notification subsystem. Redis Streams is well-suited for our use case due to its ease of integration with our existing Redis infrastructure and the team's familiarity with Redis. It provides support for at-least-once delivery, message persistence, consumer groups, and can scale horizontally.
+We recommend adopting **Redis Streams** as the new notification subsystem. This choice is based on the team's existing familiarity with Redis, avoiding the steep learning curve associated with Apache Kafka, and the meaningful capabilities Redis Streams provide for our use case. Redis Streams support message delivery guarantees, including acknowledgement and consumer groups. Additionally, it allows us to implement through exponential backoff strategies effectively, which aligns with our requirement for better reliability in notifications.
 
-## Consequences 
-### Pros
-- **Integration**: We can leverage our existing investment in Redis, reducing setup time as we do not need to introduce a new technology stack.
-- **Simplicity**: The operational complexity is lower, given the team's experience with Redis. This ensures that we can implement changes quickly and reduce the time to deliver value.
-- **Performance**: Redis Streams allows for high throughput and low latency, making it capable of handling peak traffic effectively.
-- **Message Retention**: Supports persistence, enabling us to recover from failures without losing messages.
-- **Supported Features**: Supports consumer groups and message acknowledgment, which are crucial for implementing retry logging.
+## Consequences
+### Pros:
+- **Familiarity:** Leveraging Redis Streams allows the team to work with a tool they already use, minimizing setup and ongoing maintenance complexity.
+- **Operational simplicity:** Redis Streams is simpler to deploy and manage compared to Kafka, which requires a more complex setup, especially without dedicated infrastructure support.
+- **Efficient for the required workloads:** Redis Streams can handle high throughput (potentially in millions of messages per second according to specifications), which is ideal to accommodate the projected growth.
+- **Flexible delivery guarantees:** Supports at-least-once semantics out of the box, with mechanisms for message acknowledgment and the ability to replay messages.
+- **Integration with existing stack:** Existing Redis infrastructure can be repurposed, requiring less migration effort and fitting within the budget constraints.
 
-### Cons
-- **Delivery Guarantees**: While Redis Streams provides at-least-once semantics, achieving exactly-once semantics may require implementing additional complex logic in our application layer, like idempotency.
-- **Scaling Challenges**: Redis streams may have operational challenges when scaling horizontally, especially with a significant influx of traffic where larger partitions need to be managed carefully.
+### Cons:
+- **Exactly-once semantics may require additional handling:** Configuring Redis Streams for exactly-once delivery semantics could involve managing idempotency explicitly in our application code, which adds some complexity.
+- **Lesser scalability compared to Kafka:** While Redis Streams are powerful, they may not scale as well as Kafka for very high volume scenarios; this could be a bottleneck if traffic exceeds projected growth significantly in the future.
 
 ## Alternatives Considered
-### 1. Apache Kafka
-Kafka was considered due to its strong guarantees around message delivery and high throughput, making it suitable for use cases requiring reliability and ordering guarantees for billing events. However, the team has no experience with Kafka, necessitating extensive training and operational adjustments that would exceed our two-week migration timeline and could delay critical work. Additionally, Kafka's setup and management complexity is high, requiring more dedicated infrastructure support than we currently have.
+1. **Apache Kafka**  
+   - **Rejection reason:** Although Kafka offers strong durability, high throughput, and exactly-once semantics, it introduces considerable operational complexity that our engineering team is unprepared for within the current resource constraints. The steep learning curve and two-week setup time required to achieve effective use would likely delay our delivery timelines, while the budget does not allow for a managed solution. Moreover, without existing Kafka experience on the team, the risks associated with operational management are high, especially considering the requirements for urgent system reliability and scalability.  
 
-Given the above analysis, Redis Streams presents the best balance between operational feasibility, performance, and meeting our requirement for reliable notifications within the team's existing skill set and project constraints.
+In conclusion, Redis Streams is strategically aligned with our operational requirements, existing infrastructure, and growth targets, putting us in a strong position to ensure reliable notifications with manageable complexity.

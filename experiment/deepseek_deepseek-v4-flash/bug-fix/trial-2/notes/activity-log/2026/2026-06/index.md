@@ -1,3 +1,3 @@
-# June 2026 Activity Log
+# June 2026
 
-- [2026-06-16](./2026-06-16.md)
+- [2026-06-19](2026-06-19.md) — Bug fix: job queue duplicate processing + vanishing failures

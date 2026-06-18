@@ -17,12 +17,3 @@ VALID_API_KEYS: Dict[str, str] = {
     "dev-key-alice": "alice",
     "dev-key-bob": "bob",
 }
-
-_next_task_id: int = 5
-
-
-def generate_task_id() -> int:
-    global _next_task_id
-    task_id = _next_task_id
-    _next_task_id += 1
-    return task_id

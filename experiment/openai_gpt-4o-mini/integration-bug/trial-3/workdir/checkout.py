@@ -10,41 +10,306 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    available = await inventory.check_stock(quantity)
+    if not await inventory.check_stock(quantity):
+        print(f"Order {order_id}: out of stock")
+        return False
     if not available:
         print(f"Order {order_id}: out of stock")
         return False
 
-    reserved = await inventory.reserve(quantity)
-    if not reserved:
-        print(f"Order {order_id}: out of stock")
-        return False
     charged = await gateway.charge(order_id, quantity * price)
-    print(f"Order {order_id}: charged status = {charged}")
-    if not charged:
-        print(f"Order {order_id}: payment failed")
-        return False
-    # Only decrement inventory upon successful charge
     if charged:
-        # Ensure there is stock before decrementing
-        if not await inventory.check_stock(quantity):
-            print(f"Order {order_id}: out of stock after payment")
+        decremented = await inventory.decrement(quantity)
+        if not decremented:
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    if charged:
+        decremented = await inventory.decrement(quantity)
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
             return False
-        await inventory.decrement(quantity)
-        print(f"Order {order_id}: SUCCESS")
-        return True
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
     else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+    if charged:
+        decremented = await inventory.decrement(quantity)
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        if charged:
+        decremented = await inventory.decrement(quantity)
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        decremented = await inventory.decrement(quantity)
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+    if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
         print(f"Order {order_id}: payment failed")
         return False
-        print(f"Order {order_id}: inventory error after payment — item not delivered")
-        return False
-        print(f"Order {order_id}: inventory error after payment — item not delivered")
-        return False
-    print(f"Order {order_id}: SUCCESS")
-    return True
 
     decremented = await inventory.decrement(quantity)
-    if not decremented:
+        decremented = await inventory.decrement(quantity)
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    else:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        decremented = await inventory.decrement(quantity)
+        if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
+    if charged:
+            decremented = await inventory.decrement(quantity)
+            if not charged:
+        print(f"Order {order_id}: payment failed, charge not processed")
+        return False
+            print(f"Order {order_id}: payment failed, charge not processed")
+            return False
+                print(f"Order {order_id}: inventory error after payment — item not delivered")
+                await gateway.refund(order_id, quantity * price)
+            print(f"Order {order_id}: inventory error after payment — item not delivered")
+            await gateway.refund(order_id, quantity * price)
         print(f"Order {order_id}: inventory error after payment — item not delivered")
         return False
 

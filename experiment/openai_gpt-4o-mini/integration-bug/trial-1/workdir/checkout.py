@@ -4,34 +4,37 @@ from payments import PaymentGateway
 
 
 async def checkout(
-    inventory: Inventory,
-    gateway: PaymentGateway,
     order_id: str,
     quantity: int,
     price: float,
+    inventory: Inventory,
+    gateway: PaymentGateway,
 ) -> bool:
-    if not await inventory.lock():
-        print(f"Order {order_id}: inventory lock failed")
-        return False
-
     available = await inventory.check_stock(quantity)
     if not available:
-        await inventory.unlock()
         print(f"Order {order_id}: out of stock")
+        return False
+
+
+    if gateway.has_charged(order_id):
+        print(f"Order {order_id}: already charged")
         return False
 
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        await inventory.unlock()
         print(f"Order {order_id}: payment failed")
         return False
 
-    decremented = await inventory.decrement(quantity)
+        # Only decrement inventory if charge is successful
+    
+    # Only decrement inventory if charge is successful
+    decremented = await inventory.safely_decrement(quantity)
     if not decremented:
-        await inventory.unlock()
         print(f"Order {order_id}: inventory error after payment — item not delivered")
         return False
 
-    await inventory.unlock()
+    print(f"Order {order_id}: SUCCESS")
+    return True
+
     print(f"Order {order_id}: SUCCESS")
     return True

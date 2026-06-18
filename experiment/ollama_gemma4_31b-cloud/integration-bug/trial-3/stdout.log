@@ -1,18 +1,23 @@
 [2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_ipfqdktk | LS {'path': '.'}
+  🧰 call_y6kg6pes | LS {'path': '.'}
 [0m[2m
-  🔠 call_ipfqdktk Executed
+  🔠 call_y6kg6pes Executed
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_9pkbugyg | Bash {'command': 'python3 main.py'}
+  🧰 call_wg7wubt1 | ActivateSkill {'name': 'core-coding'}
+[0m[2m
+  🔠 call_wg7wubt1 Executed
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_d8tgpw7i | Bash {'command': 'python3 main.py'}
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_5: payment failed
 [0m  [2mOrder order_0: SUCCESS
 [0m  [2mOrder order_1: SUCCESS
 [0m  [2mOrder order_2: SUCCESS
 [0m  [2mOrder order_3: SUCCESS
 [0m  [2mOrder order_4: SUCCESS
-[0m  [2mOrder order_5: inventory error after payment — item not delivered
 [0m  [2mOrder order_6: inventory error after payment — item not delivered
 [0m  [2mOrder order_7: inventory error after payment — item not delivered
 [0m  [2mOrder order_8: inventory error after payment — item not delivered
@@ -24,102 +29,71 @@
 [0m  [2mSuccessful orders:  5
 [0m  [2mItems sold:         5  (initial stock: 5)
 [0m  [2mRemaining stock:    0
-[0m  [2mTotal charged:      $1200.00
+[0m  [2mTotal charged:      $1100.00
 [0m  [2mExpected charge:    $500.00
 [0m  [2mDuplicate charges:  0
 [0m  [2mERROR: Charge amount does not match successful orders!
 [0m[2m
-  🔠 call_9pkbugyg Executed
+  🔠 call_d8tgpw7i Executed
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_dygq563q | Read {'path': 'checkout.py'}
+  🧰 call_xgk54ezc | Read {'path': 'checkout.py'}
 [0m[2m
-  🧰 call_7m44ebxe | Read {'path': 'inventory.py'}
+  🧰 call_gtk6to34 | Read {'path': 'inventory.py'}
 [0m[2m
-  🧰 call_qham7r67 | Read {'path': 'payments.py'}
+  🧰 call_dlv8w9kl | Read {'path': 'payments.py'}
 [0m[2m
-  🧰 call_qi9y0b93 | Read {'path': 'main.py'}
+  🧰 call_uyxqxuvz | Read {'path': 'main.py'}
 [0m[2m
-  🔠 call_7m44ebxe Executed
+  🔠 call_dlv8w9kl Executed
 [0m[2m
-  🔠 call_qham7r67 Executed
+  🔠 call_xgk54ezc Executed
 [0m[2m
-  🔠 call_qi9y0b93 Executed
+  🔠 call_uyxqxuvz Executed
 [0m[2m
-  🔠 call_dygq563q Executed
+  🔠 call_gtk6to34 Executed
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_xydobl1k | ActivateSkill {'name': 'core-coding'}
+  🧰 call_8iy7mfsb | WriteTodos {'todos': [{'description': 'Implement locking in Inventory to prevent race conditions during stock checks and decrements.', 'status': 'pending'}, {'description': 'Update checkout logic to reserve inventory before charging and handle refund/release on payment failure or checkout error.', 'status': 'pending'}, {'description': 'Verify fixes with main.py simulation to ensure no negative inventory and 1:1 charge-to-order ratio.', 'status': 'pending'}]}
 [0m[2m
-  🔠 call_xydobl1k Executed
+  🔠 call_8iy7mfsb Executed
 [0m[2m
-  The[0m[2m simulation[0m[2m results[0m[2m confirm both[0m[2m reported[0m[2m production[0m[2m incidents:
-     
-[0m[2m1.  **Ghost[0m[2m Charges**: The[0m[2m logs[0m[2m show "[0m[2minventory[0m[2m error after payment — item[0m[2m not delivered".[0m[2m This happens because the system[0m[2m charges[0m[2m the user[0m[2m *before* decrementing[0m[2m stock[0m[2m. If[0m[2m the[0m[2m stock was[0m[2m depleted by concurrent[0m[2m orders between the `[0m[2mcheck_stock` call[0m[2m and the `decrement`[0m[2m call, the user[0m[2m is charged but the item[0m[2m isn[0m[2m't delivered[0m[2m.
-     2.  [0m[2m**Overselling/[0m[2mRace Condition[0m[2m**: Although[0m[2m the[0m[2m current[0m[2m simulation didn[0m[2m't result[0m[2m in negative stock[0m[2m (it simply[0m[2m failed the[0m[2m `decrement` check[0m[2m), the `checkout[0m[2m`[0m[2m logic[0m[2m is fundamentally[0m[2m broken[0m[2m for[0m[2m concurrency. The[0m[2m `check_stock`[0m[2m $\rightarrow$ `charge[0m[2m` $\rightarrow$ `[0m[2mdecrement` sequence is not[0m[2m atomic.
-     
-     ### Root[0m[2m Cause Analysis
-     The `[0m[2mcheckout`[0m[2m function performs[0m[2m a "check[0m[2m-then-act"[0m[2m sequence across[0m[2m three[0m[2m asynchronous boundaries[0m[2m:
-     1. `[0m[2mawait[0m[2m inventory.check_stock[0m[2m(quantity)`
-[0m[2m2. `await gateway[0m[2m.charge(...)[0m[2m`
-     3. `[0m[2mawait inventory.decrement([0m[2mquantity)`
-     
-     Because[0m[2m these[0m[2m are `await[0m[2m` points[0m[2m, the[0m[2m event loop can[0m[2m switch to another[0m[2m `[0m[2mcheckout` task. Multiple[0m[2m tasks[0m[2m can all pass[0m[2m the[0m[2m `check_stock`[0m[2m check before[0m[2m any[0m[2m of them reach[0m[2m the `decrement` call[0m[2m, leading to more[0m[2m charges[0m[2m than available[0m[2m items[0m[2m.
-     
-     ### Strategy[0m[2m
-     To fix this while[0m[2m adhering[0m[2m to the constraint[0m[2m of[0m[2m not changing public interfaces:[0m[2m
-     
-[0m[2m1.  **Reserve[0m[2m Inventory[0m[2m First**: I will add[0m[2m a `[0m[2mreserve` method to `[0m[2mInventory` (or use[0m[2m `decrement` as[0m[2m a[0m[2m reservation) to ensure the[0m[2m item is held[0m[2m *[0m[2mbefore* payment[0m[2m is attempted.
-     2[0m[2m.  **Atomic Stock[0m[2m Management**: Since[0m[2m we[0m[2m are using `asyncio[0m[2m`[0m[2m in a single-process[0m[2m simulation[0m[2m, a[0m[2m simple `asyncio.[0m[2mLock` in[0m[2m `Inventory` will prevent[0m[2m race conditions during[0m[2m stock[0m[2m modification[0m[2m.
-     3.  [0m[2m**Comp[0m[2mensating Transaction[0m[2m**: If payment[0m[2m fails after[0m[2m stock[0m[2m has[0m[2m been reserved, I[0m[2m must call `inventory.[0m[2mincrement`[0m[2m to return[0m[2m the item[0m[2m to the pool.
-     
-[0m[2m### Plan
-     1.[0m[2m  Modify[0m[2m `inventory[0m[2m.py`:[0m[2m
-[0m[2m    *[0m[2m   Add an `async[0m[2mio.Lock` to[0m[2m ensure[0m[2m `[0m[2mdecrement` and `increment[0m[2m` operations[0m[2m are atomic.
-         [0m[2m*   ([0m[2mThe[0m[2m current[0m[2m `decrement` already[0m[2m checks stock[0m[2m before subtracting[0m[2m, which[0m[2m is good,[0m[2m but it[0m[2m needs to[0m[2m be locked[0m[2m to[0m[2m prevent interleaved[0m[2m checks[0m[2m).
-     2.  [0m[2mModify `checkout.py[0m[2m`:
-         *   [0m[2m**Change the[0m[2m order of[0m[2m operations**: Decre[0m[2mment stock *first*[0m[2m ([0m[2mreserve[0m[2m).[0m[2m
-         *   If[0m[2m stock decrement[0m[2m fails[0m[2m $\[0m[2mrightarrow$ return[0m[2m `False` (out[0m[2m of stock).
-         [0m[2m*   If stock decrement[0m[2m succeeds $\rightarrow$ attempt[0m[2m payment[0m[2m.
-         *   [0m[2mIf payment fails $\rightarrow[0m[2m$ call[0m[2m `inventory[0m[2m.increment` to release[0m[2m the reservation[0m[2m,[0m[2m then return `False`.[0m[2m
-         *   If[0m[2m payment succeeds $\rightarrow$[0m[2m return `True`.
-     
-[0m[2mThis ensures:[0m[2m
-     - **[0m[2mNo[0m[2m Overs[0m[2melling**: Stock[0m[2m is reduced[0m[2m before payment[0m[2m.
-     - **No[0m[2m Ghost Charges**: Payment[0m[2m only[0m[2m happens if stock was[0m[2m successfully reserved.
-     -[0m[2m **Consistency**: Every[0m[2m charge[0m[2m corresponds[0m[2m to a successful decrement[0m[2m;[0m[2m failed[0m[2m charges[0m[2m trigger[0m[2m a stock increment[0m[2m.
-     
-     I will now[0m[2m implement these[0m[2m changes.
-     
-     ---[0m[2m
-     
-     ###[0m[2m Execution
-     
-     ####[0m[2m Step[0m[2m 1: Update `[0m[2minventory.py` to[0m[2m be[0m[2m thread-safe/[0m[2masync[0m[2m-safe.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_ecvqel0g | Edit {'new_text': 'class Inventory:\n    def _ ...', 'old_text': 'class Inventory:\n    def _ ...', 'path': 'inventory.py'}
+  🧰 call_12pzxvx3 | WriteTodos {'todos': [{'content': 'Implement locking in Inventory to prevent race conditions during stock checks and decrements.', 'status': 'pending'}, {'content': 'Update checkout logic to reserve inventory before charging and handle refund/release on payment failure or checkout error.', 'status': 'pending'}, {'content': 'Verify fixes with main.py simulation to ensure no negative inventory and 1:1 charge-to-order ratio.', 'status': 'pending'}]}
+[0m📋 Todo list updated (3 items)
+
+📋 Todo List (0/3, 0%, ☐ 3 pending)
+     [1] Implement locking in Inventory to prevent race conditions during stock checks and decrements.
+     [2] Update checkout logic to reserve inventory before charging and handle refund/release on payment failure or checkout error.
+     [3] Verify fixes with main.py simulation to ensure no negative inventory and 1:1 charge-to-order ratio.
+~DATA~{"total":3,"completed":0,"in_progress":0,"pending":3}
+[2m
+  🔠 call_12pzxvx3 Executed
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_m6r179l0 | Edit {'new_text': 'class Inventory:\n    def _ ...', 'old_text': 'class Inventory:\n    def _ ...', 'path': 'inventory.py'}
 [0m  ✗ Failed to start LSP server 'pyright': Request 1 timed out after 30s
 [2m
-  🔠 call_ecvqel0g Executed
+  🔠 call_m6r179l0 Executed
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_u1owqt5h | Edit {'new_text': 'async def checkout(\n    or ...', 'old_text': 'async def checkout(\n    or ...', 'path': 'checkout.py'}
+  🧰 call_0htlrcav | Edit {'new_text': 'async def checkout(\n    or ...', 'old_text': 'async def checkout(\n    or ...', 'path': 'checkout.py'}
 [0m  ✗ Failed to start LSP server 'pyright': Request 1 timed out after 30s
 [2m
-  🔠 call_u1owqt5h Executed
+  🔠 call_0htlrcav Executed
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_2byd55kf | Bash {'command': 'python3 main.py'}
+  🧰 call_au5ilgt1 | Bash {'command': 'python3 main.py'}
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: payment failed
+[0m  [2mOrder order_0: SUCCESS
 [0m  [2mOrder order_1: SUCCESS
-[0m  [2mOrder order_2: payment failed
+[0m  [2mOrder order_2: SUCCESS
 [0m  [2mOrder order_3: SUCCESS
 [0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_4: payment failed
+[0m  [2mOrder order_4: SUCCESS
 [0m  [2mOrder order_6: out of stock
 [0m  [2mOrder order_7: out of stock
 [0m  [2mOrder order_8: out of stock
@@ -128,44 +102,47 @@
 [0m  [2mOrder order_11: out of stock
 [0m  [2m
 [0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  2
-[0m  [2mItems sold:         2  (initial stock: 5)
-[0m  [2mRemaining stock:    3
-[0m  [2mTotal charged:      $200.00
-[0m  [2mExpected charge:    $200.00
+[0m  [2mSuccessful orders:  5
+[0m  [2mItems sold:         5  (initial stock: 5)
+[0m  [2mRemaining stock:    0
+[0m  [2mTotal charged:      $500.00
+[0m  [2mExpected charge:    $500.00
 [0m  [2mDuplicate charges:  0
 [0m[2m
-  🔠 call_2byd55kf Executed
+  🔠 call_au5ilgt1 Executed
 [0m[2m
-  The[0m[2m checkout[0m[2m logic has been fixed to[0m[2m eliminate[0m[2m overs[0m[2melling and ghost charges.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_im6895uz | WriteTodos {'todos': [{'content': 'Implement locking in Inventory to prevent race conditions during stock checks and decrements.', 'status': 'completed'}, {'content': 'Update checkout logic to reserve inventory before charging and handle refund/release on payment failure or checkout error.', 'status': 'completed'}, {'content': 'Verify fixes with main.py simulation to ensure no negative inventory and 1:1 charge-to-order ratio.', 'status': 'completed'}]}
+[0m📋 Todo list updated (3 items)
+
+📋 Todo List (3/3, 100%, ✅ 3 completed)
+  ✅ [1] Implement locking in Inventory to prevent race conditions during stock checks and decrements.
+  ✅ [2] Update checkout logic to reserve inventory before charging and handle refund/release on payment failure or checkout error.
+  ✅ [3] Verify fixes with main.py simulation to ensure no negative inventory and 1:1 charge-to-order ratio.
+~DATA~{"total":3,"completed":3,"in_progress":0,"pending":0}
+[2m
+  🔠 call_im6895uz Executed
+[0m[2m
+  I[0m[2m have fixed the overs[0m[2melling and ghost charge[0m[2m issues[0m[2m.[0m[2m
      
-     ### Changes Made
+     ### Root[0m[2m Cause Analysis
+     1.[0m[2m  **Overselling[0m[2m**: The original `checkout[0m[2m`[0m[2m flow performed[0m[2m a `[0m[2mcheck_stock` followed[0m[2m by a `decrement`[0m[2m later. In a concurrent[0m[2m environment, multiple tasks[0m[2m could pass[0m[2m `check_stock`[0m[2m before any[0m[2m had called[0m[2m `decrement`, leading to[0m[2m race[0m[2m conditions where inventory[0m[2m dropped[0m[2m below zero.
+     2[0m[2m.  **Ghost Charges[0m[2m**: The flow[0m[2m charged[0m[2m the customer *before*[0m[2m calling[0m[2m `decrement`. If `[0m[2mdecrement` failed (due[0m[2m to the[0m[2m race condition above), the[0m[2m customer was charged but the[0m[2m order[0m[2m was not[0m[2m recorded[0m[2m as successful,[0m[2m and no item was delivered[0m[2m.
      
-[0m[2m1.  **Atomic[0m[2m Inventory Operations[0m[2m**[0m[2m (`inventory.py`[0m[2m):
-         *[0m[2m   Introdu[0m[2mced an `asyncio[0m[2m.Lock` to protect[0m[2m `[0m[2m_stock` modifications[0m[2m.
-         *   [0m[2mWrapped[0m[2m `check_stock`,[0m[2m `decrement`, and `[0m[2mincrement` in the[0m[2m lock to ensure that the[0m[2m "check-and[0m[2m-decrement" operation[0m[2m is atomic and not[0m[2m interleaved[0m[2m with other concurrent requests.[0m[2m
+     ### Changes Im[0m[2mplemented
+     -[0m[2m **[0m[2m`inventory.py`[0m[2m**: Added an `async[0m[2mio.Lock`[0m[2m to all methods that[0m[2m modify or[0m[2m read `_stock`[0m[2m (`[0m[2mcheck_stock`, `[0m[2mdecrement`, `increment`).[0m[2m This ensures atomic[0m[2m updates[0m[2m to the stock count[0m[2m.
+     - **`[0m[2mcheckout.py`**:[0m[2m
+[0m[2m    - **[0m[2mP[0m[2messimistic Locking[0m[2m/[0m[2mReservation**: Changed the order[0m[2m of[0m[2m operations to `decrement`[0m[2m (reserve) $\rightarrow[0m[2m$ `charge`.[0m[2m This[0m[2m ensures that if a charge[0m[2m is attempted[0m[2m, the item is already[0m[2m guaranteed to be available.[0m[2m
+         - **Compensation[0m[2m Logic[0m[2m**: Added[0m[2m a `try...except[0m[2m` block and failure[0m[2m handling[0m[2m to[0m[2m call[0m[2m `inventory[0m[2m.increment`[0m[2m (release[0m[2m) if the payment fails[0m[2m or an unexpected error occurs[0m[2m,[0m[2m preventing[0m[2m stock[0m[2m leakage[0m[2m.
      
-     2.  **[0m[2mP[0m[2messimistic Inventory[0m[2m Reservation** (`checkout.[0m[2mpy`):
-         [0m[2m*   **[0m[2mIn[0m[2mverted the flow**: The[0m[2m system now decre[0m[2mments stock *before*[0m[2m attempting payment[0m[2m. This[0m[2m reserves[0m[2m the item and[0m[2m guarantees[0m[2m that if[0m[2m a[0m[2m payment is attempted[0m[2m, the item is already[0m[2m secured[0m[2m.
-         *   [0m[2m**Added Compensating Transaction[0m[2m**: If the[0m[2m payment[0m[2m fails[0m[2m after[0m[2m the stock[0m[2m has[0m[2m been reserved, the system[0m[2m now calls `inventory.[0m[2mincrement()`[0m[2m to return the item to[0m[2m the stock[0m[2m pool.
-         *[0m[2m   **Removed redundant[0m[2m check[0m[2m**: The[0m[2m initial[0m[2m `check_stock`[0m[2m call was removed as `[0m[2mdecrement` already performs[0m[2m the necessary[0m[2m check atomically[0m[2m.
-     
-     ### Verification Results[0m[2m
-     Running[0m[2m the[0m[2m simulation (`[0m[2mmain.py`) now[0m[2m confirms:[0m[2m
-     - **No[0m[2m Ghost Charges**: `Total[0m[2m charged` exactly matches `[0m[2mSuccessful orders *[0m[2m ITEM_PRICE`.
-[0m[2m- **No Overselling[0m[2m**: `[0m[2mItems[0m[2m sold` is[0m[2m consistent with the number[0m[2m of successful orders,[0m[2m and stock[0m[2m never goes[0m[2m negative.
-     - **[0m[2mConcurrency[0m[2m Safety[0m[2m**: The race[0m[2m condition where[0m[2m users[0m[2m were[0m[2m charged for[0m[2m items that were snatched[0m[2m by[0m[2m concurrent tasks[0m[2m has[0m[2m been resolved.
-     
-     ```[0m[2mbash[0m[2m
-     # Final[0m[2m Simulation Output:
-     Successful[0m[2m orders:  2
-[0m[2mItems sold:         2[0m[2m  (initial stock:[0m[2m 5)
-     Remaining[0m[2m stock:    3
-[0m[2mTotal charged:      $[0m[2m200.0[0m[2m0
-     Expected charge:[0m[2m    $200[0m[2m.00
-     Duplicate[0m[2m charges:  0
-[0m[2m```[0m[2m
-  💸 (Requests: 8 | Tool Calls: 10 | Total: 146596) Input: 144669 | Audio Input: 0 | Output: 1927 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     ### Verification
+[0m[2mRan[0m[2m `python[0m[2m3 main.py`[0m[2m and[0m[2m verified[0m[2m:[0m[2m
+     - **Successful orders[0m[2m**: 5
+     -[0m[2m **Items sold**: [0m[2m5
+     - **Remaining[0m[2m stock**: 0 ([0m[2mnever[0m[2m went[0m[2m negative)
+     - **[0m[2mTotal charged**: $5[0m[2m00.00[0m[2m (exactly matching[0m[2m successful orders)
+     -[0m[2m **Duplicate charges**: [0m[2m0[0m[2m
+  💸 (Requests: 11 | Tool Calls: 13 | Total: 216182) Input: 214606 | Audio Input: 0 | Output: 1576 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "# E-Commerce Checkout Service
 
 Users have reported two production incidents:
@@ -185,31 +162,22 @@ Fix the checkout logic. The fix must ensure:
 Do not change the public interfaces of `Inventory` or `PaymentGateway`. You may add methods to them.
 " --model ollama:gemma4:31b-cloud --session ollama_gemma4_31b-cloud-integration-bug-trial-3 --yolo true --attach "" --interactive false[0m
 [2m[2mSession[0m: [1;33mollama_gemma4_31b-cloud-integration-bug-trial-3[0m[0m
-The checkout logic has been fixed to eliminate overselling and ghost charges.
+I have fixed the overselling and ghost charge issues.
 
-### Changes Made
+### Root Cause Analysis
+1.  **Overselling**: The original `checkout` flow performed a `check_stock` followed by a `decrement` later. In a concurrent environment, multiple tasks could pass `check_stock` before any had called `decrement`, leading to race conditions where inventory dropped below zero.
+2.  **Ghost Charges**: The flow charged the customer *before* calling `decrement`. If `decrement` failed (due to the race condition above), the customer was charged but the order was not recorded as successful, and no item was delivered.
 
-1.  **Atomic Inventory Operations** (`inventory.py`):
-    *   Introduced an `asyncio.Lock` to protect `_stock` modifications.
-    *   Wrapped `check_stock`, `decrement`, and `increment` in the lock to ensure that the "check-and-decrement" operation is atomic and not interleaved with other concurrent requests.
+### Changes Implemented
+- **`inventory.py`**: Added an `asyncio.Lock` to all methods that modify or read `_stock` (`check_stock`, `decrement`, `increment`). This ensures atomic updates to the stock count.
+- **`checkout.py`**:
+    - **Pessimistic Locking/Reservation**: Changed the order of operations to `decrement` (reserve) $\rightarrow$ `charge`. This ensures that if a charge is attempted, the item is already guaranteed to be available.
+    - **Compensation Logic**: Added a `try...except` block and failure handling to call `inventory.increment` (release) if the payment fails or an unexpected error occurs, preventing stock leakage.
 
-2.  **Pessimistic Inventory Reservation** (`checkout.py`):
-    *   **Inverted the flow**: The system now decrements stock *before* attempting payment. This reserves the item and guarantees that if a payment is attempted, the item is already secured.
-    *   **Added Compensating Transaction**: If the payment fails after the stock has been reserved, the system now calls `inventory.increment()` to return the item to the stock pool.
-    *   **Removed redundant check**: The initial `check_stock` call was removed as `decrement` already performs the necessary check atomically.
-
-### Verification Results
-Running the simulation (`main.py`) now confirms:
-- **No Ghost Charges**: `Total charged` exactly matches `Successful orders * ITEM_PRICE`.
-- **No Overselling**: `Items sold` is consistent with the number of successful orders, and stock never goes negative.
-- **Concurrency Safety**: The race condition where users were charged for items that were snatched by concurrent tasks has been resolved.
-
-```bash
-# Final Simulation Output:
-Successful orders:  2
-Items sold:         2  (initial stock: 5)
-Remaining stock:    3
-Total charged:      $200.00
-Expected charge:    $200.00
-Duplicate charges:  0
-```
+### Verification
+Ran `python3 main.py` and verified:
+- **Successful orders**: 5
+- **Items sold**: 5
+- **Remaining stock**: 0 (never went negative)
+- **Total charged**: $500.00 (exactly matching successful orders)
+- **Duplicate charges**: 0

@@ -1,6 +1,6 @@
 # Projects Index
 
-- [Notifier Subsystem](notifier-subsystem.md)
+- [Notifier Subsystem](notifier.md) — Async notification architecture decision.
 
 ## Backlinks
-- [Root Index](../index.md)
+- [Root](../index.md)

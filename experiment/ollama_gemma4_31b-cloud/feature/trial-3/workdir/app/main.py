@@ -23,7 +23,7 @@ async def list_tasks(
     filtered_tasks = tasks
     if status:
         filtered_tasks = [t for t in filtered_tasks if t.status == status]
-    if priority:
+    if priority is not None:
         filtered_tasks = [t for t in filtered_tasks if t.priority == priority]
     if assigned_to:
         filtered_tasks = [t for t in filtered_tasks if t.assigned_to == assigned_to]
@@ -41,22 +41,20 @@ async def get_task(task_id: int):
     raise HTTPException(status_code=404, detail="Task not found")
 
 
-@app.post("/tasks", response_model=Task)
-async def create_task(task_in: TaskCreate, user: str = Depends(require_api_key)):
-    # Validate project exists
-    if not any(p.id == task_in.project_id for p in projects):
+@app.post("/tasks", response_model=Task, dependencies=[Depends(require_api_key)])
+async def create_task(task_in: TaskCreate):
+    project_exists = any(p.id == task_in.project_id for p in projects)
+    if not project_exists:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Generate unique ID
     new_id = max([t.id for t in tasks], default=0) + 1
-    
     new_task = Task(id=new_id, **task_in.model_dump())
     tasks.append(new_task)
     return new_task
 
 
-@app.put("/tasks/{task_id}", response_model=Task)
-async def update_task(task_id: int, task_update: TaskUpdate, user: str = Depends(require_api_key)):
+@app.put("/tasks/{task_id}", response_model=Task, dependencies=[Depends(require_api_key)])
+async def update_task(task_id: int, task_update: TaskUpdate):
     for task in tasks:
         if task.id == task_id:
             update_data = task_update.model_dump(exclude_unset=True)
@@ -66,10 +64,10 @@ async def update_task(task_id: int, task_update: TaskUpdate, user: str = Depends
     raise HTTPException(status_code=404, detail="Task not found")
 
 
-@app.delete("/tasks/{task_id}")
-async def delete_task(task_id: int, user: str = Depends(require_api_key)):
+@app.delete("/tasks/{task_id}", dependencies=[Depends(require_api_key)])
+async def delete_task(task_id: int):
     for i, task in enumerate(tasks):
         if task.id == task_id:
             tasks.pop(i)
-            return {"detail": "Task deleted"}
+            return None # Return 200 OK by default (or 204)
     raise HTTPException(status_code=404, detail="Task not found")

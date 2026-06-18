@@ -5,6 +5,6 @@ from app.auth import legacy_auth
 
 def handle_0(user_id: str) -> dict:
     """Authorized endpoint."""
-    if not legacy_auth(user_id):
+    if not new_auth(user_id, scope="read"):
         return {}
     return {'ok': True}

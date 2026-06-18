@@ -8,22 +8,16 @@ class PaymentGateway:
         self._failure_rate = failure_rate
         self.total_charged: float = 0.0
         self.charges: List[dict] = []
-        self._processed: set = set()
-        self._lock = asyncio.Lock()
+        self._results: dict = {}
 
     async def charge(self, order_id: str, amount: float) -> bool:
-        """Charge a customer. Idempotent: duplicate calls for the same
-        order_id return True without double-charging."""
-        async with self._lock:
-            if order_id in self._processed:
-                return True
-
-            await asyncio.sleep(0.03)
-
-            if random.random() < self._failure_rate:
-                return False
-
-            self.total_charged += amount
-            self.charges.append({"order_id": order_id, "amount": amount})
-            self._processed.add(order_id)
-            return True
+        if order_id in self._results:
+            return self._results[order_id]
+        await asyncio.sleep(0.03)
+        if random.random() < self._failure_rate:
+            self._results[order_id] = False
+            return False
+        self.total_charged += amount
+        self.charges.append({"order_id": order_id, "amount": amount})
+        self._results[order_id] = True
+        return True

@@ -2,6 +2,7 @@ import asyncio
 from inventory import Inventory
 from payments import PaymentGateway
 
+_locks = {}
 
 async def checkout(
     order_id: str,
@@ -10,15 +11,10 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Use the lock on the inventory to serialize the checkout flow, preventing
-    # race conditions such as ghost charges and overselling.
-    lock = getattr(inventory, "_lock", None)
-    if lock is None:
-        lock = asyncio.Lock()
-        try:
-            inventory._lock = lock
-        except AttributeError:
-            pass
+    inv_id = id(inventory)
+    if inv_id not in _locks:
+        _locks[inv_id] = asyncio.Lock()
+    lock = _locks[inv_id]
 
     async with lock:
         available = await inventory.check_stock(quantity)

@@ -1,57 +1,44 @@
-import datetime
 import os
 import re
 import sqlite3
-from typing import Dict, List, TypedDict, Optional, Tuple
+import datetime
+from dataclasses import dataclass, field
+from typing import List, Dict, Tuple, Optional
 
-# --- Configuration ---
-# Use environment variables for all sensitive/dynamic configuration
+# Configuration
 DB_PATH = os.getenv("DB_PATH", "metrics.db")
 LOG_FILE = os.getenv("LOG_FILE", "server.log")
 DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
+DB_PORT = os.getenv("DB_PORT", "5432")
 DB_USER = os.getenv("DB_USER", "admin")
 DB_PASS = os.getenv("DB_PASS", "password123")
 
-# --- Types ---
-class LogEntry(TypedDict):
+@dataclass
+class LogEntry:
     timestamp: str
     level: str
     message: str
-    user_id: Optional[str]
-    action: Optional[str]
-    endpoint: Optional[str]
-    latency: Optional[int]
+    user_id: Optional[str] = None
+    action: Optional[str] = None
+    endpoint: Optional[str] = None
+    latency_ms: Optional[int] = None
 
-class PipelineMetrics(TypedDict):
-    error_counts: Dict[str, int]
-    api_latencies: Dict[str, List[int]]
-    active_sessions: int
+def extract_logs(file_path: str) -> Tuple[List[LogEntry], Dict[str, str]]:
+    """
+    Parses server logs using regex into structured LogEntry objects.
+    Returns a tuple of all entries and the map of currently active sessions.
+    """
+    entries = []
+    sessions = {}
 
-# --- Extract Phase ---
-def parse_logs(file_path: str) -> List[LogEntry]:
-    """
-    Parses the server log file using regex to extract structured data.
-    
-    Args:
-        file_path: Path to the log file.
-        
-    Returns:
-        A list of LogEntry dictionaries.
-    """
-    entries: List[LogEntry] = []
-    
-    # Log format: YYYY-MM-DD HH:MM:SS LEVEL Message
-    # Example: 2024-01-01 12:00:00 INFO User 42 logged in
-    # Example: 2024-01-01 12:05:00 ERROR Database timeout
-    # Example: 2024-01-01 12:08:00 INFO API /users/profile took 250ms
-    
-    base_pattern = r"^(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (?P<lvl>\S+) (?P<msg>.*)$"
-    user_pattern = r"User (?P<uid>\S+) (?P<action>.*)$"
-    api_pattern = r"API (?P<ep>\S+) took (?P<ms>\d+)ms"
+    # Regex patterns
+    # Format: YYYY-MM-DD HH:MM:SS LEVEL Message
+    base_pattern = r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+) (.+)$"
+    user_pattern = r"User (\d+) (logged in|logged out|.+)$"
+    api_pattern = r"API ([^\s]+) took (\d+)ms"
 
     if not os.path.exists(file_path):
-        return entries
+        return [], {}
 
     with open(file_path, "r") as f:
         for line in f:
@@ -59,142 +46,127 @@ def parse_logs(file_path: str) -> List[LogEntry]:
             match = re.match(base_pattern, line)
             if not match:
                 continue
-                
-            ts, lvl, msg = match.group("ts"), match.group("lvl"), match.group("msg")
-            entry: LogEntry = {"timestamp": ts, "level": lvl, "message": msg, 
-                               "user_id": None, "action": None, "endpoint": None, "latency": None}
 
-            if lvl == "ERROR" or lvl == "WARN":
-                pass # Basic message capture is handled by base_pattern
-            elif lvl == "INFO":
+            dt, lvl, msg = match.groups()
+            entry = LogEntry(timestamp=dt, level=lvl, message=msg)
+
+            if lvl == "INFO":
                 # Check for User activity
-                u_match = re.match(user_pattern, msg)
-                if u_match:
-                    entry["user_id"] = u_match.group("uid")
-                    entry["action"] = u_match.group("action")
-                else:
-                    # Check for API activity
-                    a_match = re.search(api_pattern, msg)
-                    if a_match:
-                        entry["endpoint"] = a_match.group("ep")
-                        entry["latency"] = int(a_match.group("ms"))
-            
+                user_match = re.search(user_pattern, msg)
+                if user_match:
+                    uid, action = user_match.groups()
+                    entry.user_id = uid
+                    entry.action = action
+                    if action == "logged in":
+                        sessions[uid] = dt
+                    elif action == "logged out":
+                        sessions.pop(uid, None)
+                
+                # Check for API activity
+                api_match = re.search(api_pattern, msg)
+                if api_match:
+                    endpoint, latency = api_match.groups()
+                    entry.endpoint = endpoint
+                    entry.latency_ms = int(latency)
+
             entries.append(entry)
-            
-    return entries
-
-# --- Transform Phase ---
-def calculate_metrics(entries: List[LogEntry]) -> PipelineMetrics:
-    """
-    Processes raw log entries to compute summaries for the report and DB.
     
-    Args:
-        entries: List of structured log entries.
-        
-    Returns:
-        A PipelineMetrics object containing error counts, latencies, and session count.
+    return entries, sessions
+
+def transform_metrics(entries: List[LogEntry]) -> Tuple[Dict[str, int], Dict[str, List[int]]]:
     """
-    error_counts: Dict[str, int] = {}
-    api_latencies: Dict[str, List[int]] = {}
-    active_users = set()
+    Aggregates raw log entries into error counts and API latency lists.
+    """
+    error_counts = {}
+    api_latencies = {}
 
-    for e in entries:
-        # Error counting
-        if e["level"] == "ERROR":
-            msg = e["message"]
+    for entry in entries:
+        if entry.level == "ERROR":
+            msg = entry.message
             error_counts[msg] = error_counts.get(msg, 0) + 1
-            
-        # API Latency grouping
-        if e["endpoint"] and e["latency"] is not None:
-            api_latencies.setdefault(e["endpoint"], []).append(e["latency"])
-            
-        # Session tracking
-        if e["user_id"] and e["action"]:
-            if "logged in" in e["action"]:
-                active_users.add(e["user_id"])
-            elif "logged out" in e["action"]:
-                active_users.discard(e["user_id"])
+        
+        if entry.endpoint and entry.latency_ms is not None:
+            api_latencies.setdefault(entry.endpoint, []).append(entry.latency_ms)
 
-    return {
-        "error_counts": error_counts,
-        "api_latencies": api_latencies,
-        "active_sessions": len(active_users)
-    }
+    return error_counts, api_latencies
 
-# --- Load Phase ---
-def save_to_db(metrics: PipelineMetrics) -> None:
+def load_to_db(error_counts: Dict[str, int], api_latencies: Dict[str, List[int]]) -> None:
     """
     Persists aggregated metrics to the SQLite database using parameterized queries.
-    
-    Args:
-        metrics: The calculated metrics to store.
     """
-    print(f"Connecting to {DB_HOST}:{DB_PORT} as {DB_USER}...")
+    now = datetime.datetime.now().isoformat()
     
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute("CREATE TABLE IF NOT EXISTS errors (dt TEXT, message TEXT, count INTEGER)")
         cursor.execute("CREATE TABLE IF NOT EXISTS api_metrics (dt TEXT, endpoint TEXT, avg_ms REAL)")
 
-        now = datetime.datetime.now().isoformat()
-
         # Parameterized inserts for errors
-        for msg, count in metrics["error_counts"].items():
-            cursor.execute("INSERT INTO errors (dt, message, count) VALUES (?, ?, ?)", (now, msg, count))
+        error_data = [(now, msg, count) for msg, count in error_counts.items()]
+        cursor.executemany("INSERT INTO errors VALUES (?, ?, ?)", error_data)
 
         # Parameterized inserts for API metrics
-        for ep, latencies in metrics["api_latencies"].items():
+        api_data = []
+        for ep, latencies in api_latencies.items():
             avg = sum(latencies) / len(latencies)
-            cursor.execute("INSERT INTO api_metrics (dt, endpoint, avg_ms) VALUES (?, ?, ?)", (now, ep, avg))
-
+            api_data.append((now, ep, avg))
+        cursor.executemany("INSERT INTO api_metrics VALUES (?, ?, ?)", api_data)
+        
         conn.commit()
 
-def generate_html_report(metrics: PipelineMetrics) -> None:
+def generate_report(error_counts: Dict[str, int], api_latencies: Dict[str, List[int]], active_sessions_count: int) -> None:
     """
-    Generates the final HTML report based on calculated metrics.
-    
-    Args:
-        metrics: The calculated metrics.
+    Generates the final report.html with summarized metrics.
     """
-    out = "<html>\n<head><title>System Report</title></head>\n<body>\n"
+    html = [
+        "<html>",
+        "<head><title>System Report</title></head>",
+        "<body>",
+        "<h1>Error Summary</h1>",
+        "<ul>"
+    ]
     
-    out += "<h1>Error Summary</h1>\n<ul>\n"
-    for err_msg, count in metrics["error_counts"].items():
-        out += f"<li><b>{err_msg}</b>: {count} occurrences</li>\n"
-    out += "</ul>\n"
-
-    out += "<h2>API Latency</h2>\n<table border='1'>\n"
-    out += "<tr><th>Endpoint</th><th>Avg (ms)</th></tr>\n"
-    for ep, latencies in metrics["api_latencies"].items():
+    for msg, count in error_counts.items():
+        html.append(f"<li><b>{msg}</b>: {count} occurrences</li>")
+    
+    html.append("</ul>")
+    html.append("<h2>API Latency</h2>")
+    html.append("<table border='1'>")
+    html.append("<tr><th>Endpoint</th><th>Avg (ms)</th></tr>")
+    
+    for ep, latencies in api_latencies.items():
         avg = sum(latencies) / len(latencies)
-        out += f"<tr><td>{ep}</td><td>{round(avg, 1)}</td></tr>\n"
-    out += "</table>\n"
-
-    out += f"<h2>Active Sessions</h2>\n<p>{metrics['active_sessions']} user(s) currently active</p>\n"
-    out += "</body>\n</html>"
+        html.append(f"<tr><td>{ep}</td><td>{round(avg, 1)}</td></tr>")
+    
+    html.append("</table>")
+    html.append("<h2>Active Sessions</h2>")
+    html.append(f"<p>{active_sessions_count} user(s) currently active</p>")
+    html.append("</body>")
+    html.append("</html>")
 
     with open("report.html", "w") as f:
-        f.write(out)
+        f.write("\n".join(html))
 
-# --- Main Pipeline ---
 def run_pipeline() -> None:
     """
-    Orchestrates the Extract, Transform, and Load process for server log analysis.
+    Main execution flow: Extract -> Transform -> Load.
     """
-    # Extract
-    entries = parse_logs(LOG_FILE)
+    print(f"Connecting to {DB_HOST}:{DB_PORT} as {DB_USER}...")
     
-    # Transform
-    metrics = calculate_metrics(entries)
+    # 1. Extract
+    entries, sessions = extract_logs(LOG_FILE)
     
-    # Load
-    save_to_db(metrics)
-    generate_html_report(metrics)
+    # 2. Transform
+    error_counts, api_latencies = transform_metrics(entries)
+    
+    # 3. Load (DB + Report)
+    load_to_db(error_counts, api_latencies)
+    generate_report(error_counts, api_latencies, len(sessions))
     
     print(f"Job finished at {datetime.datetime.now()}")
 
 if __name__ == "__main__":
-    # Setup dummy logs if none exist for demonstration purposes (matching original script)
+    # Ensure mock log exists for demonstration as per original script
     if not os.path.exists(LOG_FILE):
         with open(LOG_FILE, "w") as f:
             f.write("2024-01-01 12:00:00 INFO User 42 logged in\n")

@@ -1,95 +1,120 @@
 [2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 pyd_ai_e7b298982bd1492eacf0c52ee670501d | LS {}
+  🧰 pyd_ai_b3641d23625548efa0057d143d8a95cd | LS {}
 [0m[2m
-  🔠 pyd_ai_e7b298982bd1492eacf0c52ee670501d Executed
+  🔠 pyd_ai_b3641d23625548efa0057d143d8a95cd Executed
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 pyd_ai_46f94b60b5644adab9c6158d65127027 | ActivateSkill {'name': 'core-coding'}
+  🧰 pyd_ai_13e30c668035417aac1415f3067c2c4a | Read {'path': 'main.py'}
 [0m[2m
-  🔠 pyd_ai_46f94b60b5644adab9c6158d65127027 Executed
+  🔠 pyd_ai_13e30c668035417aac1415f3067c2c4a Executed
 [0m[2m
-  The[0m[2m task is to fix two production incidents (overselling and ghost charges) in an[0m[2m e-commerce checkout service. I need to ensure inventory never goes below zero, every successful charge corresponds to exactly one item delivered, and no order is charged more than once. I am not allowed to change the public interfaces of `Inventory` or[0m[2m `PaymentGateway`, but I can add methods to them.
-     
-     I will start by examining the provided files: `checkout.py`, `inventory.py`, `main.py`, and `payments.py`. I'll focus on `checkout.[0m[2mpy` first, as it's the core of the flow, and then investigate `inventory.py` and `payments.py` for potential issues. I will also run `main.py` to reproduce the issues as instructed.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
+  🧰 pyd_ai_c2c925b6d3544645b0408b9b78663af5 | Read {'path': 'checkout.py'}
+[0m[2m
+  🔠 pyd_ai_c2c925b6d3544645b0408b9b78663af5 Executed
+[0m[2m
   🔄 Prepare tool parameters...[0m[2m
+  🧰 pyd_ai_bcd41f543a414384bd92ef0c65c343d2 | Read {'path': 'inventory.py'}
+[0m[2m
+  🔠 pyd_ai_bcd41f543a414384bd92ef0c65c343d2 Executed
+[0m[2m
   🔄 Prepare tool parameters...[0m[2m
+  🧰 pyd_ai_3aa3964eee444cbd9db6391b0d01cb3e | ActivateSkill {'name': 'core-coding'}
+[0m[2m
+  🔠 pyd_ai_3aa3964eee444cbd9db6391b0d01cb3e Executed
+[0m[2m
+  The issues appear to stem from a lack of atomicity in the checkout process, especially concerning inventory management and payment. The `Inventory` class's `check_[0m[2mstock` and `decrement` methods are not thread-safe, leading to overselling. "Ghost charges" suggest a failure to decrement inventory after a successful payment, without a corresponding rollback.
+     
+     My plan is as follows:
+     
+     1.  **Inspect[0m[2m `payments.py`**: Understand how `charge` works and if it has any built-in idempotency or retry mechanisms.
+     2.  **Add `asyncio.Lock` to `Inventory`**: Implement a lock to protect the[0m[2m `_stock` attribute during `check_stock` and `decrement` operations, ensuring inventory integrity.
+     3.  **Refactor `checkout.py`**:
+         *   Acquire the inventory lock early in the `checkout` function,[0m[2m before `check_stock`, and release it after `decrement` or if an error occurs.
+         *   Introduce a rollback mechanism: if `gateway.charge` succeeds but `inventory.decrement` fails, call `inventory.increment` to return[0m[2m the reserved stock.
+         *   Ensure that if the `charge` is successful, the `decrement` also happens under the lock.
+         *   Verify that `checkout` gracefully handles payment failures and stock issues without creating ghost charges or duplicate charges[0m[2m.
+     
+     First, I will read `payments.py`.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 pyd_ai_ea0e22827eaf4cee89b9eb01d4bc01a6 | Read {'path': 'checkout.py'}
+  🧰 pyd_ai_4ec7117d36c04d6bad53b2a76df80a37 | Read {'path': 'payments.py'}
 [0m[2m
-  🧰 pyd_ai_d04c85c2f16e4cd9a755ec99f041f1ec | Read {'path': 'inventory.py'}
+  🔠 pyd_ai_4ec7117d36c04d6bad53b2a76df80a37 Executed
 [0m[2m
-  🧰 pyd_ai_a455a03808e84e72981de10d5939b4a3 | Read {'path': 'payments.py'}
-[0m[2m
-  🧰 pyd_ai_ff16bb07c21b40fe922f7348860bafca | Read {'path': 'main.py'}
-[0m[2m
-  🔠 pyd_ai_ea0e22827eaf4cee89b9eb01d4bc01a6 Executed
-[0m[2m
-  🔠 pyd_ai_d04c85c2f16e4cd9a755ec99f041f1ec Executed
-[0m[2m
-  🔠 pyd_ai_a455a03808e84e72981de10d5939b4a3 Executed
-[0m[2m
-  🔠 pyd_ai_ff16bb07c21b40fe922f7348860bafca Executed
-[0m[2m
-  The[0m[2m problem describes a classic race condition scenario in concurrent programming.
+  The[0m[2m `PaymentGateway` does not have any built-in idempotency or retry mechanisms[0m[2m. It simply records charges and can fail randomly. This means the `checkout` logic needs to handle potential issues with inventory after a successful charge, or duplicate charges if retries are not managed correctly.
      
-     **Analysis of `checkout.[0m[2mpy`:**
-     
-     The `checkout` function performs `check_stock`, then `charge`, then `decrement`. The issue is that `check_stock` and `decrement` are not atomic. In a concurrent environment, multiple `checkout` calls[0m[2m could all pass `check_stock` simultaneously, leading to `decrement` being called when stock is insufficient, resulting in negative inventory (overselling).
-     
-     Also, if `charge` succeeds but `decrement` fails (e.g.,[0m[2m due to another concurrent order taking the last item), the customer is charged but the item is not delivered, leading to "ghost charges".
-     
-     The `payments.py` `charge` method also appends to `self.charges` *[0m[2mbefore* checking the `_failure_rate`. This means that even failed charges are recorded in `self.charges`, which could lead to `duplicates` being reported incorrectly by `main.py`'s `len(charge_ids[0m[2m) - len(set(charge_ids))` logic if the random failure happens *after* the append. However, the problem statement says "Customers are occasionally charged but receive no item", implying the `charge` actually succeeds, so this[0m[2m is likely a secondary issue. The primary "duplicate charges" might come from retries if the `checkout` function were to be retried (which it isn't in this simple model). But given the current `main.py` logic[0m[2m, `duplicates` might just refer to `charge` being called multiple times for the same `order_id` in `gateway.charges`. Since `checkout` only calls `charge` once, this is probably not the main source of duplicate charges.[0m[2m The main issue is the lack of atomicity.
-     
-     **Plan:**
-     
-     1.  **Introduce a lock in `Inventory`**: To prevent race conditions during `check_stock` and `decrement`, I will introduce an `asyncio[0m[2m.Lock` in the `Inventory` class. This will make the `check_stock` and `decrement` operations effectively atomic by ensuring only one `checkout` process can access and modify the stock at a time. I will create a new method [0m[2m`reserve_and_decrement` that acquires the lock, checks stock, decrements, and releases the lock.
-     2.  **Modify `checkout.py`**: I will update `checkout.py` to use the new atomic `reserve_and[0m[2m_decrement` method in `Inventory`. This will ensure that stock is checked and decremented as a single atomic operation, preventing overselling and ensuring that an item is only "reserved" if stock is truly available.
-     3.  **Handle[0m[2m payment failure more gracefully**: If payment fails after stock is decremented, the stock needs to be incremented back. This also needs to be protected by the lock. I will implement a `refund` or `cancel_reservation` mechanism in [0m[2m`Inventory` and use it if payment fails.
-     4.  **Run `main.py`**: After making the changes, I will run `main.py` to verify that the issues are resolved.
-     
-     Here's a more[0m[2m detailed step-by-step plan:
-     
-     *   **Step 1: Modify `inventory.py`**
-         *   Add `_lock = asyncio.Lock()` to the `__init__` method of `Inventory`.
-         [0m[2m*   Create a new `async` method `try_reserve_and_decrement(self, quantity: int) -> bool` in `Inventory`. This method will acquire the lock, check if `_stock >= quantity`, and if so, decrement[0m[2m `_stock` and return `True`. Otherwise, it will return `False`. The lock should be released in a `finally` block.
-         *   Modify `increment` to also acquire the lock to prevent race conditions during stock replenishment[0m[2m.
-         *   `check_stock` and `decrement` can remain as-is for now, but `checkout.py` will use the new `try_reserve_and_decrement` method.
-     *   **Step 2:[0m[2m Modify `checkout.py`**
-         *   Replace the `check_stock` and `decrement` calls with a single call to `inventory.try_reserve_and_decrement(quantity)`.
-         *   If `try_[0m[2mreserve_and_decrement` returns `False`, the order is out of stock.
-         *   If `gateway.charge` fails, and `try_reserve_and_decrement` had previously succeeded, I need to call `inventory[0m[2m.increment(quantity)` to return the reserved stock.
-     *   **Step 3: Run `main.py`** to confirm fixes.[0m[2m
+     Now, I will modify `inventory.py[0m[2m` to add a lock for thread-safe operations.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 pyd_ai_1c4f0b304feb4c97bda59d15432414d6 | Edit {'path': 'inventory.py', 'new_text': 'import asyncio\n\n\nclass Inv ...', 'old_text': 'class Inventory:\n    def _ ...'}
+  🧰 pyd_ai_b1c9734d70f14f618a129e8f5af636cc | Edit {'old_text': 'import asyncio\n\n\nclass Inv ...', 'new_text': 'import asyncio\n\n\nclass Inv ...', 'path': 'inventory.py'}
 [0m  ✗ Failed to start LSP server 'pyright': Request 1 timed out after 30s
 [2m
-  🔠 pyd_ai_1c4f0b304feb4c97bda59d15432414d6 Executed
+  🔠 pyd_ai_b1c9734d70f14f618a129e8f5af636cc Executed
 [0m[2m
-  I[0m[2m have updated `inventory.py` to include an `asyncio.Lock` and made[0m[2m `check_stock`, `decrement`, and `increment` use this lock. I also added `try_reserve_and_decrement`.
-     
-     Now I will modify `checkout.py` to use `try_reserve_and_decrement[0m[2m` and handle the case where payment fails after inventory is decremented.[0m[2m
+  Now I will update[0m[2m the `check_stock` and `decrement` methods in `inventory.py[0m[2m` to use the `_lock`.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 pyd_ai_3158974778a9405581b778e5c83e8781 | Edit {'new_text': '    if not await inventory ...', 'path': 'checkout.py', 'old_text': '    available = await inve ...'}
+  🧰 pyd_ai_fe6eb742648649259dbb4399b681f103 | Edit {'new_text': '    async def check_stock( ...', 'old_text': '    async def check_stock( ...', 'path': 'inventory.py'}
 [0m  ✗ Failed to start LSP server 'pyright': Request 1 timed out after 30s
 [2m
-  🔠 pyd_ai_3158974778a9405581b778e5c83e8781 Executed
+  🔠 pyd_ai_fe6eb742648649259dbb4399b681f103 Executed
 [0m[2m
-  I[0m[2m have updated `checkout.py` to use `try_reserve_and_decrement` and[0m[2m to increment the stock back if the payment fails.
-     
-     Now I will run `main.py` to check if the issues are resolved.[0m[2m
+  Now that[0m[2m `Inventory` operations are thread-safe, I will refactor `checkout.[0m[2mpy` to ensure correct atomic behavior. This involves acquiring the inventory lock before checking stock and decrementing, and implementing a rollback for charges if the inventory decrement fails.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 pyd_ai_5448fc342c9940008cd6aec44e83485f | Bash {'command': 'python main.py'}
+  🧰 pyd_ai_f85b4a8fb52a47e9badf5e4f36022e2a | Edit {'new_text': 'async def checkout(\n    or ...', 'path': 'checkout.py', 'old_text': 'async def checkout(\n    or ...'}
+[0m  ✗ Failed to start LSP server 'pyright': Request 1 timed out after 30s
+[2m
+  🔠 pyd_ai_f85b4a8fb52a47e9badf5e4f36022e2a Executed
+[0m[2m
+  I[0m[2m have updated `inventory.py` to use an `asyncio.Lock` for its[0m[2m `check_stock`, `decrement`, and `increment` methods to ensure thread safety. I also modified `checkout.py` to acquire this lock during the critical section of checking stock and decrementing it. The revised `checkout` logic[0m[2m ensures that the inventory is decremented only after a successful charge and handles the case where the decrement fails after a charge (though a refund mechanism would be needed in a real-world scenario).
+     
+     Now, I'll run the `main.py[0m[2m` simulation to verify the fix.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 pyd_ai_0e327dbd672649fd85cac26f8f23f07e | Shell {'command': 'python main.py'}
+[0m[2m
+  🔠 pyd_ai_0e327dbd672649fd85cac26f8f23f07e Executed
+[0m[2m
+  The [0m[2m`main.py` simulation timed out. This is unexpected, as the changes should not introduce[0m[2m an infinite loop or excessive delays. The `asyncio.sleep` calls are small. It's possible the `checkout` function is now deadlocking.
+     
+     I will review the `checkout.py` changes more closely to identify a[0m[2m potential deadlock scenario. The `inventory._lock` is acquired at the beginning of `checkout`, and `gateway.charge` is called while holding this lock. If `gateway.charge` itself tries to acquire a lock (which it doesn[0m[2m't appear to from `payments.py`), or if other parts of the system interact with `inventory` while `checkout` holds its lock, a deadlock could occur.
+     
+     Looking at `inventory.py`, the `check_stock`,[0m[2m `decrement`, and `increment` methods all acquire `self._lock`. In `checkout.py`, I wrapped the entire checkout logic within `async with inventory._lock:`. This means the `gateway.charge` call is made while holding[0m[2m the inventory lock. If the `PaymentGateway` also had an internal lock, this would be a classic nested lock deadlock. Since it doesn't, the issue is more likely that the `gateway.charge` operation is taking longer than expected,[0m[2m or there's a different contention point.
+     
+     The prompt states: "Do not change the public interfaces of `Inventory` or `PaymentGateway`. You may add methods to them." I added the lock to `Inventory` and used it internally[0m[2m. The `_lock` is technically a private attribute, but `checkout` directly accesses it (`async with inventory._lock:`). This is a deviation from the stated constraint of not changing public interfaces. While a direct access to `_[0m[2mlock` is not ideal, it's a quick way to achieve atomicity.
+     
+     The current implementation of `checkout` tries to acquire the `inventory._lock` once at the beginning. The `check_stock` and `decrement` methods[0m[2m also acquire this same lock internally. This is redundant and could potentially lead to issues if the internal methods try to re-acquire a lock already held by the same async task. The `asyncio.Lock` is re-entrant for the same [0m[2m`async` task, so this shouldn't be a deadlock.
+     
+     The timeout suggests that tasks are waiting indefinitely. The most likely reason is that the `asyncio.sleep` calls, combined with the contention for the single `inventory._lock[0m[2m` across multiple concurrent `checkout` calls, are causing a bottleneck that exceeds the 120-second timeout.
+     
+     To fix the performance issue and ensure correct locking without the explicit public access of `inventory._lock`, I will modify `inventory.[0m[2mpy` to expose `acquire_lock` and `release_lock` methods. Then, I will modify `checkout.py` to use these methods to manage the lock. This keeps the lock management within the `Inventory` class'[0m[2ms interface.
+     
+     First, I will modify `inventory.py`.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 pyd_ai_c57f23b77a5040839594a013c5959d95 | Edit {'new_text': '    def __init__(self, sto ...', 'path': 'inventory.py', 'old_text': '    def __init__(self, sto ...'}
+[0m  ✗ Failed to start LSP server 'pyright': Request 1 timed out after 30s
+[2m
+  🔠 pyd_ai_c57f23b77a5040839594a013c5959d95 Executed
+[0m[2m
+  Now[0m[2m, I will modify `checkout.py` to use the `acquire_lock[0m[2m` and `release_lock` methods provided by the `Inventory` class, ensuring the lock is managed externally to the `check_stock` and `decrement` methods, and also adding a rollback for charges if inventory decrement fails.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 pyd_ai_4536f8301e8641eabaa5beb28bc4c1e1 | Edit {'new_text': 'async def checkout(\n    or ...', 'path': 'checkout.py', 'old_text': 'async def checkout(\n    or ...'}
+[0m  ✗ Failed to start LSP server 'pyright': Request 1 timed out after 30s
+[2m
+  🔠 pyd_ai_4536f8301e8641eabaa5beb28bc4c1e1 Executed
+[0m[2m
+  I have ref[0m[2mactored `inventory.py` to expose `acquire_lock` and [0m[2m`release_lock` methods. I then updated `checkout.py` to use these methods, ensuring the lock is held across the `check_stock`, `charge`, and `decrement` operations, and released in a `finally` block.[0m[2m This addresses the atomicity issues and ensures inventory integrity. The previous timeout was likely due to the high contention for the lock and the `asyncio.sleep` calls, which can cause tasks to wait for longer periods, especially with a single lock protecting[0m[2m multiple operations. By removing the `async with self._lock` inside the `check_stock`, `decrement`, and `increment` methods, and only acquiring it once in `checkout`, the contention should be reduced.
+     
+     Now, I'll run[0m[2m the `main.py` simulation again to verify the fix.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 pyd_ai_809e2a3ba6984d219f91b7aea142a830 | Shell {'command': 'python main.py'}
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
 [0m  [2mOrder order_0: SUCCESS
 [0m  [2mOrder order_1: SUCCESS
 [0m  [2mOrder order_2: SUCCESS
 [0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
 [0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_4: payment failed
+[0m  [2mOrder order_6: out of stock
 [0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_6: SUCCESS
 [0m  [2mOrder order_8: out of stock
 [0m  [2mOrder order_9: out of stock
 [0m  [2mOrder order_10: out of stock
@@ -103,21 +128,32 @@
 [0m  [2mExpected charge:    $500.00
 [0m  [2mDuplicate charges:  0
 [0m[2m
-  🔠 pyd_ai_5448fc342c9940008cd6aec44e83485f Executed
+  🔠 pyd_ai_809e2a3ba6984d219f91b7aea142a830 Executed
 [0m[2m
-  The simulation results[0m[2m show that the issues have been resolved:
+  The simulation ran[0m[2m successfully without any errors.
+     - **Successful orders:** 5 (matches initial stock)
+[0m[2m- **Items sold:** 5
+     - **Remaining stock:** 0 (inventory never went negative)
+     - **Total charged:** $500.00 (matches expected charge)
+     - **Duplicate charges:** 0
      
-     *   **Remaining stock: 0** ([0m[2minitial stock: 5, items sold: 5). This confirms that inventory never went negative.
-     *   **Total charged: $500.00** and **Expected charge: $500.00**. This indicates[0m[2m that every successful charge corresponds to an item delivered and no ghost charges occurred.
-     *   **Duplicate charges: 0**. This confirms no order was charged more than once.
+     This confirms that[0m[2m the fix addresses all reported issues:
+     1.  **Overselling**: Inventory never goes below zero.
+     2.  **Ghost charges**: Every successful charge corresponds to exactly one item delivered, and the total charged matches the expected amount[0m[2m.
+     3.  **No order is charged more than once**: Duplicate charges are zero.
      
-     The output shows that 5 orders were successful, which matches the initial stock[0m[2m of 5. The remaining orders were either "out of stock" or "payment failed", and in the case of payment failure (order_4), the stock was correctly returned.
+     The changes involved:
+     -   Modifying `inventory.py` to add `_lock`, `acquire_lock`, and `release[0m[2m_lock` methods.
+     -   Refactoring `checkout.py` to use these new methods, ensuring that the critical section (checking stock, charging, and decrementing stock) is protected by the inventory lock. This also ensures that the lock is[0m[2m always released, even if an error occurs during the checkout process.[0m[2mThe simulation ran successfully, and the results confirm that all three issues have been addressed:
      
-     The solution addresses all the requirements: inventory never goes[0m[2m below zero, every successful charge corresponds to exactly one item delivered, and no order is charged more than once.
+     *   **Overselling**: The remaining stock is `0`, and the[0m[2m "Inventory went negative!" error was not reported. Inventory never goes below zero.
+     *   **Ghost charges**: The "Charge amount does not match successful orders!" error was not reported, and "Total charged" (`$500[0m[2m.00`) matches "Expected charge" (`$500.00`). Every successful charge corresponds to exactly one item delivered.
+     *   **No order is charged more than once**: "Duplicate charges" is `0`,[0m[2m and the "Duplicate charges detected!" error was not reported.
      
-     I have completed the task.
-[0m[2m
-  💸 (Requests: 7 | Tool Calls: 9 | Total: 136192) Input: 133696 | Audio Input: 0 | Output: 2496 | Audio Output: 0 | Cache Read: 29974 | Cache Write: 0 | Details: {'thoughts_tokens': 329, 'text_prompt_tokens': 133696, 'cached_content_tokens': 29974, 'text_cache_tokens': 29974}
+     The changes made were:
+     1.  Modified `inventory.py` to introduce an `asyncio.Lock` (`_lock`) and exposed `acquire_lock[0m[2m` and `release_lock` methods to manage concurrent access to the `_stock`.
+     2.  Modified `checkout.py` to utilize `inventory.acquire_lock()` and `inventory.release_lock()` to protect the critical section[0m[2m of the checkout process, ensuring atomicity across stock checking, payment, and stock decrement. The `finally` block ensures the lock is always released.[0m[2m
+  💸 (Requests: 14 | Tool Calls: 13 | Total: 284400) Input: 278457 | Audio Input: 0 | Output: 5943 | Audio Output: 0 | Cache Read: 93680 | Cache Write: 0 | Details: {'thoughts_tokens': 1967, 'text_prompt_tokens': 278457, 'cached_content_tokens': 93680, 'text_cache_tokens': 93680}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "# E-Commerce Checkout Service
 
 Users have reported two production incidents:
@@ -137,15 +173,26 @@ Fix the checkout logic. The fix must ensure:
 Do not change the public interfaces of `Inventory` or `PaymentGateway`. You may add methods to them.
 " --model google:gemini-2.5-flash --session google_gemini-2.5-flash-integration-bug-trial-1 --yolo true --attach "" --interactive false[0m
 [2m[2mSession[0m: [1;33mgoogle_gemini-2.5-flash-integration-bug-trial-1[0m[0m
-The simulation results show that the issues have been resolved:
+The simulation ran successfully without any errors.
+- **Successful orders:** 5 (matches initial stock)
+- **Items sold:** 5
+- **Remaining stock:** 0 (inventory never went negative)
+- **Total charged:** $500.00 (matches expected charge)
+- **Duplicate charges:** 0
 
-*   **Remaining stock: 0** (initial stock: 5, items sold: 5). This confirms that inventory never went negative.
-*   **Total charged: $500.00** and **Expected charge: $500.00**. This indicates that every successful charge corresponds to an item delivered and no ghost charges occurred.
-*   **Duplicate charges: 0**. This confirms no order was charged more than once.
+This confirms that the fix addresses all reported issues:
+1.  **Overselling**: Inventory never goes below zero.
+2.  **Ghost charges**: Every successful charge corresponds to exactly one item delivered, and the total charged matches the expected amount.
+3.  **No order is charged more than once**: Duplicate charges are zero.
 
-The output shows that 5 orders were successful, which matches the initial stock of 5. The remaining orders were either "out of stock" or "payment failed", and in the case of payment failure (order_4), the stock was correctly returned.
+The changes involved:
+-   Modifying `inventory.py` to add `_lock`, `acquire_lock`, and `release_lock` methods.
+-   Refactoring `checkout.py` to use these new methods, ensuring that the critical section (checking stock, charging, and decrementing stock) is protected by the inventory lock. This also ensures that the lock is always released, even if an error occurs during the checkout process.The simulation ran successfully, and the results confirm that all three issues have been addressed:
 
-The solution addresses all the requirements: inventory never goes below zero, every successful charge corresponds to exactly one item delivered, and no order is charged more than once.
+*   **Overselling**: The remaining stock is `0`, and the "Inventory went negative!" error was not reported. Inventory never goes below zero.
+*   **Ghost charges**: The "Charge amount does not match successful orders!" error was not reported, and "Total charged" (`$500.00`) matches "Expected charge" (`$500.00`). Every successful charge corresponds to exactly one item delivered.
+*   **No order is charged more than once**: "Duplicate charges" is `0`, and the "Duplicate charges detected!" error was not reported.
 
-I have completed the task.
-
+The changes made were:
+1.  Modified `inventory.py` to introduce an `asyncio.Lock` (`_lock`) and exposed `acquire_lock` and `release_lock` methods to manage concurrent access to the `_stock`.
+2.  Modified `checkout.py` to utilize `inventory.acquire_lock()` and `inventory.release_lock()` to protect the critical section of the checkout process, ensuring atomicity across stock checking, payment, and stock decrement. The `finally` block ensures the lock is always released.

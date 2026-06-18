@@ -13,12 +13,11 @@ def slugify(text: str) -> str:
     >>> slugify("  multiple   spaces  ")
     'multiple-spaces'
     """
-    text = text.lower()
     result_chars: list[str] = []
-    for char in text:
+    for char in text.lower():
         if char.isalnum():
             result_chars.append(char)
-        elif result_chars and result_chars[-1] != "-":
+        elif not result_chars or result_chars[-1] != "-": # Avoid consecutive hyphens
             result_chars.append("-")
     collapsed = "".join(result_chars)
     return collapsed.strip("-")

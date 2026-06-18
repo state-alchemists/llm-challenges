@@ -30,6 +30,6 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
 
     If text is already short enough, return it unchanged.
     """
-    if len(text) <= max_len:
+    if len(text) <= max_len - len(suffix):
         return text
-    return text[:max_len - len(suffix)] + suffix
+    return text[: max_len - len(suffix)] + suffix

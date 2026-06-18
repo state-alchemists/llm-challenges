@@ -26,4 +26,4 @@ async def checkout(
         return False
 
     print(f"Order {order_id}: SUCCESS")
-    return True
+    return True  # End of checkout process\n# Ensure there is a one-to-one correspondence between charges and deliveries.

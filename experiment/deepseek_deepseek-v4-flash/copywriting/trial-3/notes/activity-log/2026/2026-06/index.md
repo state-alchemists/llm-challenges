@@ -1,3 +1,3 @@
-# 2026-06
+# June 2026
 
-- [2026-06-16](2026-06-16.md) — Migration guide: Zrb Task API v1 → v2
+- [2026-06-19 — Migration guide: v1 → v2 Zrb API](2026-06-19.md)

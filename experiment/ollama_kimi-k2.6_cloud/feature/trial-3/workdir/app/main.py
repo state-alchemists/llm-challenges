@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Query, status
+from fastapi import FastAPI, HTTPException, Depends, Query
 from typing import List, Optional
 from .models import Task, TaskCreate, TaskUpdate, Project, TaskStatus
 from .database import tasks, projects
@@ -40,10 +40,10 @@ async def get_task(task_id: int):
     raise HTTPException(status_code=404, detail="Task not found")
 
 
-@app.post("/tasks", response_model=Task, status_code=status.HTTP_201_CREATED)
-async def create_task(data: TaskCreate, username: str = Depends(require_api_key)):
-    project_exists = any(p.id == data.project_id for p in projects)
-    if not project_exists:
+@app.post("/tasks", response_model=Task, status_code=201)
+async def create_task(data: TaskCreate, user: str = Depends(require_api_key)):
+    project = next((p for p in projects if p.id == data.project_id), None)
+    if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     new_id = max((t.id for t in tasks), default=0) + 1
     task = Task(id=new_id, **data.model_dump())
@@ -52,20 +52,19 @@ async def create_task(data: TaskCreate, username: str = Depends(require_api_key)
 
 
 @app.put("/tasks/{task_id}", response_model=Task)
-async def update_task(task_id: int, data: TaskUpdate, username: str = Depends(require_api_key)):
+async def update_task(task_id: int, data: TaskUpdate, user: str = Depends(require_api_key)):
     for task in tasks:
         if task.id == task_id:
-            update_data = data.model_dump(exclude_unset=True)
-            for field, value in update_data.items():
+            for field, value in data.model_dump(exclude_unset=True).items():
                 setattr(task, field, value)
             return task
     raise HTTPException(status_code=404, detail="Task not found")
 
 
 @app.delete("/tasks/{task_id}")
-async def delete_task(task_id: int, username: str = Depends(require_api_key)):
+async def delete_task(task_id: int, user: str = Depends(require_api_key)):
     for i, task in enumerate(tasks):
         if task.id == task_id:
             del tasks[i]
-            return {"ok": True}
+            return {"detail": "Task deleted"}
     raise HTTPException(status_code=404, detail="Task not found")

@@ -1,9 +1,11 @@
-# HUD (Heads-Up Display)
+# Zaruba Journal Root
 
-Welcome to Zaruba's persistent memory.
+## HUD
+- Active constraints: non-interactive mode
+- Critical preferences: none
+- Recent insights: [Debugging pipeline setup](technical/pipeline-debugging.md)
 
-## Projects
-- [Projects Index](projects/index.md)
-
-## Activity Log
+## Navigation
 - [Activity Log](activity-log/index.md)
+- [Projects](projects/index.md)
+- [Technical](technical/index.md)

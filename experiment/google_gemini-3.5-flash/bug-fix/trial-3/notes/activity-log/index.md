@@ -1,6 +1,7 @@
 # Activity Log Index
 
+## Years
 - [2026](2026/index.md)
 
 ## Backlinks
-- [journal root](../index.md)
+- [Index](../index.md)

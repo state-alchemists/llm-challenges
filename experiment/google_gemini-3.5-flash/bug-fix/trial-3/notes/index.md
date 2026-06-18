@@ -1,7 +1,7 @@
-# Journal Root
-
-## Recent Insights
-- None
+# Journal Index
 
 ## Navigation
 - [Activity Log](activity-log/index.md)
+
+## Recent Insights
+None yet.

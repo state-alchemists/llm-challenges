@@ -20,8 +20,9 @@ def slugify(text: str) -> str:
         elif char.isspace() or char == "-":
             result_chars.append("-")
     collapsed = "".join(result_chars)
-    import re
-    return re.sub(r"-+", "-", collapsed.strip("-"))
+    while "--" in collapsed:
+        collapsed = collapsed.replace("--", "-")
+    return collapsed.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:

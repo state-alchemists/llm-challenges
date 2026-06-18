@@ -1,43 +1,26 @@
-# ADR-001: Notification Architecture
+# ADR-001: Notification Architecture Decision
 
 ## Status
 Proposed
 
-## Context
-The current notification system for our SaaS project management platform handles email and webhook notifications synchronously within the HTTP request cycle. This approach leads to request timeouts, silent failures, cascading failures from slow endpoints, and a lack of delivery guarantees for critical notifications. As the monthly active user count grows, the system needs to evolve to handle increased traffic and ensure timely and reliable notifications.
+## Context  
+We run a SaaS project management platform serving ~85,000 monthly active users, with approximately 2 million tasks created each month and peak traffic of about 500 requests per second during business hours. The current notifications module processes emails and webhooks synchronously within the HTTP request cycle. This has led to issues such as request timeouts (lagging up to 8 seconds), silent failures with no retry mechanisms, cascading failures impacting unrelated features, and a lack of delivery guarantees for billing-critical notifications. Thus, we need a solution that decouples the notifications from the HTTP request cycle, ensures delivery guarantees, and can scale effectively.
 
-### Requirements
-- Decoupling notification processes from the HTTP request cycle for asynchronous handling.
-- Implementing retry mechanisms with exponential backoff for failed notifications.
-- Ensuring at-least-once delivery guarantees for critical billing events and striving for exactly-once delivery.
-- Accommodating real-time WebSocket notifications.
-- Managing 10x traffic growth over the next few years.
+## Decision  
+After careful evaluation, we recommend implementing **Apache Kafka** for the notification subsystem. The justification for this choice is based on its strong benefits in handling high-throughput messaging, ensuring message ordering, and providing guarantees for at-least-once delivery, which are critical for our use case, especially for billing notifications.
 
-### Constraints
-- A limited engineering team without extensive Kafka experience.
-- Existing usage of Redis for caching purposes.
-- Budget constraints preventing large-scale systems or managed services like Confluent Cloud.
-- A necessity to deliver value within two weeks, limiting the scope of potential solutions.
+## Consequences  
+**Pros:**  
+- **High Throughput and Scalability:** Kafka can handle high traffic loads efficiently, supporting our projected traffic growth of 10x without extensive re-architecting.  
+- **Exactly-Once Delivery Semantics:** Strong support for exactly-once delivery for critical billing notifications.  
+- **Robustness and Durability:** Kafka retains messages for configured retention periods, which allows us to handle failures gracefully with built-in durability.  
+- **Consumer Groups:** Provides easy horizontal scaling for consumers, allowing multiple consumer instances to work together without risks of duplicate processing.  
 
-## Decision
-After evaluating **Apache Kafka** and **Redis Streams**, I recommend implementing **Redis Streams** for the notification subsystem due to its ease of integration and inherent support for scaling asynchronous workloads without steep operational overhead.
+**Cons:**  
+- **Operational Complexity:** Kafka introduces additional operational complexity. Given our team lacks Kafka experience, significant time will be needed for setup and management, though it is manageable within a couple of weeks.  
+- **Infrastructure Overhead:** Requires maintaining additional infrastructure components, which may strain our modest budget unless self-hosted solutions are utilized.  
 
-### Justification
-- **Familiarity**: The engineering team already has experience with Redis, reducing the learning curve and setup time.
-- **Throughput**: Redis Streams can handle high throughput, making it suitable as we anticipate increased traffic.
-- **Delivery Guarantees**: While Redis Streams provides at-least-once message delivery through acknowledgement features, it also allows for implementing retry logic in a straightforward manner.
-- **Operational Complexity**: Integrating Redis Streams is less complex than setting up Kafka for a team without extensive Kafka experience. Its operations largely involve our current Redis infrastructure.
-- **Setup Time**: Implementing Redis Streams can be achieved within the required two-week timeframe without the need for extensive modifications to existing components.
+## Alternatives Considered  
+We considered **Redis Streams**, which could potentially leverage existing infrastructure. However, it lacks robust delivery guarantees and exactly-once processing semantics, which are critical for billing notifications. The operational overhead might indeed be lower, but the potential risks involved with missing critical notifications justify the additional complexity and resource expenditure for implementing Kafka.
 
-## Consequences
-### Pros
-- Existing team can leverage their knowledge of Redis, reducing onboarding time and friction.
-- Redis Streams offers the ability to easily control message flow and implement retry strategies where needed.
-- The system is extensible, allowing for future enhancements like WebSocket notifications with minimal adjustments.
-
-### Cons
-- While offering at-least-once delivery guarantees, achieving exactly-once semantics will require additional effort and considerations in the application logic.
-- Potential limitations on retention policies when compared to Kafka, which is designed with more extensive retention capabilities suited for large data volumes.
-
-## Alternatives Considered
-**Apache Kafka**: While Kafka excels in high-throughput environments with strong retention and exactly-once delivery guarantees, the lack of experience within the current engineering team would lead to a longer setup period, higher operational complexity, and possibly a slower path to achieving the necessary improvements in the notification system. Given the moderate budgetary constraints, this choice may not provide sufficient immediate value to justify the investment in training and resource allocation.
+This decision aims to ensure a reliable, scalable, and effective notification subsystem that meets current and future requirements.

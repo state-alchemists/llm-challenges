@@ -1,6 +1,3 @@
 # 2026 Activity Logs
 
-- [2026-06 Activity Logs](2026-06/index.md)
-
-## Backlinks
-- [Activity Log Index](../index.md)
+- [2026-06](2026-06/index.md)

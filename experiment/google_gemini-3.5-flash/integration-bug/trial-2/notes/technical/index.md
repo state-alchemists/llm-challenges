@@ -1,3 +1,6 @@
-# Technical Index
+# Technical Notes Index
 
-- [Checkout Safety Patterns](checkout-safety.md)
+- [Asyncio Checkout Concurrency](asyncio-checkout-concurrency.md)
+
+## Backlinks
+- [Root](../index.md)

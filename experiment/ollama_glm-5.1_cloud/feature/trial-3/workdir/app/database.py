@@ -17,5 +17,3 @@ VALID_API_KEYS: Dict[str, str] = {
     "dev-key-alice": "alice",
     "dev-key-bob": "bob",
 }
-
-next_task_id: int = max(t.id for t in tasks) + 1 if tasks else 1

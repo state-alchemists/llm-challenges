@@ -1,6 +1,3 @@
 # Projects Index
 
-- [SaaS Platform](saas-platform.md)
-
-## Backlinks
-- [HUD Index](../index.md)
+- [Notifier Subsystem Decision](notifier-subsystem.md)

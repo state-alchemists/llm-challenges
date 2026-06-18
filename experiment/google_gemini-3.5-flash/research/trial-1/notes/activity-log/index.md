@@ -1,6 +1,5 @@
-# Activity Log Index
+# Activity Log
 
-- [2026 Activity Logs](2026/index.md)
+Chronological logs of LLM actions.
 
-## Backlinks
-- [HUD Index](../index.md)
+- [2026](2026/index.md)

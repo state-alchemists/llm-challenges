@@ -1,7 +1,10 @@
-# Zrb Migration Journal
+# Journal HUD
 
-## Active Projects
-- [Zrb v2 Migration Guide](projects/zrb-v2.md)
+## Recent Insights
+- None yet.
 
-## Recent Activity
-- [2026-06-16 Log](activity-log/2026/2026-06/2026-06-16.md)
+## Active Constraints
+- None.
+
+## Directories
+- [activity-log](activity-log/index.md)

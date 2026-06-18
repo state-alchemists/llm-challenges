@@ -1,17 +1,22 @@
 # Migrating to Zrb CLI v2
 
-Zrb CLI v2 introduces several breaking changes to improve security, scalability, and data organization. This guide will help you migrate your existing v1 integrations to the v2 API.
+Zrb CLI v2 introduces several breaking changes to improve scalability, security, and organization. This guide will help you migrate your existing v1 integrations to v2.
 
 ## Breaking Changes
 
-### 1. API Endpoint Prefix
-All API endpoints are now versioned. You must prefix all your request paths with `/v2/`.
+### 1. API Versioning (Endpoint Prefix)
+All API endpoints now require a `/v2/` prefix. Requests sent to v1 endpoints will be deprecated.
 
-**v1:** `GET /tasks`
-**v2:** `GET /v2/tasks`
+**v1**
+`GET /tasks`
+
+**v2**
+`GET /v2/tasks`
+
+---
 
 ### 2. Authentication Header
-We have moved from a custom header to the industry-standard Bearer token authentication. Requests using the old header will now return `401 Unauthorized`.
+The authentication mechanism has moved from a custom header to the standard Bearer token format.
 
 **v1**
 ```http
@@ -23,8 +28,10 @@ X-Auth-Token: <your_api_key>
 Authorization: Bearer <your_api_token>
 ```
 
+---
+
 ### 3. Task ID Type
-Task IDs have changed from integers to UUID strings to prevent ID enumeration and improve distributed system reliability.
+Task IDs have changed from integers to UUID strings to prevent ID enumeration and support distributed systems.
 
 **v1**
 ```json
@@ -36,21 +43,25 @@ Task IDs have changed from integers to UUID strings to prevent ID enumeration an
 { "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890" }
 ```
 
+---
+
 ### 4. Field Rename: `done` → `completed`
-The `done` field has been renamed to `completed` for better clarity. This affects both the response objects and the request bodies for updates.
+The boolean field indicating task status has been renamed for clarity.
 
 **v1**
 ```json
-{ "done": true }
+{ "done": false }
 ```
 
 **v2**
 ```json
-{ "completed": true }
+{ "completed": false }
 ```
 
-### 5. Mandatory `project_id` for Task Creation
-Tasks can no longer be created without being associated with a project. You must now provide a `project_id` when creating a task, otherwise the API will return `422 Unprocessable Entity`.
+---
+
+### 5. Project Association Required
+Tasks must now be associated with a project. The `project_id` field is now required during task creation.
 
 **v1**
 ```json
@@ -67,8 +78,10 @@ Tasks can no longer be created without being associated with a project. You must
 }
 ```
 
+---
+
 ### 6. Paginated List Responses
-List endpoints no longer return a bare array. They now return a paginated envelope containing the items and a cursor for the next page.
+List endpoints no longer return a bare array. They now return a paginated envelope to handle large datasets efficiently.
 
 **v1**
 ```json
@@ -85,25 +98,23 @@ List endpoints no longer return a bare array. They now return a paginated envelo
     {"id": "uuid-1", "title": "Buy milk", "completed": false},
     {"id": "uuid-2", "title": "Ship v1", "completed": true}
   ],
-  "total": 42,
+  "total": 2,
   "next_cursor": "cursor_xyz"
 }
 ```
 
----
-
 ## Migration Checklist
 
 - [ ] Update all API base URLs to include the `/v2/` prefix.
-- [ ] Update authentication logic to use `Authorization: Bearer <token>`.
-- [ ] Update data models to treat `id` as a string (UUID) instead of an integer.
-- [ ] Rename all occurrences of the `done` field to `completed` in your code and API requests.
+- [ ] Replace `X-Auth-Token` headers with `Authorization: Bearer` tokens.
+- [ ] Update data models to treat `id` as a string instead of an integer.
+- [ ] Rename all occurrences of the `done` field to `completed` in request and response bodies.
 - [ ] Update task creation logic to include a valid `project_id`.
-- [ ] Update list response handling to extract tasks from the `items` array and implement cursor-based pagination if necessary.
+- [ ] Refactor list-fetching logic to handle the new paginated envelope and use the `next_cursor` for subsequent pages.
 
 ## Upgrade Command
 
-To upgrade your local CLI to the latest version, run:
+To update your Zrb CLI to the latest version, run:
 
 ```bash
 zrb update --version v2

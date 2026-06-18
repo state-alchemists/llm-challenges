@@ -1,12 +1,13 @@
-# Zaruba Journal
+# HUD
 
-Heads-up display for project status, recent insights, and preferences.
+## Active Constraints
+- API Key must be validated against `database.py`'s `VALID_API_KEYS`.
+- POST /tasks, PUT /tasks/{task_id}, and DELETE /tasks/{task_id} endpoints must require authentication.
+- Task filtering (`GET /tasks`) must support `status`, `priority`, and `assigned_to` query params.
+- Pagination must support `page` and `page_size` query params.
 
-## Navigation
-- [Activity Log](activity-log/index.md)
-
-## Recent Activity
-- [2026-06-16 Log](activity-log/2026/2026-06/2026-06-16.md)
+## Recent Insights
+- [FastAPI Project Management API](projects/fastapi_api.md)
 
 ## Backlinks
-- None
+(none)

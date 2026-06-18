@@ -14,9 +14,9 @@ async def list_projects():
 
 @app.get("/tasks", response_model=List[Task])
 async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
+    status: Optional[str] = Query(None),
+    priority: Optional[int] = Query(None),
+    assigned_to: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1),
 ):
@@ -43,14 +43,16 @@ async def get_task(task_id: int):
 
 @app.post("/tasks", response_model=Task, dependencies=[Depends(require_api_key)])
 async def create_task(task_in: TaskCreate):
-    project_exists = any(p.id == task_in.project_id for p in projects)
-    if not project_exists:
+    # Validate project exists
+    if not any(p.id == task_in.project_id for p in projects):
         raise HTTPException(status_code=404, detail="Project not found")
     
+    # Generate unique ID
     new_id = max([t.id for t in tasks], default=0) + 1
-    new_task = Task(id=new_id, **task_in.model_dump())
-    tasks.append(new_task)
-    return new_task
+    
+    task = Task(id=new_id, **task_in.model_dump())
+    tasks.append(task)
+    return task
 
 
 @app.put("/tasks/{task_id}", response_model=Task, dependencies=[Depends(require_api_key)])

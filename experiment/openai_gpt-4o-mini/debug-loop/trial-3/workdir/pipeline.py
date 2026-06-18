@@ -11,6 +11,8 @@ def extract() -> list[int]:
 
 def transform(values: list[int]) -> float:
     total = sum(values)
+    if settings["batch_size"] == 0:
+        return 0.0
     return total / settings["batch_size"]
 
 

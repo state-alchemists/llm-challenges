@@ -1,6 +1,5 @@
-# Technical Directory
+# Technical Insights
 
-- [Checkout Transaction Isolation](checkout-transaction-isolation.md)
+Durable technical learnings.
 
-## Backlinks
-- [HUD](../index.md)
+- [Asyncio Checkout Locking](asyncio-checkout-locking.md)

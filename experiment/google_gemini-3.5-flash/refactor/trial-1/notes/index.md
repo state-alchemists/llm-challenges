@@ -1,14 +1,13 @@
-# Journal HUD
+# Zaruba Journal HUD
 
-Welcome to the refactoring project journal.
+Welcome to the HUD for Zaruba's work on the pipeline refactoring challenge.
 
-## Recent Insights
-- [Refactoring server log processing pipeline](technical/refactor_pipeline.md)
+## Projects
+- [Pipeline Refactoring](projects/pipeline-refactoring.md)
 
-## Active Projects
-- [Log Parser Refactor Project](projects/log_parser.md)
+## Navigation
+- [Projects Index](projects/index.md)
+- [Activity Log Index](activity-log/index.md)
 
-## Directory Structure
-- [Technical Notes](technical/index.md)
-- [Projects](projects/index.md)
-- [Activity Log](activity-log/index.md)
+## Recent Activity
+- [2026-06-19 Log](activity-log/2026/2026-06/2026-06-19.md)

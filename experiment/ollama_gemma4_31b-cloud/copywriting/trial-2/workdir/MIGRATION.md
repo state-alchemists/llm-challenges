@@ -1,13 +1,13 @@
 # Migrating to Zrb CLI v2
 
-Zrb CLI v2 introduces a more scalable architecture with support for projects, robust pagination, and improved security. Because of these improvements, v2 includes several breaking changes to the API and data models.
+The Zrb CLI has been upgraded to v2. This release introduces a more robust data model with project support, improved pagination for large datasets, and a modernized authentication system.
 
-This guide will help you transition your integration from v1 to v2.
+Because these changes introduce breaking API modifications, developers using v1 must update their integration code to maintain functionality.
 
 ## Breaking Changes
 
-### 1. API Versioning (URL Prefix)
-All API endpoints have been moved under the `/v2/` namespace to allow for side-by-side versioning.
+### 1. API Versioning
+All endpoints have been moved under the `/v2/` prefix.
 
 **v1**
 `GET /tasks`
@@ -18,7 +18,7 @@ All API endpoints have been moved under the `/v2/` namespace to allow for side-b
 ---
 
 ### 2. Authentication Header
-We have moved from a custom header to the industry-standard Bearer token. Requests using the old header will now return `HTTP 401 Unauthorized`.
+The custom `X-Auth-Token` header has been replaced by the industry-standard Bearer token.
 
 **v1**
 ```http
@@ -33,18 +33,28 @@ Authorization: Bearer <your_api_token>
 ---
 
 ### 3. Task Identifier Type
-Task IDs have changed from sequential integers to UUID strings to prevent ID enumeration and support distributed systems.
+Task `id`s have changed from integers to UUID strings to support better distributed scaling.
 
 **v1**
-`{"id": 42, ...}`
+```json
+{
+  "id": 42,
+  "title": "Write tests"
+}
+```
 
 **v2**
-`{"id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", ...}`
+```json
+{
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "title": "Write tests"
+}
+```
 
 ---
 
-### 4. Field Rename: `done` $\rightarrow$ `completed`
-The `done` field has been renamed to `completed` for better clarity and consistency across the API.
+### 4. Field Rename: `done` → `completed`
+The `done` boolean field has been renamed to `completed` for better clarity.
 
 **v1**
 ```json
@@ -64,8 +74,8 @@ The `done` field has been renamed to `completed` for better clarity and consiste
 
 ---
 
-### 5. Required Project Association
-Tasks can no longer exist in a global namespace. Every task must now be associated with a project. When creating a task, `project_id` is now a required field.
+### 5. Project Requirement for Task Creation
+Tasks must now be associated with a project. The `project_id` field is now required when creating a task.
 
 **v1**
 ```json
@@ -81,12 +91,11 @@ Tasks can no longer exist in a global namespace. Every task must now be associat
   "project_id": "proj_abc123"
 }
 ```
-*Note: Omitting `project_id` will return `HTTP 422 Unprocessable Entity`.*
 
 ---
 
 ### 6. Paginated List Responses
-To improve performance for large datasets, list endpoints no longer return a bare array. They now return a paginated envelope.
+List endpoints no longer return a bare array. They now return a paginated envelope to prevent timeouts and payload overflow.
 
 **v1**
 ```json
@@ -107,20 +116,19 @@ To improve performance for large datasets, list endpoints no longer return a bar
   "next_cursor": "cursor_xyz"
 }
 ```
-*To fetch the next page, pass the cursor in your request: `GET /v2/tasks?cursor=cursor_xyz`.*
 
 ## Migration Checklist
 
-- [ ] Update all API base URLs to include the `/v2/` prefix.
-- [ ] Switch `X-Auth-Token` header to `Authorization: Bearer`.
-- [ ] Update data models to handle UUID strings for Task IDs instead of integers.
-- [ ] Rename `done` field references to `completed` in both requests and responses.
+- [ ] Update base URL/endpoints to include the `/v2/` prefix.
+- [ ] Update authentication logic to use the `Authorization: Bearer` header.
+- [ ] Update data models to handle UUID strings for task IDs instead of integers.
+- [ ] Replace all occurrences of the `done` field with `completed` in request and response handling.
 - [ ] Update task creation logic to include a valid `project_id`.
-- [ ] Update list endpoint handlers to parse the `items` envelope and handle `next_cursor` pagination.
+- [ ] Refactor list-fetching logic to handle the paginated envelope and implement cursor-based navigation (`?cursor=...`).
 
 ## Upgrade Command
 
-To upgrade your CLI to the latest version, run:
+To update your CLI to the latest version, run:
 
 ```bash
 zrb update --version 2.0.0

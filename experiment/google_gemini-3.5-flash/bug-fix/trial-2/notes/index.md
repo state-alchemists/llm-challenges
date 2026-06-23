@@ -1,9 +1,13 @@
-# Heads-Up Display (HUD)
+# Journal Index
 
-Welcome to the HUD for Zaruba's persistent memory.
+## Active Constraints
+- None
+
+## Recent Insights
+- None
 
 ## Projects
-- [Projects Index](projects/index.md)
+- [Projects](projects/index.md)
 
-## Activity Log
-- [Activity Log Index](activity-log/index.md)
+## Navigation
+- [Activity Log](activity-log/index.md)

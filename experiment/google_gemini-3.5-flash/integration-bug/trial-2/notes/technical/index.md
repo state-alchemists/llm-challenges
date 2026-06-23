@@ -1,6 +1,6 @@
-# Technical Notes Index
+# Technical Insights
 
-- [Asyncio Checkout Concurrency](asyncio-checkout-concurrency.md)
+- [Concurrency Race Conditions](concurrency-race-conditions.md)
 
 ## Backlinks
-- [Root](../index.md)
+- [HUD](../index.md)

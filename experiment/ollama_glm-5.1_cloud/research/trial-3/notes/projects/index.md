@@ -1,3 +1,0 @@
-# Projects
-
-*(No entries yet.)*

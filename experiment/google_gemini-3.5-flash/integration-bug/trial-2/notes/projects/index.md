@@ -1,6 +1,6 @@
 # Projects Index
 
-- [Checkout Integration Bug](checkout-integration-bug.md)
+No active projects documents.
 
 ## Backlinks
-- [Root](../index.md)
+- [HUD](../index.md)

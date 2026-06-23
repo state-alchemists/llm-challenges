@@ -1,163 +1,108 @@
-import re
-from typing import Dict, List, Any, Tuple
-import os
 import datetime
+import os
 import sqlite3
 
-DB_PATH = os.getenv("DB_PATH", "metrics.db")
-LOG_FILE = os.getenv("LOG_FILE", "server.log")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
-DB_USER = os.getenv("DB_USER", "admin")
-DB_PASS = os.getenv("DB_PASS", "password123")
-def parse_log_line(line: str) -> Dict[str, Any] | None:
-    """Parses a single log line using regex and extracts relevant information.
+DB_PATH = "metrics.db"
+LOG_FILE = "server.log"
+DB_HOST = "localhost"
+DB_PORT = 5432
+DB_USER = "admin"
+DB_PASS = "password123"
 
-    Args:
-        line: The log line to parse.
 
-    Returns:
-        A dictionary containing parsed log data, or None if the line doesn't match a known pattern.
-    """
-    # Timestamp, Level, Message
-    error_pattern = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (ERROR) (.*)$")
-    warn_pattern = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (WARN) (.*)$")
-    user_info_pattern = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (INFO) User (\d+) (.*)$")
-    api_info_pattern = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (INFO) API (\S+) took (\d+)ms$")
+def proc_data():
+    d_list = []
+    sessions = {}
+    api_calls = []
 
-    if match := error_pattern.match(line):
-        return {"timestamp": match.group(1), "level": match.group(2), "message": match.group(3).strip()}
-    elif match := user_info_pattern.match(line):
-        return {"timestamp": match.group(1), "level": match.group(2), "user_id": match.group(3), "action": match.group(4).strip()}
-    elif match := api_info_pattern.match(line):
-        return {"timestamp": match.group(1), "level": match.group(2), "endpoint": match.group(3), "duration_ms": int(match.group(4))}
-    elif match := warn_pattern.match(line):
-        return {"timestamp": match.group(1), "level": match.group(2), "message": match.group(3).strip()}
-    return None
-
-def extract_log_data(log_file_path: str) -> List[Dict[str, Any]]:
-    """Extracts and parses log data from the specified log file.
-
-    Args:
-        log_file_path: The path to the server log file.
-
-    Returns:
-        A list of dictionaries, where each dictionary represents a parsed log entry.
-    """
-    parsed_logs: List[Dict[str, Any]] = []
-    if not os.path.exists(log_file_path):
-        print(f"Log file not found: {log_file_path}")
-        return parsed_logs
-
-    with open(log_file_path, "r") as f:
+    if os.path.exists(LOG_FILE):
+        f = open(LOG_FILE, "r")
         for line in f:
-            if parsed_line := parse_log_line(line):
-                parsed_logs.append(parsed_line)
-    return parsed_logs
+            s = line.split(" ")
+            if len(s) > 3:
+                lvl = s[2]
+                dt = s[0] + " " + s[1]
 
-def transform_log_data(parsed_logs: List[Dict[str, Any]]) -> Tuple[Dict[str, int], Dict[str, List[int]], Dict[str, str]]:
-    """Transforms parsed log data into summarized metrics.
+                if lvl == "ERROR":
+                    m = ""
+                    for i in range(3, len(s)):
+                        m += s[i] + " "
+                    d_list.append({"d": dt, "t": "ERR", "m": m.strip()})
 
-    Args:
-        parsed_logs: A list of dictionaries, each representing a parsed log entry.
+                elif lvl == "INFO" and "User" in line:
+                    uid = line.split("User ")[1].split(" ")[0]
+                    action = line.split("User " + uid + " ")[1].strip()
+                    if "logged in" in action:
+                        sessions[uid] = dt
+                    elif "logged out" in action and uid in sessions:
+                        sessions.pop(uid)
+                    d_list.append({"d": dt, "t": "USR", "u": uid, "a": action})
 
-    Returns:
-        A tuple containing:
-        - error_counts: A dictionary of error messages and their counts.
-        - api_latency: A dictionary mapping API endpoints to a list of their latencies.
-        - active_sessions: A dictionary of currently active user sessions (user_id to timestamp).
-    """
-    error_counts: Dict[str, int] = {}
-    api_latency: Dict[str, List[int]] = {}
-    active_sessions: Dict[str, str] = {}
+                elif lvl == "INFO" and "API" in line:
+                    endpoint = line.split("API ")[1].split(" ")[0]
+                    dur = line.split("took ")[1].split("ms")[0] if "took" in line else "0"
+                    api_calls.append({"d": dt, "endpoint": endpoint, "ms": int(dur)})
 
-    for entry in parsed_logs:
-        level = entry.get("level")
-        timestamp = entry.get("timestamp")
+                elif lvl == "WARN":
+                    m = " ".join(s[3:]).strip()
+                    d_list.append({"d": dt, "t": "WARN", "m": m})
+        f.close()
 
-        if level == "ERROR":
-            message = entry.get("message")
-            if message:
-                error_counts[message] = error_counts.get(message, 0) + 1
-        elif level == "INFO":
-            if "user_id" in entry and "action" in entry:
-                user_id = entry["user_id"]
-                action = entry["action"]
-                if "logged in" in action:
-                    active_sessions[user_id] = timestamp
-                elif "logged out" in action and user_id in active_sessions:
-                    active_sessions.pop(user_id)
-            elif "endpoint" in entry and "duration_ms" in entry:
-                endpoint = entry["endpoint"]
-                duration = entry["duration_ms"]
-                api_latency.setdefault(endpoint, []).append(duration)
+    print("Connecting to " + DB_HOST + ":" + str(DB_PORT) + " as " + DB_USER + "...")
 
-    return error_counts, api_latency, active_sessions
-
-def load_metrics_to_db(error_counts: Dict[str, int], api_latency: Dict[str, List[int]]) -> None:
-    """Connects to the database and loads the processed metrics.
-
-    Args:
-        error_counts: A dictionary of error messages and their counts.
-        api_latency: A dictionary mapping API endpoints to a list of their latencies.
-    """
-    print(f"Connecting to {DB_HOST}:{DB_PORT} as {DB_USER}...")
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-
     c.execute("CREATE TABLE IF NOT EXISTS errors (dt TEXT, message TEXT, count INTEGER)")
     c.execute("CREATE TABLE IF NOT EXISTS api_metrics (dt TEXT, endpoint TEXT, avg_ms REAL)")
 
-    for msg, count in error_counts.items():
-        c.execute("INSERT INTO errors (dt, message, count) VALUES (?, ?, ?)",
-                  (datetime.datetime.now().isoformat(), msg, count))
+    r = {}
+    for x in d_list:
+        if x["t"] == "ERR":
+            msg = x["m"]
+            r[msg] = r.get(msg, 0) + 1
 
-    for ep, times in api_latency.items():
-        avg = sum(times) / len(times) if times else 0.0
-        c.execute("INSERT INTO api_metrics (dt, endpoint, avg_ms) VALUES (?, ?, ?)",
-                  (datetime.datetime.now().isoformat(), ep, avg))
+    for msg, count in r.items():
+        c.execute(
+            "INSERT INTO errors VALUES ('%s', '%s', %d)"
+            % (datetime.datetime.now(), msg, count)
+        )
+
+    endpoint_stats = {}
+    for call in api_calls:
+        ep = call["endpoint"]
+        endpoint_stats.setdefault(ep, []).append(call["ms"])
+
+    for ep, times in endpoint_stats.items():
+        avg = sum(times) / len(times)
+        c.execute(
+            "INSERT INTO api_metrics VALUES ('%s', '%s', %f)"
+            % (datetime.datetime.now(), ep, avg)
+        )
 
     conn.commit()
     conn.close()
-    print("Metrics loaded to database.")
 
-def generate_report(error_counts: Dict[str, int], api_latency: Dict[str, List[int]], active_sessions: Dict[str, str]) -> None:
-    """Generates an HTML report from the processed metrics.
-
-    Args:
-        error_counts: A dictionary of error messages and their counts.
-        api_latency: A dictionary mapping API endpoints to a list of their latencies.
-        active_sessions: A dictionary of currently active user sessions (user_id to timestamp).
-    """
     out = "<html>\n<head><title>System Report</title></head>\n<body>\n"
     out += "<h1>Error Summary</h1>\n<ul>\n"
-    for err_msg, count in error_counts.items():
-        out += f"<li><b>{err_msg}</b>: {count} occurrences</li>\n"
+    for err_msg, count in r.items():
+        out += "<li><b>" + err_msg + "</b>: " + str(count) + " occurrences</li>\n"
     out += "</ul>\n"
 
     out += "<h2>API Latency</h2>\n<table border='1'>\n"
     out += "<tr><th>Endpoint</th><th>Avg (ms)</th></tr>\n"
-    for ep, times in api_latency.items():
-        avg = sum(times) / len(times) if times else 0.0
-        out += f"<tr><td>{ep}</td><td>{round(avg, 1)}</td></tr>\n"
+    for ep, times in endpoint_stats.items():
+        avg = sum(times) / len(times)
+        out += "<tr><td>" + ep + "</td><td>" + str(round(avg, 1)) + "</td></tr>\n"
     out += "</table>\n"
 
     out += "<h2>Active Sessions</h2>\n"
-    out += f"<p>{len(active_sessions)} user(s) currently active</p>\n"
+    out += "<p>" + str(len(sessions)) + " user(s) currently active</p>\n"
     out += "</body>\n</html>"
 
     with open("report.html", "w") as f:
         f.write(out)
-    print("Report generated: report.html")
 
-def main():
-    """Main function to run the log processing pipeline."""
-    print(f"Starting log processing at {datetime.datetime.now()}")
-    parsed_logs = extract_log_data(LOG_FILE)
-    error_counts, api_latency, active_sessions = transform_log_data(parsed_logs)
-    load_metrics_to_db(error_counts, api_latency)
-    generate_report(error_counts, api_latency, active_sessions)
-    print(f"Job finished at {datetime.datetime.now()}")
+    print("Job finished at " + str(datetime.datetime.now()))
 
 
 if __name__ == "__main__":
@@ -169,4 +114,4 @@ if __name__ == "__main__":
             f.write("2024-01-01 12:08:00 INFO API /users/profile took 250ms\n")
             f.write("2024-01-01 12:09:00 WARN Memory usage at 87%\n")
             f.write("2024-01-01 12:10:00 INFO User 42 logged out\n")
-    main()
+    proc_data()

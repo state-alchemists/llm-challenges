@@ -1,42 +1,38 @@
-# Zrb CLI Migration Guide from v1 to v2
+# Zrb Migration Guide: v1 to v2
 
-This guide provides a structured overview of the breaking changes introduced in v2 of the Zrb CLI Task API comparing with version 1. Follow the steps outlined here for a successful migration.
-
----
+## Introduction
+This guide outlines the breaking changes introduced in Zrb version 2 (v2) compared to version 1 (v1). It provides clear examples and a checklist to assist developers in migrating their code.
 
 ## Breaking Changes
 
-### 1. Endpoint Prefix Change
-
-**Change:** All endpoints are now prefixed with `/v2/`.
+### 1. Endpoints
+All endpoints are now prefixed with `/v2/`.
 
 **Before:**
-```http
+```
 GET /tasks
 ```
-
 **After:**
-```http
+```
 GET /v2/tasks
 ```
 
-### 2. Authentication Header Change
-
-**Change:** Authentication header changed from `X-Auth-Token` to Bearer token.
+### 2. Authentication Header
+The authentication header has changed from `X-Auth-Token` to a Bearer token.
 
 **Before:**
-```http
+```
 X-Auth-Token: <your_api_key>
 ```
-
 **After:**
-```http
+```
 Authorization: Bearer <your_api_token>
 ```
 
-### 3. Task ID Type Change
+Requests using the old token format will receive an HTTP 401 response.
 
-**Change:** Task `id` type changed from integer to UUID string.
+### 3. Task `id` Type
+The `id` field has changed from an integer to a UUID string format.
 
 **Before:**
 ```json
@@ -47,7 +43,6 @@ Authorization: Bearer <your_api_token>
   "created_at": "2024-01-15T10:30:00Z"
 }
 ```
-
 **After:**
 ```json
 {
@@ -60,8 +55,7 @@ Authorization: Bearer <your_api_token>
 ```
 
 ### 4. Task Field Renaming
-
-**Change:** Task field `done` is renamed to `completed`.
+The `done` field has been renamed to `completed`.
 
 **Before:**
 ```json
@@ -69,7 +63,6 @@ Authorization: Bearer <your_api_token>
   "done": false
 }
 ```
-
 **After:**
 ```json
 {
@@ -77,9 +70,8 @@ Authorization: Bearer <your_api_token>
 }
 ```
 
-### 5. Project ID Requirement on Task Creation
-
-**Change:** Task creation now requires `project_id`.
+### 5. Required `project_id`
+Creating a task now requires the `project_id` field, which was not previously required.
 
 **Before:**
 ```json
@@ -87,7 +79,6 @@ Authorization: Bearer <your_api_token>
   "title": "New task title"
 }
 ```
-
 **After:**
 ```json
 {
@@ -96,9 +87,8 @@ Authorization: Bearer <your_api_token>
 }
 ```
 
-### 6. Updated List Endpoint Response Format
-
-**Change:** List endpoints now return a paginated envelope instead of a bare array.
+### 6. Paginated List Envelope
+All list endpoints now return a paginated result instead of a bare array.
 
 **Before:**
 ```json
@@ -107,7 +97,6 @@ Authorization: Bearer <your_api_token>
   {"id": 2, "title": "Ship v1", "done": true, "created_at": "..."}
 ]
 ```
-
 **After:**
 ```json
 {
@@ -117,21 +106,16 @@ Authorization: Bearer <your_api_token>
 }
 ```
 
----
-
 ## Migration Checklist
-1. Update all API requests to use the `/v2/` prefix.
-2. Change authentication header to use Bearer tokens.
-3. Update task ID handling to use UUID strings instead of integers.
-4. Rename any references to the `done` field to `completed`.
-5. Ensure `project_id` is included in all task creation requests.
-6. Update any list request handling to account for the paginated response format.
-
----
+1. Update all endpoint URLs to include `/v2/`.
+2. Change the authentication header to bearer token format.
+3. Update any references to `id` from integer to UUID string.
+4. Rename all occurrences of `done` to `completed` in task objects.
+5. Ensure that `project_id` is included in all task creation requests.
+6. Modify code to handle paginated response envelopes instead of flat arrays.
 
 ## Upgrade Command
-
-Run the following command to upgrade your Zrb CLI to version 2:
-```bash
-zrb upgrade
+To upgrade to the latest version of Zrb CLI, run:
+```
+npm install -g zrb@latest
 ```

@@ -1,6 +1,6 @@
-# Technical Notes
+# Technical Index
 
-Shared cross-project knowledge, patterns, and architectural guidelines.
+- [Concurrency & Failure Handling in Async Job Queue](async-job-queue.md)
 
-## Topics
-- None yet.
+## Backlinks
+- [HUD](../index.md)

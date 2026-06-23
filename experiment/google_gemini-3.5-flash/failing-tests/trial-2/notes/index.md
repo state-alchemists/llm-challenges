@@ -1,9 +1,10 @@
-# Zaruba Journal HUD
+# LLM Challenges HUD
 
-Welcome to Zaruba's persistent memory journal for `failing-tests`.
+Welcome to the persistent memory for LLM Challenges.
 
-## Navigation
-- [Activity Log Index](activity-log/index.md)
+## Projects
+- [Projects Directory](projects/index.md)
+- [failing-tests](projects/failing-tests.md) — project details and bug fixes
 
-## Recent Insights
-None yet.
+## Activity Log
+- [Activity Log](activity-log/index.md)

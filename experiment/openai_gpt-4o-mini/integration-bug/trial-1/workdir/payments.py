@@ -9,9 +9,6 @@ class PaymentGateway:
         self.total_charged: float = 0.0
         self.charges: List[dict] = []
 
-    def has_charged(self, order_id: str) -> bool:
-        return any(charge["order_id"] == order_id for charge in self.charges)
-
     async def charge(self, order_id: str, amount: float) -> bool:
         await asyncio.sleep(0.03)
         if random.random() < self._failure_rate:

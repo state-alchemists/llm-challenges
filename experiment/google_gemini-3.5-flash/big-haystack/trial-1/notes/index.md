@@ -1,8 +1,13 @@
-# Zaruba Journal Root
+# HUD Index
 
-## HUD
-- Active constraints: Exact formatting on outputs.
-- Recent insights: None.
+## Active Constraints
+- None
 
-## Directories
+## Recent Insights
+- None
+
+## Navigation
 - [Activity Log](activity-log/index.md)
+
+## Backlinks
+- None

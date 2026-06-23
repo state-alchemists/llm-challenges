@@ -3,10 +3,7 @@ import asyncio
 
 async def process_job(queue, worker_id: int) -> None:
     while True:
-        job = job = await queue.dequeue()
-        if job is None:
-            return
-        job['status'] = 'processing'
+        job = await queue.dequeue()
         if job is None:
             return
 
@@ -20,5 +17,5 @@ async def process_job(queue, worker_id: int) -> None:
             queue.complete(job["id"], f"processed by worker {worker_id}")
             print(f"[Worker {worker_id}] finished job {job['id']}")
         except Exception as e:
-            queue.fail(job['id'], str(e))
             print(f"[Worker {worker_id}] job {job['id']} failed: {e}")
+            queue.fail(job["id"], str(e))    # Call to fail to handle the job appropriately

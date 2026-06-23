@@ -14,8 +14,5 @@ class PaymentGateway:
         if random.random() < self._failure_rate:
             return False
         self.total_charged += amount
-        if not any(c["order_id"] == order_id for c in self.charges):
-            self.charges.append({"order_id": order_id, "amount": amount})
-    async def refund(self, order_id: str, amount: float) -> None:
-        print(f"Refunding order {order_id} for amount {amount}.")
-        return True
+        self.charges.append({"order_id": order_id, "amount": amount})
+        return True  # Payment successfully charged

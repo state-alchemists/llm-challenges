@@ -14,16 +14,14 @@ def slugify(text: str) -> str:
     'multiple-spaces'
     """
     text = text.lower()
-    text = text.lower()
     result_chars: list[str] = []
     for char in text:
         if char.isalnum():
             result_chars.append(char)
-        else:
-            if not result_chars or result_chars[-1] != '-':
-                result_chars.append('-')
+        elif result_chars and result_chars[-1] != '-':
+            result_chars.append("-")
     collapsed = "".join(result_chars)
-    return collapsed.strip('-')
+    return collapsed.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:

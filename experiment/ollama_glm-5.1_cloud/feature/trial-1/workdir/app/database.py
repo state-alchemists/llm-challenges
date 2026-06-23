@@ -13,6 +13,8 @@ tasks: List[Task] = [
     Task(id=4, title="Deploy to staging", status=TaskStatus.todo, priority=2, project_id=2, assigned_to="alice"),
 ]
 
+next_task_id: int = 5
+
 VALID_API_KEYS: Dict[str, str] = {
     "dev-key-alice": "alice",
     "dev-key-bob": "bob",

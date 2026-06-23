@@ -1,6 +1,6 @@
-# Activity Log
+# Activity Log Index
 
-Chronological logs of model runs and major tasks.
+- [2026 Log](2026/index.md)
 
-## Years
-- [2026](2026/index.md)
+## Backlinks
+- [HUD](../index.md)

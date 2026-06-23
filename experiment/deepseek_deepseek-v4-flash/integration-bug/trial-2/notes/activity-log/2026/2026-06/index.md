@@ -1,3 +1,3 @@
-# June 2026
+# 2026-06
 
-- [2026-06-19](2026-06-19.md)
+- [2026-06-23](2026-06-23.md) — Fix concurrent checkout race conditions

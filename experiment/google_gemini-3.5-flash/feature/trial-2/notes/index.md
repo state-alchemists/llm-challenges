@@ -1,8 +1,6 @@
-# Zaruba's Knowledge Journal
+# Journal HUD
 
-## HUD
-- Active constraints: Ensure API conforms to project-management API requirements.
-- Recent insights: All validators successfully passed for the API endpoints.
+Welcome to the persistent LLM challenges journal.
 
-## Navigation
-- [Activity Log](activity-log/index.md)
+## Activity Log
+- [Activity Log Index](activity-log/index.md)

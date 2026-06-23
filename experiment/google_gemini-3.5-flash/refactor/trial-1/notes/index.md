@@ -1,13 +1,6 @@
-# Zaruba Journal HUD
+# Journal Index
 
-Welcome to the HUD for Zaruba's work on the pipeline refactoring challenge.
-
-## Projects
-- [Pipeline Refactoring](projects/pipeline-refactoring.md)
+Welcome to your persistent LLM journal memory root.
 
 ## Navigation
-- [Projects Index](projects/index.md)
-- [Activity Log Index](activity-log/index.md)
-
-## Recent Activity
-- [2026-06-19 Log](activity-log/2026/2026-06/2026-06-19.md)
+- [Activity Log](activity-log/index.md)

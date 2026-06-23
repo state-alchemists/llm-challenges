@@ -2,7 +2,8 @@ import asyncio
 from inventory import Inventory
 from payments import PaymentGateway
 
-_locks = {}
+_lock = None
+
 
 async def checkout(
     order_id: str,
@@ -11,12 +12,11 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    inv_id = id(inventory)
-    if inv_id not in _locks:
-        _locks[inv_id] = asyncio.Lock()
-    lock = _locks[inv_id]
+    global _lock
+    if _lock is None:
+        _lock = asyncio.Lock()
 
-    async with lock:
+    async with _lock:
         available = await inventory.check_stock(quantity)
         if not available:
             print(f"Order {order_id}: out of stock")

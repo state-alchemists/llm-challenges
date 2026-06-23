@@ -21,20 +21,14 @@ class Inventory:
         await asyncio.sleep(0.01)
         self._stock += quantity
 
-    async def reserve(self, quantity: int) -> bool:
-        """Atomically check stock and decrement. Returns True if reserved."""
+    async def reserve_and_decrement(self, quantity: int) -> bool:
+        """Atomically check stock and decrement. Lock held across the
+        check-and-decrement so no other coroutine can interleave."""
         async with self._lock:
-            await asyncio.sleep(0.02)  # simulate latency like other methods
             if self._stock >= quantity:
                 self._stock -= quantity
                 return True
             return False
-
-    async def release(self, quantity: int) -> None:
-        """Release a previous reservation (add stock back)."""
-        async with self._lock:
-            await asyncio.sleep(0.01)
-            self._stock += quantity
 
     @property
     def stock(self) -> int:

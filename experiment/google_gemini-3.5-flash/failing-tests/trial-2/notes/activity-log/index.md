@@ -1,3 +1,3 @@
-# Activity Log Index
+# Activity Log Years
 
-- [2026 Activity Log](2026/index.md)
+- [2026](2026/index.md)

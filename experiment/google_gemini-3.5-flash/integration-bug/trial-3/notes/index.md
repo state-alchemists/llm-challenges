@@ -1,10 +1,15 @@
-# HUD / Journal Index
+# LLM Session Journal Index
 
-Welcome to the checkout integration-bug notes journal.
+## HUD: Critical Constraints & Prefs
+- Project: E-Commerce Checkout Service Integration Bug
+- Tech: Python, asyncio, concurrency, e-commerce checkout logic
+- Focus: Ensure lock serialization for critical inventory & checkout sections
+
+## Technical Notes
+- [Asyncio Locks in Checkout](technical/asyncio-locks.md)
 
 ## Projects
-- [Projects Index](projects/index.md)
-- [Checkout Integration-Bug](projects/checkout-bug.md)
+- [Checkout Integration Bug](projects/checkout-integration-bug.md)
 
-## Activity Log
-- [Activity Log Index](activity-log/index.md)
+## Chronology
+- [Activity Log](activity-log/index.md)

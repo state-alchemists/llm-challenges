@@ -1,3 +1,0 @@
-# Preferences
-
-*(No entries yet.)*

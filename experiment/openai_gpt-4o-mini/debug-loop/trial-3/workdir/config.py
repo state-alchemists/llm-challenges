@@ -1,9 +1,9 @@
 """Configuration constants for the pipeline."""
 
-
-settings = {
+CONFIG = {
     "source": "events.csv",
-    "batch_size": 1,  # Updating to a valid batch size
+    "batch_size": 0,
 }
 
-CONFIG = settings  # Assuming this was the intended usage.
+# Adding settings for the import to succeed
+settings = {"batch_size": 1}

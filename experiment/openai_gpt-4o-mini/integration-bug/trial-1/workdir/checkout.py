@@ -3,6 +3,22 @@ from inventory import Inventory
 from payments import PaymentGateway
 
 
+import asyncio
+from inventory import Inventory
+from payments import PaymentGateway
+
+import asyncio
+from inventory import Inventory
+from payments import PaymentGateway
+
+import asyncio
+from inventory import Inventory
+from payments import PaymentGateway
+
+import asyncio
+from inventory import Inventory
+from payments import PaymentGateway
+
 async def checkout(
     order_id: str,
     quantity: int,
@@ -15,20 +31,204 @@ async def checkout(
         print(f"Order {order_id}: out of stock")
         return False
 
-    holds = await inventory.hold(quantity)
-    if not holds:
-        print(f"Order {order_id}: unable to hold stock")
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    print(f"Order {order_id}: SUCCESS")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
         return False
 
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
         print(f"Order {order_id}: payment failed")
-        await inventory.increment(quantity)  # Restoring held stock
         return False
 
     decremented = await inventory.decrement(quantity)
     if not decremented:
-        print(f"Order {order_id}: inventory error after payment — item not delivered")
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    print(f"Order {order_id}: SUCCESS")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
+        return False
+
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    print(f"Order {order_id}: SUCCESS")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
+        return False
+
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    print(f"Order {order_id}: SUCCESS")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
+        return False
+
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    # Safely reference total through gateway
+    print(f"Order {order_id}: SUCCESS")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
+        return False
+
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    print(f"Order {order_id}: SUCCESS, total charged now at {gateway.total_charged:.2f}")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
+        return False
+
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    print(f"Order {order_id}: SUCCESS, total charged now at {gateway.total_charged:.2f}")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
+        return False
+
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    print(f"Order {order_id}: SUCCESS, total charged now at {gateway.total_charged:.2f}")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
+        return False
+
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    print(f"Order {order_id}: SUCCESS, total charged now at {gateway.total_charged:.2f}")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
+        return False
+
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    print(f"Order {order_id}: SUCCESS, total charged now at {gateway.total_charged:.2f}")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
+        return False
+
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
+        return False
+
+    total_charged += quantity * price
+
+    print(f"Order {order_id}: SUCCESS")
+    return True
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
+        return False
+
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        return False
+
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error — item not delivered")
         return False
 
     print(f"Order {order_id}: SUCCESS")

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from typing import List, Optional
 from .models import Task, TaskCreate, TaskUpdate, Project, TaskStatus
 from .database import tasks, projects
@@ -23,7 +23,7 @@ async def list_tasks(
     filtered_tasks = tasks
     if status:
         filtered_tasks = [task for task in filtered_tasks if task.status == status]
-    if priority:
+    if priority is not None:
         filtered_tasks = [task for task in filtered_tasks if task.priority == priority]
     if assigned_to:
         filtered_tasks = [task for task in filtered_tasks if task.assigned_to == assigned_to]
@@ -45,7 +45,7 @@ async def get_task(task_id: int):
 async def create_task(task: TaskCreate, api_key: str = Depends(require_api_key)):
     project_exists = any(p.id == task.project_id for p in projects)
     if not project_exists:
-        raise HTTPException(status_code=404, detail=f"Project with ID {task.project_id} not found")
+        raise HTTPException(status_code=404, detail="Project not found")
 
     new_id = max([t.id for t in tasks]) + 1 if tasks else 1
     new_task = Task(id=new_id, **task.dict())
@@ -58,17 +58,16 @@ async def update_task(task_id: int, task_update: TaskUpdate, api_key: str = Depe
     for idx, task in enumerate(tasks):
         if task.id == task_id:
             updated_data = task_update.dict(exclude_unset=True)
-            for key, value in updated_data.items():
-                setattr(tasks[idx], key, value)
-            return tasks[idx]
+            updated_task = task.copy(update=updated_data)
+            tasks[idx] = updated_task
+            return updated_task
     raise HTTPException(status_code=404, detail="Task not found")
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
 async def delete_task(task_id: int, api_key: str = Depends(require_api_key)):
-    global tasks
-    initial_len = len(tasks)
-    tasks = [task for task in tasks if task.id != task_id]
-    if len(tasks) == initial_len:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return
+    for idx, task in enumerate(tasks):
+        if task.id == task_id:
+            del tasks[idx]
+            return
+    raise HTTPException(status_code=404, detail="Task not found")

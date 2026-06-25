@@ -16,7 +16,7 @@ class PaymentGateway:
             return True
         if random.random() < self._failure_rate:
             return False
+        self._charged_order_ids.add(order_id)
         self.total_charged += amount
         self.charges.append({"order_id": order_id, "amount": amount})
-        self._charged_order_ids.add(order_id)
         return True

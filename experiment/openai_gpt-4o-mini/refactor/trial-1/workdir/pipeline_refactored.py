@@ -1,107 +1,127 @@
-import datetime
 import os
-import sqlite3
 import re
-from typing import Dict, List
+import datetime
+import sqlite3
 
-# Load configuration from environment variables
+# Environment variables for configuration
 DB_PATH = os.getenv("DB_PATH", "metrics.db")
 LOG_FILE = os.getenv("LOG_FILE", "server.log")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", 5432))
+DB_USER = os.getenv("DB_USER", "admin")
+DB_PASS = os.getenv("DB_PASS", "password123")
 
 
-def extract_log_data() -> List[Dict[str, str]]:
-    """Extract log data from the log file and return it as a list of dictionaries."""
+def parse_log_line(line: str) -> dict:
+    """Parses a single line from the log file and returns a dictionary of values."""
+    log_regex = re.compile(r'(?P<dt>[^ ]+ [^ ]+) (?P<lvl>[A-Z]+)(?: (?P<msg>.+))?')
+    match = log_regex.match(line)
+    if match:
+        dt = match.group('dt')
+        lvl = match.group('lvl')
+        msg = match.group('msg')
+        return {'dt': dt, 'lvl': lvl, 'msg': msg}  # type: ignore
+    return None
+
+
+def process_logs() -> tuple:
+    """Processes the log file and returns a structured list of data."""
     d_list = []
+    sessions = {}
+    api_calls = []
+
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "r") as f:
             for line in f:
-                # Use regex to parse log lines
-                match = re.match(r'(\S+ \S+) \[(\w+)\] (.*)', line)
-                if match:
-                    dt, lvl, msg = match.groups()
+                parsed_line = parse_log_line(line)
+                if parsed_line:
+                    dt = parsed_line['dt']
+                    lvl = parsed_line['lvl']
+                    msg = parsed_line['msg']
+
                     if lvl == "ERROR":
                         d_list.append({"d": dt, "t": "ERR", "m": msg})
                     elif lvl == "INFO":
-                        # Further parse actions from INFO logs
                         if "User" in msg:
-                            uid = re.search(r'User (\d+)', msg)
-                            if uid:
-                                action = msg.split(f"User {uid.group(1)} ")[1].strip() if uid.group(1) else ""
-                                d_list.append({"d": dt, "t": "USR", "u": uid.group(1), "a": action})
+                            uid_match = re.search(r'User (\d+)', msg)
+                            if uid_match:
+                    uid = uid_match.group(1)
+                            sessions[uid] = dt if "logged in" in msg else sessions.pop(uid, None)
+                            d_list.append({"d": dt, "t": "USR", "u": uid, "a": msg})
                         elif "API" in msg:
-                            endpoint = re.search(r'API (\S+)', msg)
-                            if endpoint:
-                                dur = re.search(r'took (\d+)ms', msg)
-                                api_duration = int(dur.group(1)) if dur else 0
-                                d_list.append({"d": dt, "t": "API", "endpoint": endpoint.group(1), "ms": api_duration})
+                            endpoint = re.search(r'API (.+?) ', msg).group(1)
+                            dur = int(re.search(r'took (\d+)ms', msg).group(1)) if "took" in msg else 0
+                            api_calls.append({"d": dt, "endpoint": endpoint, "ms": dur})
                     elif lvl == "WARN":
                         d_list.append({"d": dt, "t": "WARN", "m": msg})
-    return d_list
 
-def store_data_in_db(d_list: List[Dict[str, str]]) -> None:
-    """Store processed log data into the SQLite database."""
+    return d_list, sessions, api_calls
+
+
+def insert_error_data(c: sqlite3.Cursor, error_data: dict):
+    """Inserts error data into the database."""
+    c.execute("INSERT INTO errors (dt, message, count) VALUES (?, ?, ?)", (datetime.datetime.now(), msg, count))
+
+
+def insert_api_metric(c: sqlite3.Cursor, api_metric_data: tuple):
+    """Inserts API metric data into the database."""
+    c.execute("INSERT INTO api_metrics (dt, endpoint, avg_ms) VALUES (?, ?, ?)" , api_metric_data)
+
+
+def generate_report(errors: dict, api_metrics: dict, active_sessions: int) -> str:
+    """Generates an HTML report from the error and API metrics data."""
+    out = "<html>\n<head><title>System Report</title></head>\n<body>\n"
+    out += "<h1>Error Summary</h1>\n<ul>\n"
+    for err_msg, count in errors.items():
+        out += f"<li><b>{err_msg}</b>: {count} occurrences</li>\n"
+    out += "</ul>\n"
+    out += "<h2>API Latency</h2>\n<table border='1'>\n"
+    out += "<tr><th>Endpoint</th><th>Avg (ms)</th></tr>\n"
+    for ep, times in api_metrics.items():
+        avg = sum(times) / len(times)
+        out += f"<tr><td>{ep}</td><td>{round(avg, 1)}</td></tr>\n"
+    out += "</table>\n"
+    out += f"<h2>Active Sessions</h2>\n<p>{active_sessions} user(s) currently active</p>\n"
+    out += "</body>\n</html>"
+    return out
+
+
+def proc_data():
+    """Main processing function that drives the log parsing and reporting."""
+    d_list, sessions, api_calls = process_logs()
+
+    # Database connection
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("CREATE TABLE IF NOT EXISTS errors (dt TEXT, message TEXT, count INTEGER)")
     c.execute("CREATE TABLE IF NOT EXISTS api_metrics (dt TEXT, endpoint TEXT, avg_ms REAL)")
 
-    error_counts = {}
-    for entry in d_list:
-        if entry["t"] == "ERR":
-            msg = entry["m"]
-            error_counts[msg] = error_counts.get(msg, 0) + 1
+    error_count = {}
+    for x in d_list:
+        if x["t"] == "ERR":
+            msg = x["m"]
+            error_count[msg] = error_count.get(msg, 0) + 1
 
-    for msg, count in error_counts.items():
-        c.execute("INSERT INTO errors (dt, message, count) VALUES (?, ?, ?)", (datetime.datetime.now(), msg, count))
+    for msg, count in error_count.items():
+        insert_error_data(c, (datetime.datetime.now(), msg, count))
 
-    api_stats = {}
-    for entry in d_list:
-        if entry["t"] == "API":
-            ep = entry["endpoint"]
-            api_stats.setdefault(ep, []).append(entry["ms"])
+    endpoint_stats = {}
+    for call in api_calls:
+        ep = call["endpoint"]
+        endpoint_stats.setdefault(ep, []).append(call["ms"])
 
-    for ep, times in api_stats.items():
-        if times:
-            avg = sum(times) / len(times)
-            c.execute("INSERT INTO api_metrics (dt, endpoint, avg_ms) VALUES (?, ?, ?)", (datetime.datetime.now(), ep, avg))
+    for ep, times in endpoint_stats.items():
+        avg = sum(times) / len(times)
+        insert_api_metric(c, (datetime.datetime.now(), ep, avg))
 
     conn.commit()
     conn.close()
 
-def generate_report(d_list: List[Dict[str, str]], sessions: Dict[str, str]) -> None:
-    """Generate an HTML report from processed log data."""
-    out = "<html>\n<head><title>System Report</title></head>\n<body>\n"
-    out += "<h1>Error Summary</h1>\n<ul>\n"
-    error_counts = {entry["m"]: entry for entry in d_list if entry["t"] == "ERR"}
-    for err_msg, count in error_counts.items():
-        out += f"<li><b>{err_msg}</b>: {count} occurrences</li>\n"
-    out += "</ul>\n"
-
-    out += "<h2>API Latency</h2>\n<table border='1'>\n"
-    out += "<tr><th>Endpoint</th><th>Avg (ms)</th></tr>\n"
-    api_stats = {entry["endpoint"]: [] for entry in d_list if entry["t"] == "API"}
-    for entry in d_list:
-        if entry["t"] == "API":
-            api_stats[entry["endpoint"]].append(entry["ms"])
-
-    for ep, times in api_stats.items():
-        avg = sum(times) / len(times) if times else 0
-        out += f"<tr><td>{ep}</td><td>{round(avg, 1)}</td></tr>\n"
-    out += "</table>\n"
-
-    out += "<h2>Active Sessions</h2>\n"
-    out += f"<p>{len(sessions)} user(s) currently active</p>\n"
-    out += "</body>\n</html>"
-
+    report = generate_report(error_count, endpoint_stats, len(sessions))
     with open("report.html", "w") as f:
-        f.write(out)
+        f.write(report)
 
-def proc_data() -> None:
-    """Main function to process log data from extraction to storing and reporting."""
-    d_list = extract_log_data()
-    sessions = {entry["u"]: entry["d"] for entry in d_list if entry["t"] == "USR"}
-    store_data_in_db(d_list)
-    generate_report(d_list, sessions)
+    print("Job finished at " + str(datetime.datetime.now()))
 
 
 if __name__ == "__main__":
@@ -113,4 +133,4 @@ if __name__ == "__main__":
             f.write("2024-01-01 12:08:00 INFO API /users/profile took 250ms\n")
             f.write("2024-01-01 12:09:00 WARN Memory usage at 87%\n")
             f.write("2024-01-01 12:10:00 INFO User 42 logged out\n")
-    proc_data()  
+    proc_data()

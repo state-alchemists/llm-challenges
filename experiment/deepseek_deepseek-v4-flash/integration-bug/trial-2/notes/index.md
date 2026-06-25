@@ -1,14 +1,10 @@
-# Journal
+# Journal Index
 
-## Recent Activity
+## Recent Insights
+- [ecommerce-checkout](projects/ecommerce-checkout.md) — TOCTOU race in concurrent checkout: reserve-then-charge pattern
 
-- [2026-06-23](activity-log/2026/2026-06/2026-06-23.md) — Fix concurrent checkout race conditions (overselling + ghost charges)
+## Project Notes
+- [ecommerce-checkout](projects/ecommerce-checkout.md)
 
-## Technical Notes
-
-- [Concurrency Patterns](technical/concurrency-patterns.md) — atomic reserve pattern for inventory management
-
-## Index
-
-- [Activity Log](activity-log/index.md)
-- [Technical](technical/index.md)
+## Activity Log
+- [2026](activity-log/2026/index.md)

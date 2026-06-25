@@ -1,3 +1,9 @@
 # Activity Log Index
 
-- [2026 Activity Log](2026/index.md)
+Chronological log of significant agent actions.
+
+## Years
+- [2026](2026/index.md)
+
+## Backlinks
+- [index](../index.md)

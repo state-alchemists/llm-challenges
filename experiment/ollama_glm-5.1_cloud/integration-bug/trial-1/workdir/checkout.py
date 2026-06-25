@@ -10,17 +10,19 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Reserve stock first — if this fails, no charge is attempted.
-    decremented = await inventory.decrement(quantity)
-    if not decremented:
+    # 1. Atomically reserve inventory before charging.
+    #    This eliminates the TOCTOU race between check_stock and decrement.
+    reserved = await inventory.reserve(quantity)
+    if not reserved:
         print(f"Order {order_id}: out of stock")
         return False
 
+    # 2. Charge the customer. If payment fails, roll back the reservation
+    #    so stock is returned and no ghost charge remains.
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        # Charge failed — release the reserved stock so other orders can use it.
         await inventory.increment(quantity)
-        print(f"Order {order_id}: payment failed, stock restored")
+        print(f"Order {order_id}: payment failed — inventory released")
         return False
 
     print(f"Order {order_id}: SUCCESS")

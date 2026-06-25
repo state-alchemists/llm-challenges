@@ -2,8 +2,6 @@ import asyncio
 from inventory import Inventory
 from payments import PaymentGateway
 
-_lock = None
-
 
 async def checkout(
     order_id: str,
@@ -12,25 +10,24 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    global _lock
-    if _lock is None:
-        _lock = asyncio.Lock()
+    # Reserve stock first to prevent overselling and race conditions
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: out of stock")
+        return False
 
-    async with _lock:
-        available = await inventory.check_stock(quantity)
-        if not available:
-            print(f"Order {order_id}: out of stock")
-            return False
-
+    try:
         charged = await gateway.charge(order_id, quantity * price)
-        if not charged:
-            print(f"Order {order_id}: payment failed")
-            return False
+    except Exception as e:
+        # If charging raises an exception, we must restore the reserved inventory
+        await inventory.increment(quantity)
+        raise e
 
-        decremented = await inventory.decrement(quantity)
-        if not decremented:
-            print(f"Order {order_id}: inventory error after payment — item not delivered")
-            return False
+    if not charged:
+        print(f"Order {order_id}: payment failed")
+        # Payment failed, so restore the reserved inventory
+        await inventory.increment(quantity)
+        return False
 
-        print(f"Order {order_id}: SUCCESS")
-        return True
+    print(f"Order {order_id}: SUCCESS")
+    return True

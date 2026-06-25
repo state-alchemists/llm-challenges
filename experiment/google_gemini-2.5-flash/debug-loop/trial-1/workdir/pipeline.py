@@ -11,8 +11,6 @@ def extract() -> list[int]:
 
 def transform(values: list[int]) -> float:
     total = sum(values)
-    if CONFIG["batch_size"] == 0:
-        return total / len(values)
     return total / CONFIG["batch_size"]
 
 

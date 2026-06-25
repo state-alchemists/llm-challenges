@@ -1,6 +1,6 @@
 # Activity Log Index
 
-- [2026 Log](2026/index.md)
+- [2026 Year Index](2026/index.md)
 
 ## Backlinks
-- [HUD](../index.md)
+- [HUD index](../index.md)

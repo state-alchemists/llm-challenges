@@ -1,10 +1,12 @@
-# Journal HUD
+# Zaruba Journal
 
-## Recent Insights
-- No insights yet.
+Welcome to the Heads-Up Display for Zaruba's persistent memory.
+
+## Active Projects
+- [Projects](projects/index.md) — List of active projects
 
 ## Navigation
-- [Activity Log](activity-log/index.md)
+- [Activity Logs](activity-log/index.md)
 
 ## Backlinks
-- (none)
+- None

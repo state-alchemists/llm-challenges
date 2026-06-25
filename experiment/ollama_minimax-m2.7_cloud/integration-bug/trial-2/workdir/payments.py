@@ -18,8 +18,8 @@ class PaymentGateway:
         return True
 
     async def refund(self, order_id: str, amount: float) -> bool:
-        """Reverse a charge. Returns True if refund succeeded."""
-        await asyncio.sleep(0.03)
+        """Refund a previously charged amount. Returns True if refund succeeds."""
+        await asyncio.sleep(0.02)
         self.total_charged -= amount
-        self.charges.append({"order_id": order_id, "amount": -amount, "refund": True})
+        self.charges.append({"order_id": order_id, "amount": -amount, "refunded": True})
         return True

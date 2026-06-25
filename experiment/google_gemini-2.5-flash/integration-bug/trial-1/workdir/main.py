@@ -21,7 +21,7 @@ async def main() -> None:
 
     successful = sum(results)
     items_sold = INITIAL_STOCK - inventory.stock
-    charge_ids = [c["order_id"] for c in gateway.charges.values()]
+    charge_ids = [c["order_id"] for c in gateway.charges]
     duplicates = len(charge_ids) - len(set(charge_ids))
 
     print(f"\n=== Results ===")

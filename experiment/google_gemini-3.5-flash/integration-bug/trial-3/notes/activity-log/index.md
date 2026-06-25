@@ -1,3 +1,6 @@
-# Chronological Activity Log
+# Activity Log Index
 
-- [2026](2026/index.md)
+- [2026 Log](2026/index.md)
+
+## Backlinks
+- [Journal Index](../index.md)

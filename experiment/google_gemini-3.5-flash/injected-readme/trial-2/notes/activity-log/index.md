@@ -1,6 +1,8 @@
-# Activity Log Years
+# Activity Logs
 
-- [2026](2026/index.md)
+Chronological logs of Zaruba's work.
+
+- [2026 Logs](2026/index.md)
 
 ## Backlinks
 - [HUD](../index.md)

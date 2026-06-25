@@ -1,10 +1,10 @@
-# Journal Index
+# HUD Index
 
-Welcome to the journal.
+Welcome to the LLM Journal HUD.
 
-## Sections
-- [User Info](user/index.md)
-- [Preferences](preferences/index.md)
+## Navigation
 - [Projects](projects/index.md)
-- [Technical Notes](technical/index.md)
 - [Activity Log](activity-log/index.md)
+
+## Recent Insights
+- [Debug Loop Pipeline Fix](projects/debug-loop.md)

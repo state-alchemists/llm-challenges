@@ -17,10 +17,16 @@ class PaymentGateway:
         self.charges.append({"order_id": order_id, "amount": amount})
         return True
 
-    async def refund(self, order_id: str, amount: float) -> None:
-        # In a real system, this would interact with the payment gateway to process a refund.
-        # For this simulation, we'll just adjust our internal records.
-        await asyncio.sleep(0.01)
-        self.total_charged -= amount
-        # Remove the specific charge from the list
-        self.charges = [c for c in self.charges if not (c["order_id"] == order_id and c["amount"] == amount)]
+    async def refund(self, order_id: str, amount: float) -> bool:
+        await asyncio.sleep(0.01) # Simulate network delay
+        original_charge = None
+        for charge in self.charges:
+            if charge["order_id"] == order_id and charge["amount"] == amount:
+                original_charge = charge
+                break
+        
+        if original_charge:
+            self.charges.remove(original_charge)
+            self.total_charged -= amount
+            return True
+        return False

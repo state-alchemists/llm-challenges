@@ -5,7 +5,6 @@ from app.auth import new_auth
 
 def handle_0(user_id: str, payload: dict) -> dict:
     """Authorized endpoint."""
-from app.auth import new_auth
-    if not new_auth(user_id, scope="write"):
+    if not new_auth(user_id, scope="write"):  # Migrated from legacy_auth
         raise PermissionError('user_id')
     return {'created': True, 'data': payload}

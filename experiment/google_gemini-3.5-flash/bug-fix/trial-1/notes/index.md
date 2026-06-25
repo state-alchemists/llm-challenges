@@ -1,11 +1,9 @@
-# HUD
+# Zaruba's Memory Journal
 
-## Active Constraints
-- Maintain public signatures for all job queue and worker APIs.
+Welcome to the HUD index.
 
-## Recent Insights
-- [Concurrency & Failure Handling in Async Job Queue](technical/async-job-queue.md)
-
-## Navigation
-- [Technical Index](technical/index.md)
+## Directory Index
 - [Activity Log](activity-log/index.md)
+
+## Backlinks
+- None

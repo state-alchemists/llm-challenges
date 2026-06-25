@@ -7,7 +7,7 @@ class JobQueue:
         self._jobs: Dict[int, Dict[str, Any]] = {}
         self._next_id = 1
         self.max_retries = max_retries
-        self._lock = asyncio.Lock() # Add a lock for atomic dequeue operations
+        self._dequeue_lock = asyncio.Lock()
 
     def enqueue(self, payload: dict) -> int:
         job_id = self._next_id
@@ -22,21 +22,10 @@ class JobQueue:
         return job_id
 
     async def dequeue(self) -> Optional[Dict]:
-        async with self._lock:
-            # Check for stuck jobs (processing but not completed) and re-enqueue them if retries allow
-            for job_id, job in list(self._jobs.items()): # Iterate over a copy to allow modification
-                if job["status"] == "processing":
-                    if job["retries"] < self.max_retries:
-                        job["retries"] += 1
-                        job["status"] = "pending"
-                        print(f"DEBUG: Re-enqueued stuck job {job_id}. Retries: {job['retries']}")
-                    else:
-                        job["status"] = "failed"
-                        job["result"] = "Job stuck and exceeded max retries"
-                        print(f"DEBUG: Job {job_id} marked as failed due to being stuck and exceeding retries.")
-
+        async with self._dequeue_lock:
             for job in self._jobs.values():
                 if job["status"] == "pending":
+                    await asyncio.sleep(0.01)
                     job["status"] = "processing"
                     return job
             return None

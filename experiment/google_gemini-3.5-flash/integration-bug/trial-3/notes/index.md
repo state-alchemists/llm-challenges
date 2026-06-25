@@ -1,15 +1,12 @@
-# LLM Session Journal Index
+# Journal Index
 
-## HUD: Critical Constraints & Prefs
-- Project: E-Commerce Checkout Service Integration Bug
-- Tech: Python, asyncio, concurrency, e-commerce checkout logic
-- Focus: Ensure lock serialization for critical inventory & checkout sections
-
-## Technical Notes
-- [Asyncio Locks in Checkout](technical/asyncio-locks.md)
+Welcome to your Heads-Up Display (HUD) and persistent memory.
 
 ## Projects
-- [Checkout Integration Bug](projects/checkout-integration-bug.md)
+- [Checkout Service](projects/index.md)
 
-## Chronology
-- [Activity Log](activity-log/index.md)
+## Technical Reference
+- [Distributed Transactions](technical/index.md)
+
+## Activity Log
+- [Activity Log Root](activity-log/index.md)

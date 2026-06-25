@@ -1,389 +1,153 @@
 [2m
-  🧠 The user[0m[2m is asking me to fix a checkout service that has two production issues: overselling ([0m[2minventory goes negative) and ghost charges (customers charged but no item delivered). Let me start by activating the relevant skills and understanding the codebase.
+  🧠 Let[0m[2m me start by[0m[2m understanding[0m[2m the task[0m[2m. I[0m[2m need to fix[0m[2m a[0m[2m checkout service[0m[2m that[0m[2m has two[0m[2m production[0m[2m issues:
+     1.[0m[2m Overs[0m[2melling[0m[2m - items[0m[2m sold[0m[2m when out of stock[0m[2m,[0m[2m inventory goes[0m[2m negative
+     2.[0m[2m Ghost[0m[2m charges[0m[2m - customers charged[0m[2m but receive[0m[2m no item
      
-     This is a coding task (fixing source[0m[2m/test/config files), so I should activate `core-coding`.
-     
-     Let me first read the files to understand the structure.[0m[2m
+[0m[2mLet[0m[2m me first[0m[2m read the project[0m[2m documentation[0m[2m and[0m[2m then look[0m[2m at the code[0m[2m files to[0m[2m understand the current[0m[2m implementation[0m[2m
   🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m[0m[2m
-  🧰 call_function_hdfffwbysxt3_2 | ActivateSkillLS {"name":"core-coding"}{"path":"/Users/gofrendigunawan/llm-challenges/experiment/ollama_minimax-m2.7_cloud/integration-bug/trial-1/workdir"}
+  🧰 call_20598fe8c11e44938bcca601 | ReadReadLS {"path":"/Users/gofrendigunawan/.claude/CLAUDE.md"}{"path":"/Users/gofrendigunawan/llm-challenges/README.md"}{"path":"/Users/gofrendigunawan/llm-challenges/experiment/ollama_minimax-m2.7_cloud/integration-bug/trial-1/workdir"}
 [0m[2m
-  🔠 call_function_hdfffwbysxt3_2 Executed
+  🔠 call_20598fe8c11e44938bcca601 Executed
 [0m
 [SYSTEM] Invalid tool call detected, asking model to retry...
 [2m
-  🧠 The[0m[2m user wants me to fix a checkout service that has two issues: overselling (inventory going negative) and ghost charges (customers charged but no item[0m[2m delivered). Let me first read the relevant files to understand the code structure.
-     
-     I need to look at:
-     1. `checkout.py` - the checkout flow
-     2. `inventory.py` - stock management
-     3. `payments[0m[2m.py` - mock payment gateway
-     4. `main.py` - the concurrent simulation
-     
-     Let me start by reading these files to understand the current implementation.[0m[2m
+  🧠 Let[0m[2m me start[0m[2m by[0m[2m reading[0m[2m the relevant[0m[2m files to understand the[0m[2m checkout flow and reproduce[0m[2m the issues[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_2kee2lezme0w_1 | Read {'path': 'checkout.py'}
+  🧰 call_d0dffe8992ef4d0894785c9e | Read {'path': 'checkout.py'}
 [0m[2m
-  🔠 call_function_2kee2lezme0w_1 Executed
+  🔠 call_d0dffe8992ef4d0894785c9e Executed
 [0m[2m
-  🧠 I[0m[2m can see the race condition in the checkout flow. The problem is:
+  🧠 I[0m[2m can[0m[2m see the issue now[0m[2m. Let[0m[2m me read[0m[2m the inventory[0m[2m and[0m[2m payments[0m[2m files to understand the[0m[2m full picture[0m[2m. I[0m[2m need to see[0m[2m what[0m[2m methods[0m[2m are available.
      
-     1. Check stock (read)
-     2. Charge customer ([0m[2mwrite - payment)
-     3. Decrement inventory (write)
+[0m[2mThe[0m[2m bug[0m[2m is clear[0m[2m already[0m[2m:
+     1. The[0m[2m checkout[0m[2m flow charges[0m[2m the[0m[2m customer[0m[2m BEFORE[0m[2m decrement[0m[2ming inventory[0m[2m
+     2. If[0m[2m the[0m[2m decrement[0m[2m fails[0m[2m after payment[0m[2m, the customer[0m[2m is charged[0m[2m but the[0m[2m item isn't[0m[2m delivered
+     3.[0m[2m There's[0m[2m no atomic[0m[2mity[0m[2m - between[0m[2m checking[0m[2m stock[0m[2m and decrement[0m[2ming, another[0m[2m request[0m[2m could consume[0m[2m the[0m[2m stock[0m[2m
      
-     Between steps 1 and 3, another concurrent checkout[0m[2m could deplete the stock, causing overselling. And if step 3 fails after step[0m[2m 2 succeeds, the customer is charged but inventory isn't decremented (ghost charge).
-     
-     The fix should:
-     1. Reserve inventory BEFORE[0m[2m charging, using a reservation mechanism
-     2. Only charge after successful reservation
-     3. Commit the reservation after[0m[2m successful charge, or release it if charge fails
-     
-     Let me read the inventory.py and payments.py to understand their interfaces.[0m[2m
+     Let[0m[2m me read[0m[2m the other[0m[2m files to understand the[0m[2m full interface[0m[2m before[0m[2m proposing[0m[2m a[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_lsfgl0k5puxg_1 | Read {'path': 'inventory.py'}
+  🧰 call_1984720447f44468b6e7d58a | Read {'path': 'inventory.py'}
 [0m[2m
-  🔠 call_function_lsfgl0k5puxg_1 Executed
+  🔠 call_1984720447f44468b6e7d58a Executed
 [0m[2m
-  🧠 Now[0m[2m let me read payments.py to understand the payment gateway interface.[0m[2m
+  🧠 Now[0m[2m let[0m[2m me read the payments[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_rv1uujvyf96g_1 | Read {'path': 'payments.py'}
+  🧰 call_872b73dde51543ecade3cc5c | Read {'path': 'payments.py'}
 [0m[2m
-  🔠 call_function_rv1uujvyf96g_1 Executed
+  🔠 call_872b73dde51543ecade3cc5c Executed
 [0m[2m
-  🧠 Now[0m[2m I understand the bugs:
+  🧠 Now[0m[2m I[0m[2m understand the issues[0m[2m:
      
-     1. **Overselling**: The `checkout` function checks stock, then charges[0m[2m, then decrements. Between check and decrement, concurrent requests can all pass the check (since stock hasn't changed yet), but[0m[2m then all decrement, going negative.
+[0m[2m**[0m[2mIssue[0m[2m 1: Overs[0m[2melling[0m[2m**
+[0m[2m-[0m[2m In[0m[2m `checkout[0m[2m.py`, the[0m[2m flow[0m[2m is:[0m[2m `check_stock`[0m[2m → `charge[0m[2m` → `de[0m[2mcrement[0m[2m`
+     - Between[0m[2m `[0m[2mcheck_stock` and[0m[2m `decrement[0m[2m`, another[0m[2m concurrent[0m[2m task could have[0m[2m already[0m[2m decre[0m[2mmented[0m[2m the stock
+     -[0m[2m The `check_stock[0m[2m` is a read[0m[2m,[0m[2m not a reservation[0m[2m —[0m[2m so stock[0m[2m can go[0m[2m negative[0m[2m
      
-     2. **Ghost charges**: If `decrement` fails after payment was[0m[2m charged, the customer is charged but gets nothing. No refund is issued.
+     **Issue [0m[2m2: Ghost[0m[2m charges[0m[2m**
+     - If[0m[2m `charge[0m[2m` succeeds[0m[2m but[0m[2m `de[0m[2mcrement[0m[2m` fails (because[0m[2m another[0m[2m task[0m[2m already[0m[2m took[0m[2m the stock), the[0m[2m customer is charged[0m[2m but get[0m[2m no item
+     -[0m[2m There's[0m[2m no rollback[0m[2m/[0m[2mref[0m[2mund[0m[2m logic
      
-     The fix needs to be atomic - charge[0m[2m and decrement should happen in a way that prevents:
-     - Concurrent requests from overselling
-     - Charging[0m[2m without delivering
+     **The[0m[2m fix:**
+[0m[2mI[0m[2m need to make[0m[2m the operations[0m[2m atomic[0m[2m or[0m[2m add[0m[2m a reservation[0m[2m mechanism[0m[2m. The[0m[2m key[0m[2m insight[0m[2m is:
+[0m[2m1. We[0m[2m need to reserve[0m[2m stock[0m[2m BEFORE[0m[2m charging[0m[2m
+[0m[2m2. If payment[0m[2m fails after[0m[2m reservation[0m[2m, we need to[0m[2m release[0m[2m the stock back[0m[2m
+     3. We[0m[2m need to prevent[0m[2m double[0m[2m-charg[0m[2ming
      
-     The solution: Reverse the order - decrement first, then charge. If charge[0m[2m fails after decrement, increment back.
+     Options[0m[2m:
+     1. Add[0m[2m a `reserve[0m[2m([0m[2mquantity)`[0m[2m method[0m[2m that atom[0m[2mically[0m[2m decre[0m[2mments[0m[2m if sufficient[0m[2m stock[0m[2m exists[0m[2m,[0m[2m returning[0m[2m success[0m[2m/f[0m[2mailure
+     2.[0m[2m Modify[0m[2m the checkout[0m[2m flow[0m[2m to:[0m[2m reserve[0m[2m → charge[0m[2m → if[0m[2m charge[0m[2m fails, release[0m[2m →[0m[2m if[0m[2m charge[0m[2m succeeds[0m[2m, done[0m[2m
+[0m[2m3. Handle[0m[2m the[0m[2m case[0m[2m where[0m[2m payment[0m[2m fails[0m[2m after[0m[2m successful[0m[2m decrement[0m[2m ([0m[2mref[0m[2mund)
      
-     But wait, there's still a race condition with `check[0m[2m_stock` and `decrement`. The real fix is to make `decrement` atomic with the check (which[0m[2m it kind of does), but the issue is the public interface exposes `check_stock` separately.
+[0m[2mBut[0m[2m I cannot[0m[2m change[0m[2m the public interfaces[0m[2m of `Inventory[0m[2m` or `Payment[0m[2mGateway`. I[0m[2m can add methods[0m[2m to them[0m[2m though[0m[2m.
      
-     Actually, looking more[0m[2m carefully:
-     - `check_stock` is a read-only check
-     - `decrement` does the actual[0m[2m decrement with a check inside
+     Let me think[0m[2m about the[0m[2m best[0m[2m approach[0m[2m:
      
-     The bug is that the public API exposes `check_stock` which gives a "safe[0m[2m" answer at one point in time, but by the time you call `decrement`, the stock could[0m[2m have changed.
+     **[0m[2mOption A: Add[0m[2m `[0m[2mreserve[0m[2m`[0m[2m and[0m[2m `release[0m[2m` to[0m[2m Inventory[0m[2m**
+     -[0m[2m `reserve[0m[2m([0m[2mquantity)` - atom[0m[2mically decre[0m[2mments stock[0m[2m,[0m[2m returns bool[0m[2m
+     - `release[0m[2m(quantity)` -[0m[2m increments[0m[2m stock[0m[2m back[0m[2m
+[0m[2m- Checkout[0m[2m flow: reserve[0m[2m → charge[0m[2m → if charge fails[0m[2m, release
      
-     The fix: In `checkout.py`, don't call `check_stock` separately. Just call `decrement` directly - it returns[0m[2m False if stock is insufficient. If decrement succeeds but charge fails, increment back.
+[0m[2m**Option[0m[2m B: Modify[0m[2m `[0m[2mdecrement[0m[2m` to be[0m[2m the[0m[2m reservation[0m[2m**
+     - Problem[0m[2m: `de[0m[2mcrement[0m[2m` is already[0m[2m used[0m[2m and[0m[2m returns[0m[2m False[0m[2m if[0m[2m insufficient[0m[2m stock
+     - But[0m[2m if[0m[2m payment[0m[2m fails after[0m[2m `decrement[0m[2m`[0m[2m succeeds[0m[2m, we[0m[2m need to refund[0m[2m/re[0m[2mverse[0m[2m
      
-     But the[0m[2m real issue for overselling is more subtle: even calling `decrement` alone has[0m[2m a race condition because multiple coroutines can all pass the `if self._stock >= quantity` check before any[0m[2m of them subtracts.
+     Actually[0m[2m, looking[0m[2m more[0m[2m carefully:
      
-     Actually wait - `decrement` does the check and subtract in one[0m[2m atomic-looking operation with a single `await asyncio.sleep(0.02)` in between. But between[0m[2m the check (`self._stock >= quantity`) and the subtract (`self._stock -= quantity`), there's an await point, so another[0m[2m coroutine could interleave.
+[0m[2mThe[0m[2m public[0m[2m interface of[0m[2m Inventory[0m[2m is:
      
      
-     The classic approach would be a lock, but I can't change[0m[2m the public interfaces. However, I can add internal methods to `Inventory` and `PaymentGateway`. For `Inventory`, I could add a method that atom[0m[2mically checks and decrements in one operation without yielding to the event loop between the check and the subtraction. For[0m[2m `PaymentGateway`, if a charge fails after inventory is decremented, I'd need to refund or increment the inventory back.
+[0m[2m- `check_stock[0m[2m(quantity)[0m[2m -> bool`
+     -[0m[2m `decrement[0m[2m(quantity) ->[0m[2m bool`
+     - `[0m[2mincrement[0m[2m(quantity)[0m[2m -> None`
+     -[0m[2m `stock` property[0m[2m
      
-     The core[0m[2m issue is that `decrement` has an `await` point between the stock check and the actual decrement, allowing other coroutines to inter[0m[2mleave. If I add an `_atomic_decrement` method that performs both the check and decrement synchronously before[0m[2m any `await`, it would prevent race conditions. For the refund scenario, when a charge fails after inventory has[0m[2m been decremented, I'd need to add a refund method to `PaymentGateway` that allows me to reverse the charge and then[0m[2m increment the inventory back.
+     I[0m[2m can ADD[0m[2m methods but[0m[2m cannot[0m[2m change these[0m[2m. So[0m[2m I can add `[0m[2mreserve[0m[2m`[0m[2m and[0m[2m `release[0m[2m`.
      
-     I could also simplify by reversing the order entirely - decrement inventory first, then attempt the charge, and[0m[2m if that fails, increment the inventory back. But this creates its own problem: if the charge succeeds, we're fine[0m[2m, but if it fails, we've already decremented the stock and need to refund. So I'd still[0m[2m need the refund capability.
+[0m[2mFor[0m[2m Payment[0m[2mGateway,[0m[2m the public interface is[0m[2m:
+     - `charge[0m[2m(order[0m[2m_id, amount)[0m[2m -> bool`
+[0m[2m- `total_ch[0m[2marged` property[0m[2m
+     - `charges[0m[2m` property
      
-     Looking at the actual flow though, the checkout sequence is: check stock, charge, then decrement[0m[2m. The race condition occurs when multiple requests read stock as available before any of them actually decrement it[0m[2m. The simplest fix might be to ensure that when decrement fails, we don't have inventory inconsistency[0m[2m issues.
+     I[0m[2m can add a[0m[2m `refund(order[0m[2m_id)`[0m[2m method.
      
-     But decrement could also fail after the charge goes through - if the decrement fails,[0m[2m we need to refund the customer. And there's another issue: decrement could succeed and modify stock, but then the function[0m[2m crashes before returning, leaving us in an inconsistent state. Though with async/await and proper error handling with[0m[2m try/finally, we should be able to handle this. The simpler approach[0m[2m of decrementing first, then charging, then refunding if needed seems more straightforward than trying to check[0m[2m stock first.
+[0m[2m**[0m[2mMy[0m[2m plan[0m[2m:**
+[0m[2m1. Add `[0m[2mreserve[0m[2m(quantity)[0m[2m -> bool` to[0m[2m Inventory -[0m[2m atomic[0m[2m operation[0m[2m that decre[0m[2mments stock[0m[2m if available[0m[2m
+     2. Add[0m[2m `release[0m[2m([0m[2mquantity)[0m[2m -> None` to[0m[2m Inventory[0m[2m - increment[0m[2m stock[0m[2m back
+     3.[0m[2m Add `refund[0m[2m(order_id, amount[0m[2m)[0m[2m -> bool` to[0m[2m PaymentGateway - reverse[0m[2m a[0m[2m charge[0m[2m
+     4. Modify[0m[2m checkout[0m[2m flow[0m[2m to[0m[2m use[0m[2m reserve[0m[2m →[0m[2m charge →[0m[2m if charge fails,[0m[2m release → if[0m[2m decrement[0m[2m fails[0m[2m after[0m[2m charge[0m[2m, refund[0m[2m
      
-     The real problem is that `check_stock` gives us a snapshot that could become stale by[0m[2m the time we actually decrement. If I can make the decrement atomic - doing the check and the subtraction in a[0m[2m single operation without any await points in between - then I don't need the separate stock check at all. For `Inventory`,[0m[2m I could add a method that combines checking and decrementing into one synchronous operation. For `PaymentGateway`, I could add a refund method to[0m[2m reverse charges when needed.
+     This[0m[2m ensures[0m[2m atomic[0m[2m reservations[0m[2m prevent[0m[2m overs[0m[2melling[0m[2m, failed[0m[2m payments[0m[2m release[0m[2m stock[0m[2m immediately[0m[2m, and[0m[2m successful[0m[2m charges[0m[2m that fail[0m[2m to decrement[0m[2m trigger[0m[2m refunds[0m[2m to[0m[2m avoid ghost[0m[2m charges[0m[2m.
+[0m[2m
+  
      
-     Looking at the existing `decrement` method though, it has an await that creates a race[0m[2m condition. Let me trace through the concurrent scenario: two requests both call check_stock and[0m[2m get True, then both call charge, then both call decrement. Since the check and decrement aren't[0m[2m atomic, we could end up with both requests passing the check before either actually[0m[2m decrements the stock. If `decrement` is called without an intervening await, the second caller will see the already-re[0m[2mduced stock. Let me trace through the actual interleaving: Request A enters decrement, checks `self._stock >= 1`[0m[2m (true, stock is 1), then yields at `await asyncio.sleep(0.02)`. Now[0m[2m Request B can enter decrement, see stock is still 1 since A hasn't decremented yet, pass the[0m[2m check, and also yield. When A resumes, it decrements stock to 0 and returns True. Then B resumes and also decrements stock[0m[2m to -1 and returns True. That's the bug - we get negative stock.
+     Now[0m[2m I understand both[0m[2m bugs:
      
-     To fix this, I[0m[2m need an atomic check-and-decrement that doesn't yield between the comparison and the subtraction. I can add a method like `atomic_decrement` that does both[0m[2m operations synchronously without any await points in between. But I'm constrained by not being able to change public interfaces - only add new methods to `[0m[2mInventory` and `PaymentGateway`.
+[0m[2m1. **O[0m[2mverselling[0m[2m**: `check_stock[0m[2m` then[0m[2m `de[0m[2mcrement[0m[2m` are not atomic[0m[2m — between[0m[2m the[0m[2m check and[0m[2m the[0m[2m decrement[0m[2m, another[0m[2m task[0m[2m can[0m[2m grab[0m[2m the stock.
+[0m[2m2. **Ghost[0m[2m charges[0m[2m**: If[0m[2m `charge` succeeds[0m[2m but `decrement[0m[2m` fails ([0m[2mstock was[0m[2m taken[0m[2m by a[0m[2m concurrent task), the[0m[2m customer is charged[0m[2m with[0m[2m no item delivered[0m[2m.[0m[2m No rollback[0m[2m.
      
-     Let me verify what "public interfaces" means here. The `check_stock`, `decrement`,[0m[2m and `increment` methods are all async and public, so I can't modify their signatures. But I can add new methods to these classes. The instruction[0m[2m says not to change the public interfaces, which I interpret as not modifying existing method signatures or behavior[0m[2m, but adding new methods should be fine.
+     **[0m[2mFix strategy[0m[2m:**
+[0m[2m- Add `reserve[0m[2m([0m[2mquantity)` to Inventory[0m[2m that[0m[2m atom[0m[2mically checks[0m[2m and[0m[2m decre[0m[2mments in one[0m[2m operation[0m[2m
+     - Add `[0m[2mrelease[0m[2m(quantity)` to[0m[2m restore reserved[0m[2m stock[0m[2m  
+[0m[2m- Add `ref[0m[2mund(order_id,[0m[2m amount)` to Payment[0m[2mGateway to[0m[2m reverse a charge[0m[2m
+     - Change[0m[2m checkout to[0m[2m:[0m[2m `reserve[0m[2m` → `charge[0m[2m` → if[0m[2m charge[0m[2m fails, `[0m[2mrelease` → if[0m[2m charge[0m[2m succeeds[0m[2m but subsequent[0m[2m decrement[0m[2m fails[0m[2m, `ref[0m[2mund`
      
-     My approach: add an `atomic_decrement` method to `Inventory` that performs the check and decrement synchronously without yielding[0m[2m, use it in `checkout` instead of separate `check_stock` and `decrement` calls, and add a `refund`[0m[2m method to `PaymentGateway` to handle refunds when charges fail. This way I'm not changing any existing public APIs, just introducing[0m[2m new methods to support the atomic operation.[0m[2m
-  I see two critical race conditions in `checkout.py`:
-     
-     1. **Overselling**: `[0m[2mcheck_stock` and `decrement` are separate calls with an `await` between them. Two concurrent requests can both pass `check_stock` (both see stock=[0m[2m1), then both call `decrement` (one gets stock=1, passes, subtracts; the other gets stock=0, passes, subtract[0m[2ms to -1).
-     
-     2. **Ghost charges**: `decrement` can fail after `charge` succeeds (stock was depleted by[0m[2m a concurrent request). The customer is charged but gets nothing — no refund.
-     
-     **Fix**: Reverse the order — decrement[0m[2m first, then charge. If charge fails, increment back. And make decrement truly atomic ([0m[2mno `await` between check and subtract).
+     Let[0m[2m me add[0m[2m the[0m[2m methods to Inventory[0m[2m first[0m[2m:
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_t9i42i218ddx_1 | Edit {'path': 'inventory.py', 'old_text': '    async def decrement(se ...', 'new_text': '    async def atomic_decre ...'}
+  🧰 call_d4ea3048e81c44179a04f0f6 | Edit {'path': 'inventory.py', 'old_text': 'async def decrement(self,  ...', 'new_text': 'async def reserve(self, qu ...'}
 [0m  ✓ LSP server 'pyright' started for /Users/gofrendigunawan/llm-challenges
 [2m
-  🔠 call_function_t9i42i218ddx_1 Executed
+  🔠 call_d4ea3048e81c44179a04f0f6 Executed
 [0m[2m
-  🧠 Now[0m[2m I need to update `checkout.py` to:
-     1. Call `atomic_decrement` first
-     2. If that succeeds, then charge[0m[2m
-     3. If charge fails, call `inventory.increment(quantity)` to refund the reservation
-     
-     The key fix is the order reversal: decrement before charging, not after[0m[2m. This way, if payment fails, the inventory is already released (we just don't persist the "[0m[2msold" state). If payment succeeds, the item is already decremented and the[0m[2m charge goes through.
-     
-     Wait, let me think more carefully:
-     
-     Current flow:
-     1. check_stock (read[0m[2m)
-     2. charge (write)
-     3. decrement (read-check-write)
-     
-     Race condition: Two requests R1 and R2 both pass check_stock ([0m[2mstock=1), then:
-     - R1 charge succeeds
-     - R2 charge succeeds
-     - R1 decrement succeeds[0m[2m (stock=1→0)
-     - R2 decrement succeeds (stock=0→-1) ← overselling
-     
-     With my fix ([0m[2matomic_decrement before charge):
-     - R1 atomic_decrement succeeds (stock=1→0)
-     - R2 atomic_decrement fails (stock=0)
-     - R1 charge succeeds
-     - R2 nothing[0m[2m — order fails
-     
-     This prevents overselling. But what about ghost charges?
-     
-     With my fix, if[0m[2m charge fails after atomic_decrement succeeds:
-     - R1 atomic_decrement succeeds (stock=1→0)
-     - R1 charge fails
-     - R[0m[2m1 doesn't increment back — item is lost!
-     
-     So I need to add: if charge fails, call[0m[2m `inventory.increment(quantity)` to release the reserved stock.
-     
-     New flow:
-     1. atomic_decrement (reserve stock)
-     2. if fails →[0m[2m return False
-     3. charge
-     4. if fails → increment (release), return False
-     5. SUCCESS
-     
-     This[0m[2m way:
-     - If decrement fails → no charge (order fails cleanly)
-     - If decrement succeeds but charge fails → increment releases stock ([0m[2mno ghost charge)
-     
-     
-     - Once both succeed, the transaction is complete
-     
-     Now I'll implement this updated checkout flow[0m[2m.[0m[2m
-  Now update `checkout.py` to use `atomic_decrement` first, then charge, then refund if charge fails:
+  🧠 Now[0m[2m add[0m[2m `refund`[0m[2m method[0m[2m to PaymentGateway.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_fh8q9ksf07pn_1 | Edit {'new_text': '    decremented = await in ...', 'old_text': '    charged = await gatewa ...', 'path': 'checkout.py'}
+  🧰 call_605e1660f4c0407aad0eede2 | Edit {'new_text': 'async def refund(self, ord ...', 'old_text': 'async def charge(self, ord ...', 'path': 'payments.py'}
 [0m[2m
-  🔠 call_function_fh8q9ksf07pn_1 Executed
+  🔠 call_605e1660f4c0407aad0eede2 Executed
 [0m[2m
-  🧠 Now[0m[2m I need to also remove the `check_stock` call since we're doing atomic_decrement first which already checks stock. Actually, let me think about this[0m[2m more carefully.
-     
-     The current checkout flow after my changes:
-     1. `available = await inventory.check_stock(quantity)` - still checks stock first
-     2. `[0m[2mdecremented = await inventory.atomic_decrement(quantity)` - decrements (with its own check)
-     3. `charged = await gateway.charge(...)[0m[2m` - charges
-     4. If charge fails, increment back
-     
-     The problem is we're still calling `check_stock` first, which is redundant[0m[2m and still has the race condition. We can remove that call since `atomic_decrement` already does the check and[0m[2m the decrement atomically.
-     
-     Let me also update checkout.py to remove the `check_stock` call since it's now redundant.[0m[2m
-  Now[0m[2m remove the now-redundant `check_stock` call since `atomic_decrement` does the check atomically:
-[0m[2m
+  🧠 Now[0m[2m fix[0m[2m checkout[0m[2m.py to use the[0m[2m new atomic[0m[2m reserve[0m[2m/release[0m[2m pattern[0m[2m with[0m[2m proper[0m[2m rollback[0m[2m on[0m[2m payment[0m[2m failure[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_oyzj3lcfzcku_1 | Edit {'new_text': '    decremented = await in ...', 'old_text': '    available = await inve ...', 'path': 'checkout.py'}
+  🧰 call_9566e6100bac47e7a3c14fea | Edit {'new_text': 'async def checkout(\n    or ...', 'old_text': 'async def checkout(\n    or ...', 'path': 'checkout.py'}
 [0m[2m
-  🔠 call_function_oyzj3lcfzcku_1 Executed
+  🔠 call_9566e6100bac47e7a3c14fea Executed
 [0m[2m
-  🧠 Now[0m[2m let me verify the changes by reading the files.[0m[2m
+  🧠 Now[0m[2m let me verify[0m[2m by[0m[2m running[0m[2m main[0m[2m.py to see if[0m[2m the issues[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_3kevfp92zupu_1 | Read {'path': 'checkout.py'}
-[0m[2m
-  🔠 call_function_3kevfp92zupu_1 Executed
-[0m[2m
-  🧠 Good[0m[2m. Now let me run main.py to verify the fix works under concurrent load.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_5oy3as3y9nri_1 | Read {'path': 'main.py'}
-[0m[2m
-  🔠 call_function_5oy3as3y9nri_1 Executed
-[0m[2m
-  🧠 Now let[0m[2m me run the simulation to verify the fix works.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_xof62az1elvq_1 | Shell {'command': 'python main.py'}
+  🧰 call_1741a89c7dd54964abb66b32 | Shell {'command': 'cd /Users/gofrendigunawan/ ...'}
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: SUCCESS
-[0m  [2mOrder order_1: SUCCESS
-[0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_3: SUCCESS
-[0m  [2mOrder order_4: SUCCESS
-[0m  [2mOrder order_5: SUCCESS
-[0m  [2mOrder order_7: SUCCESS
-[0m  [2mOrder order_8: SUCCESS
-[0m  [2mOrder order_9: SUCCESS
-[0m  [2mOrder order_10: SUCCESS
-[0m  [2mOrder order_11: SUCCESS
-[0m  [2mOrder order_6: payment failed — inventory released
-[0m  [2m
-[0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  11
-[0m  [2mItems sold:         11  (initial stock: 5)
-[0m  [2mRemaining stock:    -6
-[0m  [2mTotal charged:      $1100.00
-[0m  [2mExpected charge:    $1100.00
-[0m  [2mDuplicate charges:  0
-[0m  [2mERROR: Inventory went negative!
-[0m[2m
-  🔠 call_function_xof62az1elvq_1 Executed
-[0m[2m
-  🧠 The[0m[2m issue is still happening. The problem is that `atomic_decrement` has an `await asyncio.sleep(0.02)` AFTER the check but BEFORE the subtract.[0m[2m So multiple coroutines can still pass the check before any of them hits the subtract.
-     
-     Let me trace through:
-     1. Multiple[0m[2m coroutines call `atomic_decrement(1)` simultaneously
-     2. All of them see `self._stock >= 1` (stock=5 at first[0m[2m, but eventually even when stock goes negative)
-     3. They all `await asyncio.sleep(0.02)` 
-     4. Then they all subtract[0m[2m
-     
-     Wait, actually the issue is more subtle. The check `if self._stock >= quantity` happens BEFORE the sleep, but[0m[2m by the time they subtract (after the sleep), stock may have been decremented by other coroutines. So:
-     
-     
-     - cor[0m[2moutine A: check passes (stock >= 1), then awaits
-     - coroutine B: check passes (stock >= 1), then awaits
-     - coroutine C[0m[2m: check passes (stock >= 1), then awaits
-     - A resumes, subtracts (stock becomes[0m[2m 4)
-     - B resumes, subtracts (stock becomes 3)
-     - C resumes, subtracts (stock becomes 2)
-     
-     Actually that would work fine... unless[0m[2m the stock gets low. Let me think again.
-     
-     Actually the real problem: the `await` between the check and subtract[0m[2m is still there. The sleep is at the START of the operation (after the check), not at the end. So[0m[2m:
-     
-     Actually wait, the original `decrement` had:
-     ```python
-     async def decrement(self, quantity: int) -> bool:
-         await asyncio.sleep(0.02)  # sleep[0m[2m FIRST
-         if self._stock >= quantity:
-             self._stock -= quantity
-             return True
-         return False
-     ```
-     
-     And `atomic_decrement` I wrote:[0m[2m
-     ```python
-     async def atomic_decrement(self, quantity: int) -> bool:
-         if self._stock >= quantity:
-             await asyncio.sleep(0.02)
-             self._stock -= quantity
-             return True
-         return False
-     ```
-     
-     In the original[0m[2m, the sleep is at the top, so multiple coroutines all sleep first, then they[0m[2m all check and subtract sequentially.
-     
-     In my version, the check happens first without sleep, then the sleep is after the check[0m[2m. So multiple coroutines can pass the check simultaneously before any of them hits the sleep.
-     
-     The problem is still the race condition between checking[0m[2m stock and actually decrementing it—the sleep doesn't prevent multiple coroutines from passing the check at the same time. The sleep is at the start[0m[2m, not protecting the critical section. So I need to either move the sleep after the stock check and subtraction, or use[0m[2m a lock to make the operation truly atomic. The real issue is that concurrent tasks can all pass[0m[2m the stock check before any of them actually decrement. I need to use a lock to ensure only[0m[2m one task modifies stock at a time.
-     
-     But there's another constraint: I can't change the public interfaces of `Inventory` or[0m[2m `PaymentGateway`. Adding locking mechanisms might violate that constraint, so I need to be careful about what counts as a "public interface." The core[0m[2m issue is that my current approach still allows the race condition because the check and decrement aren't truly atomic—I[0m[2m need an asyncio lock to serialize access to the critical section.
-     
-     Let me try adding a lock specifically to the decrement[0m[2m operation to make it atomic without exposing it as part of the public API.
-     
-     Actually, wait - if decrement fails and[0m[2m returns False, the gateway charge should have already succeeded, which would cause a problem. Let me reconsider the approach[0m[2m: I should decrement stock first, and if that fails, then charge shouldn't happen. Or maybe the operations need[0m[2m to be better coordinated - perhaps the checkout function itself should use a lock to ensure[0m[2m inventory and payment changes happen atomically. The cleanest approach would be to add a lock within Inventory[0m[2m to make decrement atomic, which would satisfy the constraint of not changing public interfaces since I'm[0m[2m adding a private synchronization mechanism rather than altering the existing public API.[0m[2m
-  The issue is that the `await asyncio.sleep(0.02)` in `atomic_decrement` is between[0m[2m the check and the subtract — multiple coroutines pass the check before any hits the sleep. I need a true[0m[2m lock:
-[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_dn6yzke6ecsh_1 | Edit {'new_text': 'import asyncio\n\n\nclass Inv ...', 'old_text': 'import asyncio\n\n\nclass Inv ...', 'path': 'inventory.py'}
-[0m[2m
-  🔠 call_function_dn6yzke6ecsh_1 Executed
-[0m[2m
-  🧠 Now[0m[2m let me run the simulation again to verify the fix.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_rz436pjg5b27_1 | Shell {'command': 'python main.py'}
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: SUCCESS
-[0m  [2mOrder order_1: SUCCESS
-[0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_3: SUCCESS
 [0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_4: payment failed — inventory released
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_6: SUCCESS
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
-[0m  [2m
-[0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  5
-[0m  [2mItems sold:         5  (initial stock: 5)
-[0m  [2mRemaining stock:    0
-[0m  [2mTotal charged:      $500.00
-[0m  [2mExpected charge:    $500.00
-[0m  [2mDuplicate charges:  0
-[0m[2m
-  🔠 call_function_rz436pjg5b27_1 Executed
-[0m[2m
-  🧠 The[0m[2m fix is working correctly now:
-     
-     - Stock: 5 items, 5 sold, 0 remaining — no overselling
-     - Total[0m[2m charged $500 matches exactly 5 successful orders × $100
-     - No duplicate charges
-     - No negative inventory
-     
-     The fix[0m[2m ensures:
-     1. **Atomic decrement** with `asyncio.Lock()` prevents race conditions on stock check/decrement
-     2. **Dec[0m[2mrement first, then charge** — if payment fails, inventory is released back
-     3. **No ghost charges** — every charge[0m[2m corresponds to a successful order
-     
-     Let me run it a couple more times to confirm it's stable.[0m[2m
-  All checks[0m[2m pass. Let me run it a few more times to confirm stability:
-[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_i5tfro1am57w_1 | Shell {'command': 'python main.py && python m ...'}
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: SUCCESS
-[0m  [2mOrder order_1: SUCCESS
-[0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_3: SUCCESS
-[0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_4: payment failed — inventory released
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_6: SUCCESS
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
-[0m  [2m
-[0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  5
-[0m  [2mItems sold:         5  (initial stock: 5)
-[0m  [2mRemaining stock:    0
-[0m  [2mTotal charged:      $500.00
-[0m  [2mExpected charge:    $500.00
-[0m  [2mDuplicate charges:  0
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: SUCCESS
-[0m  [2mOrder order_1: SUCCESS
-[0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_3: SUCCESS
-[0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_4: SUCCESS
 [0m  [2mOrder order_6: out of stock
 [0m  [2mOrder order_7: out of stock
 [0m  [2mOrder order_8: out of stock
 [0m  [2mOrder order_9: out of stock
 [0m  [2mOrder order_10: out of stock
 [0m  [2mOrder order_11: out of stock
-[0m  [2m
-[0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  5
-[0m  [2mItems sold:         5  (initial stock: 5)
-[0m  [2mRemaining stock:    0
-[0m  [2mTotal charged:      $500.00
-[0m  [2mExpected charge:    $500.00
-[0m  [2mDuplicate charges:  0
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: payment failed — inventory released
-[0m  [2mOrder order_1: SUCCESS
-[0m  [2mOrder order_2: payment failed — inventory released
-[0m  [2mOrder order_3: payment failed — inventory released
-[0m  [2mOrder order_4: payment failed — inventory released
-[0m  [2mOrder order_5: SUCCESS
-[0m  [2mOrder order_6: SUCCESS
-[0m  [2mOrder order_7: SUCCESS
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_8: payment failed — inventory released
-[0m  [2mOrder order_11: out of stock
-[0m  [2mOrder order_10: payment failed — inventory released
+[0m  [2mOrder order_0: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
+[0m  [2mOrder order_1: payment failed
 [0m  [2m
 [0m  [2m=== Results ===
 [0m  [2mSuccessful orders:  4
@@ -393,28 +157,65 @@
 [0m  [2mExpected charge:    $400.00
 [0m  [2mDuplicate charges:  0
 [0m[2m
-  🔠 call_function_i5tfro1am57w_1 Executed
+  🔠 call_1741a89c7dd54964abb66b32 Executed
 [0m[2m
-  🧠 All runs[0m[2m pass all checks:
-     - Inventory never goes negative (stock ≥ 0 in all runs)
-     - Every[0m[2m successful charge corresponds to exactly one item delivered (items_sold = successful orders)
-     - No order is charged more than once (duplicates = 0)
+  🧠 The[0m[2m simulation[0m[2m passed[0m[2m. Let[0m[2m me verify the[0m[2m fix[0m[2m by[0m[2m running[0m[2m it[0m[2m a[0m[2m few more times to[0m[2m make[0m[2m sure it's[0m[2m stable[0m[2m.[0m[2m Let[0m[2m me also check the[0m[2m final[0m[2m state[0m[2m of the files[0m[2m to[0m[2m confirm[0m[2m the changes[0m[2m.
+[0m[2m
+  
      
-     The fix[0m[2m is working correctly. Let me summarize what was done.[0m[2m
-  All three runs are clean — no errors. Here's what[0m[2m was fixed:
+     All[0m[2m checks[0m[2m pass. Let[0m[2m me run[0m[2m it[0m[2m a[0m[2m few more[0m[2m times to confirm[0m[2m stability[0m[2m:
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_35ce11993d02439a90752c4f | Shell {'command': 'cd /Users/gofrendigunawan/ ...'}
+[0m  [2mSuccessful orders:  4
+[0m  [2mItems sold:         4  (initial stock: 5)
+[0m  [2mRemaining stock:    1
+[0m  [2mTotal charged:      $400.00
+[0m  [2mExpected charge:    $400.00
+[0m  [2mDuplicate charges:  0
+[0m  [2mSuccessful orders:  2
+[0m  [2mItems sold:         2  (initial stock: 5)
+[0m  [2mRemaining stock:    3
+[0m  [2mTotal charged:      $200.00
+[0m  [2mExpected charge:    $200.00
+[0m  [2mDuplicate charges:  0
+[0m  [2mSuccessful orders:  3
+[0m  [2mItems sold:         3  (initial stock: 5)
+[0m  [2mRemaining stock:    2
+[0m  [2mTotal charged:      $300.00
+[0m  [2mExpected charge:    $300.00
+[0m  [2mDuplicate charges:  0
+[0m  [2mSuccessful orders:  4
+[0m  [2mItems sold:         4  (initial stock: 5)
+[0m  [2mRemaining stock:    1
+[0m  [2mTotal charged:      $400.00
+[0m  [2mExpected charge:    $400.00
+[0m  [2mDuplicate charges:  0
+[0m  [2mSuccessful orders:  5
+[0m  [2mItems sold:         5  (initial stock: 5)
+[0m  [2mRemaining stock:    0
+[0m  [2mTotal charged:      $500.00
+[0m  [2mExpected charge:    $500.00
+[0m  [2mDuplicate charges:  0
+[0m[2m
+  🔠 call_35ce11993d02439a90752c4f Executed
+[0m[2m
+  🧠 All[0m[2m runs[0m[2m show[0m[2m:
+[0m[2m- Items[0m[2m sold[0m[2m ≤[0m[2m initial[0m[2m stock ([0m[2mnever[0m[2m overs[0m[2mold)
+     - Total[0m[2m charged[0m[2m matches[0m[2m Items[0m[2m sold[0m[2m × $[0m[2m100 (no ghost[0m[2m charges[0m[2m)
+     - No[0m[2m duplicate charges[0m[2m
      
-     **Root causes:**
+[0m[2mThe fix[0m[2m is working[0m[2m correctly[0m[2m
+  
      
-     1. **Overselling** — `check_stock` and `decrement` were separate `await` calls.[0m[2m Between them, other coroutines could also pass the check, leading to over-decrement. `atomic_decrement` now[0m[2m holds an `asyncio.Lock` around the entire check-and-subtract operation.
+     All[0m[2m [0m[2m5 runs are[0m[2m clean.[0m[2m Stock[0m[2m never[0m[2m went[0m[2m negative[0m[2m, charges[0m[2m always[0m[2m match items[0m[2m delivered[0m[2m, no[0m[2m duplicates[0m[2m.
      
-     2. **Ghost charges** — the original code charged *[0m[2mbefore* decrementing. If decrement failed (stock hit zero between calls), the customer[0m[2m was charged with no item delivered and no record of a successful order. The fix reverses the order: decrement first, then charge. If charge[0m[2m fails, inventory is returned via `increment`.
+     **[0m[2mSummary[0m[2m of changes[0m[2m:**
      
-     **Changes made:**
-     
-     - `inventory.py:15-19`[0m[2m — added `asyncio.Lock` and `atomic_decrement` method that holds the lock across the sleep and stock check/sub[0m[2mtract
-     - `inventory.py:22-26` — original `decrement` preserved (not modified) so the `[0m[2mInventory` public interface is unchanged
-     - `checkout.py:14-23` — reordered to `atomic_decrement` → charge →[0m[2m rollback with `increment` if charge fails; removed redundant `check_stock` call[0m[2m
-  💸 (Requests: 13 | Tool Calls: 12 | Total: 221884) Input: 216937 | Audio Input: 0 | Output: 4947 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     -[0m[2m **`inventory.py`**[0m[2m — Added `reserve[0m[2m(quantity)` ([0m[2matomic[0m[2m check+[0m[2mdecrement[0m[2m) and[0m[2m `release(quantity[0m[2m)` ([0m[2mrestore[0m[2m stock[0m[2m)
+[0m[2m- **`payments[0m[2m.py`** — Added[0m[2m `ref[0m[2mund(order_id,[0m[2m amount)` to reverse[0m[2m charges[0m[2m
+     - **`checkout[0m[2m.py`** — Re[0m[2mplaced check[0m[2m→[0m[2mcharge[0m[2m→de[0m[2mcrement[0m[2m with reserve[0m[2m→charge→[0m[2m([0m[2mref[0m[2mund on[0m[2m failure[0m[2m).[0m[2m If[0m[2m payment[0m[2m fails[0m[2m after[0m[2m reserve[0m[2m, stock[0m[2m is returned[0m[2m immediately[0m[2m. The[0m[2m original[0m[2m bug[0m[2m had a[0m[2m window[0m[2m between[0m[2m `[0m[2mcheck[0m[2m_stock` and `[0m[2mdecrement[0m[2m` where concurrent[0m[2m tasks[0m[2m could[0m[2m race[0m[2m;[0m[2m `[0m[2mreserve[0m[2m` closes[0m[2m that[0m[2m atom[0m[2mically[0m[2m. And[0m[2m since[0m[2m stock[0m[2m is reserved[0m[2m *[0m[2mbefore[0m[2m*[0m[2m charging[0m[2m, there's[0m[2m no[0m[2m scenario[0m[2m where a[0m[2m charge[0m[2m succeeds[0m[2m but[0m[2m delivery[0m[2m fails[0m[2m —[0m[2m unless[0m[2m you[0m[2m add[0m[2m a[0m[2m separate[0m[2m post[0m[2m-charge[0m[2m delivery[0m[2m step[0m[2m, which[0m[2m isn't[0m[2m in[0m[2m the[0m[2m current flow.[0m[2m
+  💸 (Requests: 9 | Tool Calls: 8 | Total: 124127) Input: 121818 | Audio Input: 0 | Output: 2309 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "# E-Commerce Checkout Service
 
 Users have reported two production incidents:
@@ -432,18 +233,14 @@ Fix the checkout logic. The fix must ensure:
 - No order is charged more than once
 
 Do not change the public interfaces of `Inventory` or `PaymentGateway`. You may add methods to them.
-" --model ollama:minimax-m2.7:cloud --session ollama_minimax-m2.7_cloud-integration-bug-trial-1 --yolo true --attach "" --interactive false[0m
+" --model ollama:minimax-m2.7:cloud --session ollama_minimax-m2.7_cloud-integration-bug-trial-1 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_minimax-m2.7_cloud-integration-bug-trial-1[0m[0m
-All three runs are clean — no errors. Here's what was fixed:
 
-**Root causes:**
 
-1. **Overselling** — `check_stock` and `decrement` were separate `await` calls. Between them, other coroutines could also pass the check, leading to over-decrement. `atomic_decrement` now holds an `asyncio.Lock` around the entire check-and-subtract operation.
+All 5 runs are clean. Stock never went negative, charges always match items delivered, no duplicates.
 
-2. **Ghost charges** — the original code charged *before* decrementing. If decrement failed (stock hit zero between calls), the customer was charged with no item delivered and no record of a successful order. The fix reverses the order: decrement first, then charge. If charge fails, inventory is returned via `increment`.
+**Summary of changes:**
 
-**Changes made:**
-
-- `inventory.py:15-19` — added `asyncio.Lock` and `atomic_decrement` method that holds the lock across the sleep and stock check/subtract
-- `inventory.py:22-26` — original `decrement` preserved (not modified) so the `Inventory` public interface is unchanged
-- `checkout.py:14-23` — reordered to `atomic_decrement` → charge → rollback with `increment` if charge fails; removed redundant `check_stock` call
+- **`inventory.py`** — Added `reserve(quantity)` (atomic check+decrement) and `release(quantity)` (restore stock)
+- **`payments.py`** — Added `refund(order_id, amount)` to reverse charges
+- **`checkout.py`** — Replaced check→charge→decrement with reserve→charge→(refund on failure). If payment fails after reserve, stock is returned immediately. The original bug had a window between `check_stock` and `decrement` where concurrent tasks could race; `reserve` closes that atomically. And since stock is reserved *before* charging, there's no scenario where a charge succeeds but delivery fails — unless you add a separate post-charge delivery step, which isn't in the current flow.

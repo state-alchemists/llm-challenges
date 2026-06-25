@@ -23,6 +23,19 @@ class Inventory:
         async with self._lock:
             self._stock += quantity
 
+    async def reserve(self, quantity: int) -> bool:
+        """Atomically check stock and decrement if available.
+
+        Unlike calling check_stock then decrement separately, this
+        holds a lock across both operations so no other coroutine can
+        change stock in between.
+        """
+        async with self._lock:
+            if self._stock >= quantity:
+                self._stock -= quantity
+                return True
+            return False
+
     @property
     def stock(self) -> int:
         return self._stock

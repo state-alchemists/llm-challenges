@@ -1,6 +1,6 @@
-# Journal HUD
+# Journal Index
 
-Welcome to the persistent LLM challenges journal.
+Welcome to Zaruba's persistent memory.
 
-## Activity Log
-- [Activity Log Index](activity-log/index.md)
+## Navigation
+- [Activity Log](activity-log/index.md)

@@ -2,7 +2,7 @@
 
 CONFIG = {
     "source": "events.csv",
-    "batch_size": 100,
+    "batch_size": 10,
 }
 
 settings = CONFIG

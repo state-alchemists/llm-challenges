@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from config import CONFIG as settings
-
 
 def extract() -> list[int]:
     return [10, 20, 30, 40]
@@ -11,7 +9,7 @@ def extract() -> list[int]:
 
 def transform(values: list[int]) -> float:
     total = sum(values)
-    return total / settings["batch_size"]
+    return total / len(values)
 
 
 def load(value: float) -> None:

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query, Depends
 from typing import List, Optional
 from .models import Task, TaskCreate, TaskUpdate, Project
 from .database import tasks, projects
@@ -14,148 +14,13 @@ async def list_projects():
 
 @app.get("/tasks", response_model=List[Task])
 async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
+    status: Optional[str] = Query(None),
+    priority: Optional[int] = Query(None),
+    assigned_to: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1)
+):
     filtered_tasks = tasks
-    filtered_tasks = tasks 
-    filtered_tasks = tasks
-async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-async def get_task(task_id: int):
-    for task in tasks:
-    for task in tasks:
-async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-            filtered_tasks = tasks
-@app.get("/tasks", response_model=List[Task])
-async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
-    filtered_tasks = tasks
-    filtered_tasks = tasks 
-    filtered_tasks = tasks
-async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-async def get_task(task_id: int):
-    for task in tasks:
-    for task in tasks:
-@app.post("/tasks", response_model=Task)
-@app.post("/tasks", response_model=Task)
-@app.post("/tasks", response_model=Task)
-@app.post("/tasks", response_model=Task)
-@app.post("/tasks", response_model=Task)
-async def create_task(task_create: TaskCreate):
-            if task_create.project_id not in [project.id for project in projects]:
-            if task_create.project_id not in [project.id for project in projects]:
-                    if task_create.project_id not in [project.id for project in projects]:
-@app.post("/tasks", response_model=Task)
-@app.post("/tasks", response_model=Task)
-@app.post("/tasks", response_model=Task)
-@app.post("/tasks", response_model=Task)
-async def create_task(task_create: TaskCreate):
-            if task_create.project_id not in [project.id for project in projects]:
-            if task_create.project_id not in [project.id for project in projects]:
-                    if task_create.project_id not in [project.id for project in projects]:
-                    if task_create.project_id not in [project.id for project in projects]:
-                raise HTTPException(status_code=404, detail="Project not found")
-
-                            if task_create.project_id not in [project.id for project in projects]:
-
-@app.get("/tasks", response_model=List[Task])
-async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
-    filtered_tasks = tasks
-    filtered_tasks = tasks 
-    filtered_tasks = tasks
-async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-async def get_task(task_id: int):
-    for task in tasks:
-    for task in tasks:
-async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-            filtered_tasks = tasks
-async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-            filtered_tasks = tasks
-                                if task_create.project_id not in [project.id for project in projects]:
-                raise HTTPException(status_code=404, detail="Project not found")
-    new_task_id = max(task.id for task in tasks) + 1 if tasks else 1
-    new_task = Task(
-        id=new_task_id,
-        title=task_create.title,
-        status=task_create.status,
-        priority=task_create.priority,
-        project_id=task_create.project_id,
-        assigned_to=task_create.assigned_to
-    )
-                                            tasks.append(new_task)
-                                                tasks.append(new_task)
-                                tasks.append(new_task)
-    return new_task
-
-            filtered_tasks = tasks
     if status:
         filtered_tasks = [task for task in filtered_tasks if task.status == status]
     if priority:
@@ -164,36 +29,49 @@ async def list_tasks(
         filtered_tasks = [task for task in filtered_tasks if task.assigned_to == assigned_to]
     start = (page - 1) * page_size
     end = start + page_size
-    start = (page - 1) * page_size
-    end = start + page_size
     return filtered_tasks[start:end]
 
 
-@app.get("/tasks", response_model=List[Task])
-async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
-    filtered_tasks = tasks
-    filtered_tasks = tasks 
-    filtered_tasks = tasks
-async def list_tasks(
-    status: Optional[str] = None,
-    priority: Optional[int] = None,
-    assigned_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20):
-    filtered_tasks = tasksstatus: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
-    filtered_tasks = tasks
-    filtered_tasks = tasks
-    filtered_tasks = tasks
+@app.get("/tasks/{task_id}", response_model=Task)
 async def get_task(task_id: int):
-    for task in tasks:
-    for task in tasks:
     for task in tasks:
         if task.id == task_id:
             return task
+    raise HTTPException(status_code=404, detail="Task not found")
+
+
+@app.post("/tasks", response_model=Task)
+async def create_task(task_create: TaskCreate, x_api_key: str = Depends(require_api_key)):
+    if not any(project.id == task_create.project_id for project in projects):
+        raise HTTPException(status_code=404, detail="Project not found")
+    new_task_id = max(task.id for task in tasks) + 1 if tasks else 1
+    new_task = Task(id=new_task_id, **task_create.dict())
+    tasks.append(new_task)
+    return new_task
+
+
+@app.put("/tasks/{task_id}", response_model=Task)
+async def update_task(task_id: int, task_update: TaskUpdate, x_api_key: str = Depends(require_api_key)):
+    for index, task in enumerate(tasks):
+        if task.id == task_id:
+            # Update task fields if provided
+            if task_update.title is not None:
+                task.title = task_update.title
+            if task_update.status is not None:
+                task.status = task_update.status
+            if task_update.priority is not None:
+                task.priority = task_update.priority
+            if task_update.assigned_to is not None:
+                task.assigned_to = task_update.assigned_to
+            tasks[index] = task
+            return task
+    raise HTTPException(status_code=404, detail="Task not found")
+
+
+@app.delete("/tasks/{task_id}")
+async def delete_task(task_id: int, x_api_key: str = Depends(require_api_key)):
+    for index, task in enumerate(tasks):
+        if task.id == task_id:
+            tasks.pop(index)
+            return
     raise HTTPException(status_code=404, detail="Task not found")

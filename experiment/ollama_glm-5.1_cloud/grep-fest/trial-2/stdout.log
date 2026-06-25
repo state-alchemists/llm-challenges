@@ -1,534 +1,457 @@
 [2m
-  🧠 Let[0m[2m me start by understanding[0m[2m the codebase structure[0m[2m and finding all call[0m[2m sites of `legacy[0m[2m_auth`.[0m[2m
+  🧠 Let[0m[2m me start by understanding[0m[2m the code[0m[2mbase structure and finding[0m[2m all occurrences[0m[2m of `legacy_auth[0m[2m`.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_uyd3ecwk | ActivateSkill {'name': 'core-coding'}
+  🧰 call_d2yymjug | TodoWrite {'todos': [{'content': 'Read project docs and auth.py to understand current state', 'id': 1, 'status': 'in_progress'}, {'content': 'Find all legacy_auth call sites and imports', 'id': 2, 'status': 'pending'}, {'content': 'Analyze each call site for write/mutation context to determine scope', 'id': 3, 'status': 'pending'}, {'content': 'Migrate all call sites: replace legacy_auth with new_auth', 'id': 4, 'status': 'pending'}, {'content': 'Update all imports from legacy_auth to new_auth', 'id': 5, 'status': 'pending'}, {'content': 'Verify zero remaining legacy_auth call sites', 'id': 6, 'status': 'pending'}, {'content': 'Verify project still imports cleanly', 'id': 7, 'status': 'pending'}]}
+[0m📋 Todo list updated (7 items)
+
+📋 Todo List (0/7, 0%, ▶️ 1 in progress  ☐ 6 pending)
+  ▶️ [1] Read project docs and auth.py to understand current state
+     [2] Find all legacy_auth call sites and imports
+     [3] Analyze each call site for write/mutation context to determine scope
+     [4] Migrate all call sites: replace legacy_auth with new_auth
+     [5] Update all imports from legacy_auth to new_auth
+     [6] Verify zero remaining legacy_auth call sites
+     [7] Verify project still imports cleanly
+~DATA~{"total":7,"completed":0,"in_progress":1,"pending":6}
+[2m
+  🔠 call_d2yymjug Executed
 [0m[2m
-  🔠 call_uyd3ecwk Executed
-[0m[2m
-  🧠 Let[0m[2m me start by understanding[0m[2m the codebase structure[0m[2m and finding all call[0m[2m sites of `legacy[0m[2m_auth`.[0m[2m
+  🧠 Let[0m[2m me start by reading[0m[2m the project docs and[0m[2m the auth module to[0m[2m understand the current state[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_ewxarpi9 | LS {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🧰 call_m4mssemy | Grep {'pattern': 'legacy_auth', 'path': '/Users/gofrendigunawan/llm ...', 'output_mode': 'content', 'context_lines': 2}
-[0m[2m
-  🔠 call_m4mssemy Executed
-[0m[2m
-  🔠 call_ewxarpi9 Executed
-[0m[2m
   🔄 Prepare tool parameters...[0m[2m
+  🧰 call_y15z2lik | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🧰 call_lnmboemr | Grep {'pattern': 'legacy_auth', 'path': '/Users/gofrendigunawan/llm ...', 'output_mode': 'content', '-n': 'true'}
+[0m[2m
+  🧰 call_koo0zwys | Grep {'pattern': 'new_auth', 'path': '/Users/gofrendigunawan/llm ...', 'output_mode': 'content', '-n': 'true'}
+[0m[2m
+  🔠 call_koo0zwys Executed
+[0m[2m
+  🔠 call_y15z2lik Executed
+[0m[2m
+  🔠 call_lnmboemr Executed
+[0m[2m
+  🧠 The[0m[2m Grep tool had[0m[2m parameter[0m[2m issues[0m[2m. Let me use[0m[2m the correct parameters[0m[2m to[0m[2m search for legacy[0m[2m_auth occurrences[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_ppqus2fn | Grep {'pattern': 'legacy_auth', 'path': '/Users/gofrendigunawan/llm ...', 'context_lines': 3}
+  🧰 call_5l8yx0th | Grep {'pattern': 'legacy_auth', 'path': '/Users/gofrendigunawan/llm ...'}
 [0m[2m
-  🧰 call_gazzpj0p | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🔠 call_5l8yx0th Executed
 [0m[2m
-  🔠 call_ppqus2fn Executed
-[0m[2m
-  🔠 call_gazzpj0p Executed
-[0m[2m
-  🧠 Now[0m[2m I have a complete[0m[2m picture. Let me[0m[2m analyze the scope[0m[2m decision[0m[2m for each call site[0m[2m.[0m[2m
+  🧠 Now[0m[2m I have a clear[0m[2m picture.[0m[2m Let me analyze the[0m[2m scope decisions[0m[2m for[0m[2m each file:[0m[2m
      
-     The rule[0m[2m is:
-     - Default[0m[2m: `scope[0m[2m="read"`[0m[2m
-     - Use[0m[2m `scope="write[0m[2m"` when[0m[2m the surrounding[0m[2m code clearly does a[0m[2m write/mutation ([0m[2mlook for `create[0m[2m_`, `update[0m[2m_`, `delete[0m[2m_`, `save[0m[2m_`, `write[0m[2m_`, or `[0m[2mPOST`[0m[2m/`PUT`[0m[2m/`PATCH`[0m[2m HTTP verbs in the[0m[2m same function)[0m[2m
+     **Write scope ([0m[2mscope="write[0m[2m")** —[0m[2m files where[0m[2m the surrounding code does[0m[2m create[0m[2m/update/delete[0m[2m/save/write[0m[2m operations[0m[2m:[0m[2m
      
-     Let me categorize[0m[2m each file:[0m[2m
+     1. `[0m[2mapp/services[0m[2m/importer.py`[0m[2m -[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m → write[0m[2m
+     2. `app[0m[2m/services/mailer.py[0m[2m` - returns[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}` →[0m[2m write
+     3.[0m[2m `app/services/not[0m[2mifier.py` -[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload[0m[2m}` → write[0m[2m
+     4. `app[0m[2m/api/users_create.py[0m[2m` - filename[0m[2m has[0m[2m `_create`, returns[0m[2m `{'created':[0m[2m True,[0m[2m 'data': payload[0m[2m}` → write[0m[2m
+     5. `app[0m[2m/api/comments_create.py[0m[2m` - filename has[0m[2m `_create`, returns[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}` →[0m[2m write
+     6.[0m[2m `app/services/b[0m[2milling.py` -[0m[2m handle_0[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m → write;[0m[2m handle_1 returns[0m[2m `{'updated':[0m[2m True, 'data[0m[2m': payload}`[0m[2m → write
+     7[0m[2m. `app/api[0m[2m/users_update.py`[0m[2m - filename has `_[0m[2mupdate`, returns `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}` → write[0m[2m
+     8. `[0m[2mapp/api/posts_create[0m[2m.py` - filename[0m[2m has `_create`,[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m → write
+     9[0m[2m. `app/api[0m[2m/posts_update.py`[0m[2m - filename has `_[0m[2mupdate`, returns `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}` → write[0m[2m
+     10. `[0m[2mapp/workers/c[0m[2mleanup.py` -[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m → write
+     11[0m[2m. `app/api[0m[2m/users_delete.py`[0m[2m - filename has `_[0m[2mdelete`, returns `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}` → write[0m[2m
+     12. `[0m[2mapp/api/uploads_create[0m[2m.py` - filename[0m[2m has `_create`,[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m → write
+     13[0m[2m. `app/work[0m[2mers/sync.py[0m[2m` - returns `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}` → write[0m[2m
+     14. `[0m[2mapp/db/tokens[0m[2m_repo.py` -[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload[0m[2m}` → write[0m[2m
+     15. `app[0m[2m/db/audit_repo[0m[2m.py` - returns[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}` →[0m[2m write
      
-     **Write scope ([0m[2mfunction[0m[2m name or[0m[2m context indicates mutation[0m[2m):**
-     - `[0m[2mapp/api/comments_create[0m[2m.py` -[0m[2m "create" →[0m[2m `[0m[2mscope="write"`[0m[2m
-     - `app/api[0m[2m/posts_create.py`[0m[2m - "create"[0m[2m → `scope="[0m[2mwrite"`
-     - `[0m[2mapp/api/posts_update[0m[2m.py` - "[0m[2mupdate" → `[0m[2mscope="write"`[0m[2m
-     - `app/api[0m[2m/uploads_create.py`[0m[2m - "create"[0m[2m → `scope="[0m[2mwrite"`
-     - `[0m[2mapp/api/users_create[0m[2m.py` - "[0m[2mcreate" → `[0m[2mscope="write"`[0m[2m
-     - `app/api[0m[2m/users_delete.py`[0m[2m - "delete"[0m[2m → `scope="[0m[2mwrite"`
-     - `[0m[2mapp/api/users_update[0m[2m.py` - "[0m[2mupdate" → `[0m[2mscope="write"`[0m[2m
-     - `app/db[0m[2m/audit_repo.py[0m[2m` - audit[0m[2m_repo[0m[2m ([0m[2mwriting[0m[2m to[0m[2m audit)[0m[2m —[0m[2m hmm[0m[2m, the function name[0m[2m is[0m[2m `handle_0[0m[2m` with `[0m[2mcreated[0m[2m:[0m[2m True`,[0m[2m but[0m[2m "[0m[2maudit"[0m[2m repo[0m[2m could be read[0m[2m or[0m[2m write. The[0m[2m function returns[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}` so[0m[2m it's a write[0m[2m.[0m[2m
-     - `app/db[0m[2m/tokens_repo.py[0m[2m` - returns[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}` →[0m[2m `[0m[2mscope="write"`[0m[2m
-     - `app/services[0m[2m/billing.py`[0m[2m - handle_0[0m[2m returns `{'created[0m[2m': True}`,[0m[2m handle_1 returns[0m[2m `{'updated':[0m[2m True}` → both[0m[2m `scope="write[0m[2m"`
-     - `app[0m[2m/services/importer.py[0m[2m` - returns `[0m[2m{'created': True[0m[2m,[0m[2m 'data': payload[0m[2m}` → `scope[0m[2m="write"`
-     -[0m[2m `app/services/m[0m[2mailer.py` -[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m → `scope="[0m[2mwrite"`[0m[2m
-     - `app/services[0m[2m/notifier.py`[0m[2m - returns `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}` → `scope[0m[2m="write"`
-     -[0m[2m `app/workers[0m[2m/cleanup.py`[0m[2m - returns `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}` → `scope[0m[2m="write"`
-     -[0m[2m `app/workers[0m[2m/sync.py`[0m[2m - returns `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}` → `scope[0m[2m="write"`
+     **Read[0m[2m scope (scope="[0m[2mread")** —[0m[2m files where no[0m[2m write[0m[2m/mutation is evident[0m[2m:
      
-     Wait[0m[2m, let me reconsider[0m[2m. The instruction[0m[2m says:[0m[2m
-     > If the surrounding[0m[2m code clearly does a[0m[2m write/mutation ([0m[2mlook for nearby `[0m[2mcreate_`, `[0m[2mupdate_`, `[0m[2mdelete_`, `[0m[2msave_`, `[0m[2mwrite_`, or[0m[2m `POST`/[0m[2m`PUT`/[0m[2m`PATCH` HTTP[0m[2m verbs in the same[0m[2m function), use[0m[2m `scope="write[0m[2m"` instead.
+     1. `[0m[2mapp/services/ratel[0m[2mimiter.py` -[0m[2m handle[0m[2m_0 returns `[0m[2m{'ok': True[0m[2m}` → read[0m[2m
+     2. `app[0m[2m/services/auditor[0m[2m.py` - handle[0m[2m_0 returns `[0m[2m{'ok': True[0m[2m}` → read[0m[2m
+     3. `app[0m[2m/services/export[0m[2mer.py` -[0m[2m handle_0 returns[0m[2m `{'ok':[0m[2m True}` → read[0m[2m
+     4. `[0m[2mapp/workers/[0m[2mnightly_export.py[0m[2m` - handle_[0m[2m0 returns `{'[0m[2mok': True[0m[2m}` → read[0m[2m
+     5. `app[0m[2m/services/search_index.py[0m[2m` - handle_[0m[2m0 returns `{'[0m[2mok': True}`[0m[2m → read
+     6[0m[2m. `app/utils[0m[2m/token_utils.py`[0m[2m - handle_0[0m[2m returns `{'ok[0m[2m': True}` →[0m[2m read
+     7.[0m[2m `app/utils/session[0m[2m_utils.py` -[0m[2m handle_0 returns[0m[2m `{'ok':[0m[2m True}` → read[0m[2m
+     8. `[0m[2mapp/utils/permissions[0m[2m.py` - both[0m[2m handlers[0m[2m return `{'ok[0m[2m': True}` →[0m[2m read
+     9.[0m[2m `app/workers[0m[2m/indexer.py`[0m[2m - handle_0[0m[2m returns `{'ok[0m[2m': True}` →[0m[2m read
+     10.[0m[2m `app/api/users[0m[2m_get.py` -[0m[2m filename has `_get[0m[2m`, returns `{'[0m[2mok': True}`[0m[2m → read
+     11[0m[2m. `app/api[0m[2m/users_list.py`[0m[2m - filename has `_[0m[2mlist`, returns `[0m[2m{'ok': True[0m[2m}` → read[0m[2m
+     12. `app[0m[2m/utils/format_utils.py[0m[2m` - handle_[0m[2m0 returns `{'[0m[2mok': True}`[0m[2m → read
+     13[0m[2m. `app/api[0m[2m/comments_list.py`[0m[2m - filename[0m[2m has `_list`,[0m[2m both return[0m[2m `{'ok':[0m[2m True}` → read[0m[2m
+     14. `[0m[2mapp/api/exports[0m[2m_get.py` -[0m[2m filename has `_get[0m[2m`, returns `{'[0m[2mok': True}`[0m[2m → read
+     15[0m[2m. `app/api[0m[2m/posts_get.py`[0m[2m - filename has `_[0m[2mget`, returns `[0m[2m{'ok': True[0m[2m}` → read[0m[2m
+     16. `app[0m[2m/api/feed.py`[0m[2m - all handlers[0m[2m return `{'ok[0m[2m': True}` →[0m[2m read
+     17.[0m[2m `app/api/posts[0m[2m_list.py` -[0m[2m filename has `_list[0m[2m`, returns `{'[0m[2mok': True}`[0m[2m → read
+     18[0m[2m. `app/api[0m[2m/search.py` -[0m[2m both handlers[0m[2m return `{'ok[0m[2m': True}` →[0m[2m read
+     19.[0m[2m `app/workers[0m[2m/metrics.py`[0m[2m - handle_0[0m[2m returns `{'ok[0m[2m': True}` →[0m[2m read
+     20.[0m[2m `app/db/posts[0m[2m_repo.py` -[0m[2m handle_0 returns[0m[2m `{'ok':[0m[2m True}` → read[0m[2m
+     21. `[0m[2mapp/db/users_repo[0m[2m.py` - both[0m[2m handlers return `{'[0m[2mok': True}`[0m[2m → read
+     22[0m[2m. `app/db[0m[2m/session_repo.py`[0m[2m - handle_0[0m[2m returns `{'ok[0m[2m': True}` →[0m[2m read
      
-     The[0m[2m key signals[0m[2m are:
-     1.[0m[2m Function names[0m[2m containing `create_[0m[2m`, `update_[0m[2m`, `delete_[0m[2m`, `save_[0m[2m`, `write_[0m[2m`
-     2. HTTP[0m[2m verbs `[0m[2mPOST`,[0m[2m `PUT`, `[0m[2mPATCH`[0m[2m
-     3. The function[0m[2m returns[0m[2m `{'created':[0m[2m True}` or `[0m[2m{'updated': True[0m[2m}` —[0m[2m these indicate[0m[2m write[0m[2m operations
+     Now I[0m[2m need to decide[0m[2m scope[0m[2m for each.[0m[2m The[0m[2m key[0m[2m criteria:[0m[2m "look[0m[2m for nearby `create[0m[2m_`, `update[0m[2m_`, `delete[0m[2m_`, `save[0m[2m_`, `write[0m[2m_`, or `[0m[2mPOST`[0m[2m/`PUT`[0m[2m/`PATCH`[0m[2m HTTP verbs in the[0m[2m same function"
      
-     Let me[0m[2m also[0m[2m look at the file[0m[2m/module[0m[2m names since[0m[2m the function[0m[2m names are generic[0m[2m (`handle_0[0m[2m`, `handle_[0m[2m1`).
+     Let[0m[2m me re-ex[0m[2mamine more carefully.[0m[2m The return[0m[2m values `[0m[2m{'created': True[0m[2m, ...[0m[2m}` and `{'[0m[2mupdated': True,[0m[2m ...}` are strong[0m[2m signals[0m[2m of write operations[0m[2m. Also[0m[2m the[0m[2m filenames like[0m[2m `users[0m[2m_create.py`, `[0m[2mposts_update[0m[2m.py`, `[0m[2musers_delete.py`[0m[2m are clear signals[0m[2m.
      
-     Actually[0m[2m, I[0m[2m need to look[0m[2m more carefully. The[0m[2m functions[0m[2m are all named[0m[2m `handle_0[0m[2m`, `handle_[0m[2m1`, etc.[0m[2m — not[0m[2m with[0m[2m create[0m[2m/update[0m[2m/delete prefixes[0m[2m. The[0m[2m file names are[0m[2m the strongest[0m[2m signal.[0m[2m Let me re-ex[0m[2mamine:
+     Let me also[0m[2m check `[0m[2mapp/db/[0m[2maudit_repo.py`[0m[2m - it[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m which[0m[2m is a write.[0m[2m And `app/db[0m[2m/tokens_repo.py[0m[2m` similarly.
      
-     **[0m[2mFiles with clear[0m[2m write signals[0m[2m ([0m[2mfilename contains[0m[2m create/update/delete/save[0m[2m/write,[0m[2m or returns[0m[2m created[0m[2m/updated):**[0m[2m
+     For[0m[2m `app/workers[0m[2m/cleanup.py`[0m[2m and[0m[2m `app/workers[0m[2m/sync.py`[0m[2m - they[0m[2m return `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m which is a write[0m[2m signal.
      
-     1. `app[0m[2m/api/comments_create.py[0m[2m` - filename[0m[2m has "create"[0m[2m → `scope="[0m[2mwrite"`
-     2.[0m[2m `app/api/posts[0m[2m_create.py` -[0m[2m filename has "create[0m[2m" → `scope[0m[2m="write"`
-     3[0m[2m. `app/api[0m[2m/posts_update.py`[0m[2m - filename has "[0m[2mupdate" → `[0m[2mscope="write"`[0m[2m
-     4. `app[0m[2m/api/uploads_create.py[0m[2m` - filename has[0m[2m "create" →[0m[2m `scope="write[0m[2m"`
-     5. `[0m[2mapp/api/users_create[0m[2m.py` - filename[0m[2m has "create"[0m[2m → `scope="[0m[2mwrite"`
-     6.[0m[2m `app/api/users[0m[2m_delete.py` -[0m[2m filename has "delete[0m[2m" → `scope[0m[2m="write"`
-     7[0m[2m. `app/api[0m[2m/users_update.py`[0m[2m - filename has "[0m[2mupdate" → `[0m[2mscope="write"`[0m[2m
+     For `[0m[2mapp/services/importer[0m[2m.py`, `app[0m[2m/services/mailer.py[0m[2m`, `app/services[0m[2m/notifier.py`[0m[2m - they all[0m[2m return `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m.[0m[2m
      
-     For[0m[2m functions[0m[2m that return `{'[0m[2mcreated': True}`[0m[2m or `{'updated[0m[2m': True}`:[0m[2m
-     8. `app[0m[2m/db/audit_repo[0m[2m.py` - handle[0m[2m_0 returns `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}` → write[0m[2m
-     9. `[0m[2mapp/db/tokens[0m[2m_repo.py` -[0m[2m handle_0 returns[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}` →[0m[2m write
-     10.[0m[2m `app/services/b[0m[2milling.py` -[0m[2m handle_0 returns[0m[2m `{'created':[0m[2m True}`, handle_[0m[2m1 returns `{'[0m[2mupdated': True}`[0m[2m → both[0m[2m write
-     11.[0m[2m `app/services/import[0m[2mer.py` -[0m[2m handle_0 returns[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}` →[0m[2m write
-     12.[0m[2m `app/services/m[0m[2mailer.py` -[0m[2m handle_0 returns[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}` →[0m[2m write
-     13.[0m[2m `app/services/not[0m[2mifier.py` -[0m[2m handle_0 returns[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}` →[0m[2m write
-     14.[0m[2m `app/workers[0m[2m/cleanup.py`[0m[2m - handle_0[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m → write
-     15[0m[2m. `app/work[0m[2mers/sync.py[0m[2m` - handle_[0m[2m0 returns `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}` → write[0m[2m
+     OK[0m[2m, let[0m[2m me categor[0m[2mize more[0m[2m carefully.[0m[2m I need[0m[2m to read each file[0m[2m to check[0m[2m for write patterns[0m[2m.[0m[2m But from[0m[2m the grep context,[0m[2m I can[0m[2m see[0m[2m the return values already[0m[2m:[0m[2m
      
-     Hmm, wait[0m[2m. Let me re[0m[2m-read the instruction more[0m[2m carefully:
+     **Write scope**[0m[2m (returns[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}` or[0m[2m `{'updated':[0m[2m True, '[0m[2mdata': payload}`,[0m[2m or filename has create[0m[2m/update/delete):[0m[2m
      
-     > If[0m[2m the surrounding code clearly[0m[2m does a write/m[0m[2mutation (look for[0m[2m nearby `create_[0m[2m`, `update_[0m[2m`, `delete_[0m[2m`, `save_[0m[2m`, `write_[0m[2m`, or `POST[0m[2m`/`PUT[0m[2m`/`PATCH[0m[2m` HTTP verbs in[0m[2m the same function),[0m[2m use `scope="[0m[2mwrite"` instead.[0m[2m
+     1. `app[0m[2m/services/importer.py[0m[2m` - `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}`[0m[2m
+     2. `app[0m[2m/services/mailer.py[0m[2m` - `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}`
+     3. `[0m[2mapp/services/notifier[0m[2m.py` - `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}`
+     4.[0m[2m `app/api[0m[2m/users_create.py`[0m[2m - `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}` + filename[0m[2m
+     5. `app[0m[2m/api/comments_create.py[0m[2m` - `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}` + filename[0m[2m
+     6. `app[0m[2m/services/billing.py[0m[2m` - handle_[0m[2m0 `[0m[2m{'created': True[0m[2m}`,[0m[2m handle_1 `[0m[2m{'updated': True[0m[2m}`
+     7. `[0m[2mapp/api/users_update[0m[2m.py` - `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}` + filename[0m[2m
+     8. `[0m[2mapp/api/posts_create[0m[2m.py` - `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}` + filename[0m[2m
+     9. `[0m[2mapp/api/posts_update[0m[2m.py` - `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}` + filename[0m[2m
+     10. `[0m[2mapp/workers/c[0m[2mleanup.py` -[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}`
+     11[0m[2m. `app/api[0m[2m/users_delete.py`[0m[2m - `{'created[0m[2m': True, '[0m[2mdata': payload[0m[2m}` + filename[0m[2m
+     12. `app[0m[2m/api/uploads_create.py[0m[2m` - `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}` + filename[0m[2m
+     13. `app[0m[2m/workers/sync[0m[2m.py` - `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}`
+     14.[0m[2m `app/db/t[0m[2mokens_repo.py`[0m[2m - `{'created[0m[2m': True, '[0m[2mdata': payload[0m[2m}`
+     15. `[0m[2mapp/db/audit[0m[2m_repo.py` -[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}`[0m[2m
      
-     The instruction[0m[2m specifically[0m[2m says to look for[0m[2m:
-     -[0m[2m `create_`,[0m[2m `update_`,[0m[2m `delete_`,[0m[2m `save_`,[0m[2m `write_`[0m[2m —[0m[2m these are prefixes/p[0m[2matterns in function[0m[2m names or variable[0m[2m names
-     - `[0m[2mPOST`,[0m[2m `PUT`, `[0m[2mPATCH` —[0m[2m HTTP verbs
+     **Read scope**[0m[2m (returns `{'[0m[2mok': True}`[0m[2m only[0m[2m, no write signals[0m[2m in[0m[2m filename):[0m[2m
      
-     The[0m[2m function names are all[0m[2m `handle_0[0m[2m`, `handle_[0m[2m1`, etc.[0m[2m — none of these[0m[2m contain[0m[2m those[0m[2m patterns. However[0m[2m, the **[0m[2mmodule[0m[2m/file[0m[2m names** contain[0m[2m them[0m[2m:[0m[2m `comments_create`,[0m[2m `posts_create[0m[2m`, `posts_update[0m[2m`, `uploads[0m[2m_create`, `users[0m[2m_create`, `users[0m[2m_delete`, `users[0m[2m_update`.
+     1. `app[0m[2m/services/ratelimiter[0m[2m.py`
+     2.[0m[2m `app/services/[0m[2mauditor.py`[0m[2m
+     3. `app[0m[2m/services/exporter.py[0m[2m`
+     4. `[0m[2mapp/workers/[0m[2mnightly_export.py[0m[2m`
+     5. `[0m[2mapp/services/search_index[0m[2m.py`
+     6.[0m[2m `app/utils/token[0m[2m_utils.py`
+     7[0m[2m. `app/utils[0m[2m/session_utils.py`[0m[2m
+     8. `app[0m[2m/utils/permissions.py[0m[2m`
+     9. `[0m[2mapp/workers/index[0m[2mer.py`
+     10[0m[2m. `app/api[0m[2m/users_get.py`[0m[2m
+     11. `app[0m[2m/api/users_list.py[0m[2m`
+     12. `[0m[2mapp/utils/format_utils[0m[2m.py`
+     13.[0m[2m `app/api/comments[0m[2m_list.py`
+     14[0m[2m. `app/api[0m[2m/exports_get.py[0m[2m`
+     15. `[0m[2mapp/api/posts_get[0m[2m.py`
+     16.[0m[2m `app/api/feed[0m[2m.py`
+     17.[0m[2m `app/api/posts[0m[2m_list.py`
+     18[0m[2m. `app/api[0m[2m/search.py`
+     19[0m[2m. `app/work[0m[2mers/metrics.py[0m[2m`
+     20. `[0m[2mapp/db/posts_repo[0m[2m.py`
+     21.[0m[2m `app/db/users[0m[2m_repo.py`
+     22[0m[2m. `app/db[0m[2m/session_repo.py`[0m[2m
      
-     But[0m[2m the instruction[0m[2m says "in the[0m[2m same function" —[0m[2m so I need to[0m[2m look at the function[0m[2m body and[0m[2m nearby[0m[2m code. The[0m[2m function names are `[0m[2mhandle_0`[0m[2m etc. The[0m[2m return[0m[2m values include[0m[2m `{'created':[0m[2m True}` which[0m[2m is[0m[2m a strong[0m[2m signal of a write[0m[2m operation.
+     Now I need to[0m[2m read some[0m[2m files[0m[2m more[0m[2m carefully to make sure[0m[2m I don[0m[2m't miss any write[0m[2m patterns. But[0m[2m from[0m[2m the grep[0m[2m context, these[0m[2m files[0m[2m are very[0m[2m simple[0m[2m - just[0m[2m a guard[0m[2m check and[0m[2m a[0m[2m return. Let me[0m[2m read a few of[0m[2m the ambiguous[0m[2m ones.[0m[2m
      
-     Actually[0m[2m, let me re[0m[2m-read:[0m[2m "look[0m[2m for nearby `create[0m[2m_`, `update[0m[2m_`, `delete[0m[2m_`, `save[0m[2m_`, `write[0m[2m_`[0m[2m" — these[0m[2m could[0m[2m be in variable[0m[2m names, function calls[0m[2m, or the module[0m[2m/function[0m[2m name[0m[2m context. The file[0m[2m names like[0m[2m `comments_create.py[0m[2m` clearly have[0m[2m `[0m[2mcreate`[0m[2m in them[0m[2m.[0m[2m The[0m[2m return values like[0m[2m `{'created':[0m[2m True}` also[0m[2m clearly[0m[2m indicate write[0m[2m operations.
+     Actually, let me[0m[2m just[0m[2m read all[0m[2m the files to be[0m[2m thorough[0m[2m. But they[0m[2m seem[0m[2m very simple based[0m[2m on the context.[0m[2m Let me use[0m[2m a shell[0m[2m script to[0m[2m do the bulk replacement[0m[2m efficiently.
      
-     I[0m[2m think the intent[0m[2m is clear:[0m[2m
-     - Files whose[0m[2m names contain `create[0m[2m`, `update`,[0m[2m `delete` →[0m[2m write scope
-     -[0m[2m Functions that return `[0m[2m{'created': True[0m[2m}` or `{'[0m[2mupdated': True}`[0m[2m → write scope[0m[2m
+     Let[0m[2m me plan the approach[0m[2m:[0m[2m
+     1. For each[0m[2m file, replace[0m[2m `from[0m[2m app.auth import legacy[0m[2m_auth` with `[0m[2mfrom app.auth import[0m[2m new_auth`
+     2[0m[2m. For[0m[2m each call site,[0m[2m replace `legacy_auth[0m[2m(<user>)[0m[2m` with `new[0m[2m_auth(<user>,[0m[2m scope="read")[0m[2m` or `new[0m[2m_auth(<user>,[0m[2m scope="write")[0m[2m` depending on context[0m[2m
      
-     Let me be[0m[2m more careful about[0m[2m the[0m[2m "near[0m[2mby" check[0m[2m. Let[0m[2m me re-read each[0m[2m file to[0m[2m check[0m[2m for[0m[2m the[0m[2m specific patterns.
+     Since[0m[2m there[0m[2m are[0m[2m 37 files ([0m[2mexcluding auth.py itself[0m[2m), I'll[0m[2m use sed[0m[2m to[0m[2m do the[0m[2m replacements efficiently. Let[0m[2m me build[0m[2m the[0m[2m list of write[0m[2m-s[0m[2mcope files and read[0m[2m-scope files.[0m[2m
      
-     Actually[0m[2m, I already[0m[2m have the grep[0m[2m context[0m[2m for[0m[2m each file[0m[2m. Let me categor[0m[2mize based[0m[2m on what I see[0m[2m:
+     Actually, let me[0m[2m read a few of[0m[2m the files to confirm[0m[2m the patterns[0m[2m before mass[0m[2m-editing.[0m[2m
      
-     **Write scope[0m[2m (`[0m[2mscope="write[0m[2m"[0m[2m`) — clear[0m[2m write[0m[2m/mutation signals:[0m[2m**
+     Wait, let[0m[2m me also check -[0m[2m some files have multiple[0m[2m call sites ([0m[2me[0m[2m.g., `app[0m[2m/services[0m[2m/billing.py`[0m[2m has `[0m[2mlegacy_auth(user_id[0m[2m)` on[0m[2m line 8 and[0m[2m `legacy_auth(user[0m[2m_id_1)`[0m[2m on line 14[0m[2m). I need to[0m[2m be[0m[2m careful with[0m[2m the[0m[2m variable names.
      
-     Files[0m[2m with `create`[0m[2m/`update`[0m[2m/`delete`[0m[2m in filename[0m[2m:
-     1[0m[2m. `app/api[0m[2m/comments_create.py`[0m[2m —[0m[2m filename[0m[2m has "create"[0m[2m
-     2. `app[0m[2m/api/posts_create.py[0m[2m` — filename has[0m[2m "create"
-     3[0m[2m. `app/api[0m[2m/posts_update.py`[0m[2m — filename has "[0m[2mupdate"
-     4.[0m[2m `app/api/uploads[0m[2m_create.py` —[0m[2m filename has "create[0m[2m"
-     5. `[0m[2mapp/api/users_create[0m[2m.py` — filename[0m[2m has "create"[0m[2m
-     6. `app[0m[2m/api/users_delete.py[0m[2m` — filename has[0m[2m "delete"
-     7[0m[2m. `app/api[0m[2m/users_update.py`[0m[2m — filename has "[0m[2mupdate"
+     Let[0m[2m me read[0m[2m a few key[0m[2m files to confirm[0m[2m the patterns:[0m[2m
+     - `app/services[0m[2m/billing.py`[0m[2m (has two[0m[2m handlers[0m[2m -[0m[2m one created[0m[2m, one updated)[0m[2m
+     - `app/api[0m[2m/feed.py` ([0m[2mhas three handlers,[0m[2m all read)
+     -[0m[2m `app/utils/[0m[2mpermissions.py` ([0m[2mhas two handlers)[0m[2m
      
-     Files whose[0m[2m function body[0m[2m returns `{'created[0m[2m': True}` or[0m[2m `{'updated':[0m[2m True}`:[0m[2m
-     8. `app[0m[2m/db/audit_repo[0m[2m.py` — `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}`
-     9.[0m[2m `app/db/t[0m[2mokens_repo.py`[0m[2m — `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m
-     10. `app[0m[2m/services/billing.py[0m[2m` — handle_[0m[2m0: `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}`, handle_1[0m[2m: `{'updated[0m[2m': True, '[0m[2mdata': payload}`[0m[2m
-     11. `app[0m[2m/services/importer.py[0m[2m` — `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}`
-     12. `[0m[2mapp/services/mailer[0m[2m.py` — `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}`
-     13.[0m[2m `app/services/not[0m[2mifier.py` —[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}`[0m[2m
-     14. `app[0m[2m/workers/cleanup[0m[2m.py` — `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}`
-     15.[0m[2m `app/workers[0m[2m/sync.py`[0m[2m — `{'created[0m[2m': True, '[0m[2mdata': payload}`[0m[2m
+     Actually[0m[2m, from[0m[2m the grep context,[0m[2m I can[0m[2m already see the patterns[0m[2m clearly. The[0m[2m files are very[0m[2m simple. Let me[0m[2m proceed[0m[2m with the edits[0m[2m.
      
-     **Read scope[0m[2m (`scope="read[0m[2m"`) — no[0m[2m write[0m[2m/m[0m[2mutation signals:**[0m[2m
+     Let me use[0m[2m a shell approach[0m[2m to[0m[2m be[0m[2m efficient. I'll[0m[2m:[0m[2m
+     1. Read each[0m[2m file[0m[2m
+     2. Replace[0m[2m the import[0m[2m
+     3. Replace each[0m[2m `[0m[2mlegacy_auth(X[0m[2m)` call with `[0m[2mnew_auth(X[0m[2m, scope="read[0m[2m")[0m[2m` or `new[0m[2m_auth(X, scope[0m[2m="write")`[0m[2m
      
-     Files whose[0m[2m function body returns `[0m[2m{'ok': True[0m[2m}` (read[0m[2m-only operations[0m[2m):
-     1[0m[2m. `app/api[0m[2m/comments[0m[2m_list.py` —[0m[2m "list" ([0m[2mread)
-     2.[0m[2m `app/api/[0m[2mexports_get.py`[0m[2m — "get"[0m[2m (read)
-     3[0m[2m. `app/api[0m[2m/feed.py`[0m[2m — read[0m[2m (feed[0m[2m viewing[0m[2m)
-     4. `[0m[2mapp/api/posts_get[0m[2m.py` — "[0m[2mget" (read[0m[2m)
-     5. `[0m[2mapp/api/posts_list[0m[2m.py` — "[0m[2mlist" (read[0m[2m)
-     6. `[0m[2mapp/api/search[0m[2m.py` — search[0m[2m (read)
-     7[0m[2m. `app/api[0m[2m/users_get.py`[0m[2m — "get"[0m[2m (read)
-     8[0m[2m. `app/api[0m[2m/users_list.py`[0m[2m — "list"[0m[2m (read)
-     9[0m[2m. `app/db[0m[2m/posts_repo.py`[0m[2m — returns[0m[2m `{'ok':[0m[2m True}`[0m[2m
-     10. `app[0m[2m/db/session[0m[2m_repo.py` —[0m[2m returns `{'ok[0m[2m': True}`
-     11[0m[2m. `app/db[0m[2m/users_repo.py`[0m[2m — returns[0m[2m `{'ok':[0m[2m True}` (both[0m[2m handle_0 and[0m[2m handle_1)[0m[2m
-     12. `app[0m[2m/services/auditor[0m[2m.py` — returns[0m[2m `{'ok':[0m[2m True}`[0m[2m
-     13. `app[0m[2m/services/exporter.py[0m[2m` — returns `[0m[2m{'ok': True[0m[2m}`
-     14. `[0m[2mapp/services/ratel[0m[2mimiter.py` —[0m[2m returns `{'ok[0m[2m': True}`
-     15[0m[2m. `app/services[0m[2m/search_index.py`[0m[2m — returns `{'[0m[2mok': True}`[0m[2m
-     16. `app[0m[2m/utils/format_utils.py[0m[2m` — returns `[0m[2m{'ok': True[0m[2m}`
-     17. `[0m[2mapp/utils/permissions[0m[2m.py` — returns[0m[2m `{'ok':[0m[2m True}` (both[0m[2m handle_0 and[0m[2m handle_1)[0m[2m
-     18. `app[0m[2m/utils/session_utils.py[0m[2m` — returns `[0m[2m{'ok': True[0m[2m}`
-     19. `[0m[2mapp/utils/token_utils[0m[2m.py` — returns[0m[2m `{'ok':[0m[2m True}`
-     20.[0m[2m `app/workers[0m[2m/indexer.py`[0m[2m — returns `{'[0m[2mok': True}`[0m[2m
-     21. `app[0m[2m/workers/metrics[0m[2m.py` — returns[0m[2m `{'ok':[0m[2m True}`
-     22.[0m[2m `app/workers[0m[2m/nightly_export[0m[2m.py` — returns[0m[2m `{'ok':[0m[2m True}`
+     Since[0m[2m there are[0m[2m 37 files, I[0m[2m'll use sed[0m[2m for bulk replacement[0m[2m. Let me construct[0m[2m the sed[0m[2m commands.
      
-     Wait[0m[2m, but[0m[2m the[0m[2m instruction says to[0m[2m look specifically[0m[2m for `create_[0m[2m`, `update_[0m[2m`, `delete_[0m[2m`, `save_[0m[2m`, `write_[0m[2m`,[0m[2m or `POST`[0m[2m/`PUT`[0m[2m/`PATCH`[0m[2m in the **[0m[2msame function**.[0m[2m Let me be[0m[2m more precise.
+     For[0m[2m the[0m[2m import:[0m[2m `from app.auth[0m[2m import legacy_auth`[0m[2m → `from app[0m[2m.auth import new_auth[0m[2m`
      
-     The[0m[2m function names are `[0m[2mhandle_0`,[0m[2m `handle_1[0m[2m`, `[0m[2mhandle_2`[0m[2m — none contain[0m[2m those patterns.[0m[2m
+     For read[0m[2m-s[0m[2mcope calls[0m[2m: `legacy_auth[0m[2m(user_id)` →[0m[2m `new_auth(user[0m[2m_id, scope="[0m[2mread")`
+     For[0m[2m write[0m[2m-scope calls:[0m[2m `legacy_auth(user[0m[2m_id)` → `[0m[2mnew_auth(user_id[0m[2m, scope="write[0m[2m")`
      
-     The[0m[2m **[0m[2mmodule names[0m[2m** contain[0m[2m some[0m[2m of these patterns:[0m[2m
-     - `comments_create[0m[2m` → contains[0m[2m `create`
-     -[0m[2m `posts_create`[0m[2m → contains `create[0m[2m`
-     - `posts[0m[2m_update` → contains[0m[2m `update`
-     -[0m[2m `uploads_create`[0m[2m → contains `create[0m[2m`
-     - `users[0m[2m_create` → contains[0m[2m `create`
-     -[0m[2m `users_delete`[0m[2m → contains `delete[0m[2m`
-     - `users[0m[2m_update` → contains[0m[2m `update`
+     But some[0m[2m files have `[0m[2mlegacy[0m[2m_auth(user_id_[0m[2m1)` or[0m[2m `legacy_auth(user[0m[2m_id_2)`[0m[2m - I need to[0m[2m handle those too.[0m[2m
      
-     But[0m[2m the instruction says "[0m[2min the same function[0m[2m" — so[0m[2m does[0m[2m the module name count[0m[2m? I[0m[2m think it[0m[2m does, since the[0m[2m module name[0m[2m is part of the[0m[2m context and[0m[2m clearly[0m[2m indicates what[0m[2m kind[0m[2m of operation this[0m[2m is.
+     Let me think[0m[2m about this more[0m[2m carefully. I'll[0m[2m use sed[0m[2m to replace[0m[2m:[0m[2m
+     - `legacy_auth[0m[2m(user_id)`[0m[2m → `new_auth[0m[2m(user_id, scope[0m[2m="read")`[0m[2m or `new_auth[0m[2m(user_id, scope[0m[2m="write")`[0m[2m
+     - `legacy_auth[0m[2m(user_id_1[0m[2m)` → `new[0m[2m_auth(user_id_[0m[2m1, scope="[0m[2mread")` or[0m[2m `new_auth(user[0m[2m_id_1,[0m[2m scope="write")[0m[2m`
+     - `legacy[0m[2m_auth(user_id_[0m[2m2)` → `[0m[2mnew_auth(user_id[0m[2m_2, scope[0m[2m="read")`[0m[2m or `new_auth[0m[2m(user_id_2[0m[2m, scope="write[0m[2m")`
      
-     Also[0m[2m, looking[0m[2m at the return values[0m[2m more[0m[2m carefully:
-     - `[0m[2m{'created': True[0m[2m,[0m[2m 'data': payload[0m[2m}` — this[0m[2m is clearly a create[0m[2m/write response[0m[2m
-     - `{'[0m[2mupdated': True,[0m[2m 'data': payload[0m[2m}` — this is[0m[2m clearly an[0m[2m update/write response[0m[2m
-     - `{'ok[0m[2m': True}` —[0m[2m this could[0m[2m be read[0m[2m-only[0m[2m
+     For[0m[2m the import[0m[2m, the[0m[2m replacement is the same[0m[2m everywhere[0m[2m.[0m[2m
      
-     But[0m[2m wait, some[0m[2m of these "[0m[2mservice[0m[2m" modules that[0m[2m return `{'created[0m[2m': True}` —[0m[2m are they really[0m[2m doing write operations?[0m[2m Let me think about[0m[2m this more carefully.[0m[2m
+     Let me use[0m[2m sed[0m[2m with[0m[2m specific[0m[2m files:[0m[2m
      
-     Actually[0m[2m, the return[0m[2m value[0m[2m `{'created':[0m[2m True}` is literally[0m[2m saying[0m[2m "I[0m[2m created something[0m[2m" — that's[0m[2m a clear[0m[2m write signal. Similarly[0m[2m `{'updated':[0m[2m True}` says[0m[2m "I updated[0m[2m something".
-     
-     But[0m[2m for[0m[2m `[0m[2mapp[0m[2m/services[0m[2m/billing.py`,[0m[2m the `[0m[2mhandle_1`[0m[2m returns[0m[2m `{'updated':[0m[2m True}` — that[0m[2m's an[0m[2m update operation[0m[2m →[0m[2m write scope.
-     
-     Let[0m[2m me also consider[0m[2m some[0m[2m edge[0m[2m cases:
-     - `[0m[2mapp/services[0m[2m/mailer.py`[0m[2m — returns[0m[2m `{'created':[0m[2m True}` — sending[0m[2m mail could[0m[2m be considered a write[0m[2m operation[0m[2m.[0m[2m I[0m[2m'll use `scope[0m[2m="write"`.[0m[2m
-     - `app/services[0m[2m/notifier.py`[0m[2m — returns `{'[0m[2mcreated': True}`[0m[2m — notification[0m[2m creation[0m[2m.[0m[2m Write[0m[2m scope.
-     - `[0m[2mapp/services/importer[0m[2m.py` — returns[0m[2m `{'created':[0m[2m True}` — importing[0m[2m creates[0m[2m data. Write scope[0m[2m.
-     - `app[0m[2m/services[0m[2m/exporter.py`[0m[2m — returns `{'[0m[2mok': True}`[0m[2m — exporting is[0m[2m typically[0m[2m read-only[0m[2m. Read scope.[0m[2m
-     - `app/services[0m[2m/auditor.py[0m[2m` — returns `[0m[2m{'ok': True[0m[2m}` — auditing is[0m[2m typically read-only[0m[2m. Read scope.[0m[2m
-     - `app/services[0m[2m/search_index.py`[0m[2m — returns `{'[0m[2mok': True}`[0m[2m — search is[0m[2m read. Read scope[0m[2m.
-     - `app[0m[2m/services/ratelimiter[0m[2m.py` — returns[0m[2m `{'ok':[0m[2m True}` — rate[0m[2m limiting check[0m[2m. Read scope.[0m[2m
-     - `app/db[0m[2m/audit_repo.py[0m[2m` — returns `[0m[2m{'created': True[0m[2m}` — this is[0m[2m creating[0m[2m audit[0m[2m entries[0m[2m. Write scope.[0m[2m
-     - `app/db[0m[2m/tokens_repo.py[0m[2m` — returns `[0m[2m{'created': True[0m[2m}` — creating tokens[0m[2m. Write scope.[0m[2m
-     - `app/db[0m[2m/posts_repo.py`[0m[2m — returns `{'[0m[2mok': True}`[0m[2m — read-only repo[0m[2m access[0m[2m. Read scope.[0m[2m
-     - `app/db[0m[2m/session_repo.py`[0m[2m — returns `{'[0m[2mok': True}`[0m[2m — could[0m[2m be read. Read[0m[2m scope.
-     - `[0m[2mapp/db/users_repo[0m[2m.py` — returns[0m[2m `{'ok':[0m[2m True}` — read[0m[2m. Read scope.[0m[2m
-     - `app/utils[0m[2m/format_utils.py`[0m[2m — read[0m[2m scope[0m[2m.
-     - `app[0m[2m/utils/permissions.py[0m[2m` — read scope[0m[2m.
-     - `app[0m[2m/utils/session_utils.py[0m[2m` — read scope[0m[2m.
-     - `app[0m[2m/utils/token_utils.py[0m[2m` — read scope[0m[2m.
-     - `app[0m[2m/workers/cleanup[0m[2m.py` — returns[0m[2m `{'created':[0m[2m True}` — cleanup[0m[2m creates[0m[2m records[0m[2m?[0m[2m Write scope.[0m[2m
-     - `app/work[0m[2mers/sync.py[0m[2m` — returns `[0m[2m{'created': True[0m[2m}` — sync creates[0m[2m/w[0m[2mrites. Write scope[0m[2m.
-     - `app[0m[2m/workers/indexer[0m[2m.py` — returns[0m[2m `{'ok':[0m[2m True}` — indexing[0m[2m could be write[0m[2m, but no[0m[2m clear signal. Read[0m[2m scope.
-     - `[0m[2mapp/workers/m[0m[2metrics.py` —[0m[2m returns `{'ok[0m[2m': True}` —[0m[2m read scope[0m[2m.
-     - `app[0m[2m/workers/night[0m[2mly_export.py`[0m[2m — returns `{'[0m[2mok': True[0m[2m}` — read[0m[2m scope.[0m[2m
-     
-     Actually[0m[2m, let[0m[2m me reconsider. The[0m[2m instruction says:[0m[2m
-     
-     > If the surrounding[0m[2m code clearly does a[0m[2m write/mutation ([0m[2mlook for nearby `[0m[2mcreate_`, `[0m[2mupdate_`, `[0m[2mdelete_`, `[0m[2msave_`, `[0m[2mwrite_`, or[0m[2m `POST`/[0m[2m`PUT`/[0m[2m`PATCH` HTTP[0m[2m verbs in the same[0m[2m function), use `[0m[2mscope="write"`[0m[2m instead.
-     
-     The key[0m[2m word[0m[2m is "clearly[0m[2m."[0m[2m I need to look[0m[2m for explicit signals[0m[2m. Let me re[0m[2m-ex[0m[2mamine:[0m[2m
-     
-     1. `[0m[2mcreate_`[0m[2m prefix[0m[2m — none[0m[2m of the[0m[2m function[0m[2m names start[0m[2m with `[0m[2mcreate_`
-     2[0m[2m. `update_[0m[2m` prefix — none[0m[2m start[0m[2m with `update_[0m[2m`
-     3. `[0m[2mdelete_` prefix[0m[2m — none start[0m[2m with `delete_[0m[2m`
-     4. `[0m[2msave_` prefix[0m[2m — none
-     5[0m[2m. `write_[0m[2m` prefix — none[0m[2m
-     6. `[0m[2mPOST`,[0m[2m `PUT`, `[0m[2mPATCH` — none[0m[2m in the function[0m[2m bodies
-     
-     Hmm,[0m[2m but the module[0m[2m/file[0m[2m names DO[0m[2m contain these patterns.[0m[2m For[0m[2m example, `app[0m[2m/api/comments_create.py[0m[2m` is[0m[2m clearly a "[0m[2mcreate" operation[0m[2m. The `[0m[2mcreate`[0m[2m is in[0m[2m the filename[0m[2m.
-     
-     I[0m[2m think the spirit[0m[2m of the instruction is[0m[2m to use[0m[2m `[0m[2mscope="write"`[0m[2m when[0m[2m the context[0m[2m ([0m[2mincluding[0m[2m the[0m[2m module[0m[2m name and[0m[2m return[0m[2m values[0m[2m) clearly indicates a[0m[2m write/mutation operation[0m[2m. Let[0m[2m me use[0m[2m both[0m[2m the[0m[2m filename and[0m[2m return[0m[2m value[0m[2m as signals.
-     
-     Let[0m[2m me also[0m[2m reconsider[0m[2m whether[0m[2m "[0m[2mnear[0m[2mby" could[0m[2m include the module path[0m[2m. I[0m[2m think it[0m[2m should[0m[2m — the module path[0m[2m is[0m[2m part of the "[0m[2msur[0m[2mrounding code"[0m[2m context.
-     
-     OK[0m[2m let[0m[2m me finalize my categor[0m[2mization. I'll[0m[2m be[0m[2m more[0m[2m careful and[0m[2m read the[0m[2m actual[0m[2m full[0m[2m content of files[0m[2m where[0m[2m I'm[0m[2m unsure[0m[2m.
-     
-     Actually, I[0m[2m already[0m[2m have enough[0m[2m context from the grep[0m[2m results. Let me[0m[2m finalize[0m[2m:
-     
-     **scope[0m[2m="write" files[0m[2m ([0m[2mclear write/mutation[0m[2m signals from[0m[2m filename or return values[0m[2m):**
-     
-     1.[0m[2m `app/api/comments[0m[2m_create.py` —[0m[2m filename has `[0m[2mcreate`,[0m[2m returns `{'created[0m[2m': True}`[0m[2m
-     2. `app[0m[2m/api/posts_create.py[0m[2m` — filename has[0m[2m `create`, returns[0m[2m `{'created':[0m[2m True}`
-     3.[0m[2m `app/api/posts[0m[2m_update.py` —[0m[2m filename has `update[0m[2m`, returns `{'[0m[2mcreated': True}`[0m[2m (note: returns[0m[2m '[0m[2mcreated' even[0m[2m though it's[0m[2m update[0m[2m...[0m[2m auto[0m[2m-generated code[0m[2m)
-     4. `[0m[2mapp/api/uploads_create[0m[2m.py` — filename[0m[2m has `create`,[0m[2m returns `{'created[0m[2m': True}`
-     5[0m[2m. `app/api[0m[2m/users_create.py`[0m[2m — filename has `[0m[2mcreate`, returns `[0m[2m{'created': True[0m[2m}`
-     6. `[0m[2mapp/api/users_delete[0m[2m.py` — filename[0m[2m has `delete`,[0m[2m returns `{'created[0m[2m': True}`
-     7[0m[2m. `app/api[0m[2m/users_update.py`[0m[2m — filename has `[0m[2mupdate`, returns `[0m[2m{'created': True[0m[2m}`
-     8. `[0m[2mapp/db/audit[0m[2m_repo.py` —[0m[2m returns `{'created[0m[2m': True}`
-     9[0m[2m. `app/db[0m[2m/tokens_repo.py[0m[2m` — returns `[0m[2m{'created': True[0m[2m}`
-     10. `[0m[2mapp/services/billing[0m[2m.py` — handle[0m[2m_0:[0m[2m `{'created':[0m[2m True}`, handle_[0m[2m1: `{'[0m[2mupdated': True}`[0m[2m
-     11. `app[0m[2m/services/importer.py[0m[2m` — returns `[0m[2m{'created': True[0m[2m}`
-     12. `[0m[2mapp/services/mailer[0m[2m.py` — returns[0m[2m `{'created':[0m[2m True}`
-     13.[0m[2m `app/services/not[0m[2mifier.py` —[0m[2m returns `{'created[0m[2m': True}`
-     14[0m[2m. `app/work[0m[2mers/cleanup.py[0m[2m` — returns `[0m[2m{'created': True[0m[2m}`
-     15. `[0m[2mapp/workers/s[0m[2mync.py` —[0m[2m returns `{'created[0m[2m': True}`[0m[2m
-     
-     **scope="read[0m[2m" files (no[0m[2m write[0m[2m/mutation signals,[0m[2m returns `{'ok[0m[2m': True}`):[0m[2m**
-     
-     1. `[0m[2mapp/api/comments[0m[2m_list.py`
-     2[0m[2m. `app/api[0m[2m/exports_get.py[0m[2m`
-     3. `[0m[2mapp/api/feed.py[0m[2m`
-     4. `[0m[2mapp/api/posts_get[0m[2m.py`
-     5.[0m[2m `app/api/posts[0m[2m_list.py`
-     6[0m[2m. `app/api[0m[2m/search.py`
-     7[0m[2m. `app/api[0m[2m/users_get.py`[0m[2m
-     8. `app[0m[2m/api/users_list.py[0m[2m`
-     9. `[0m[2mapp/db/posts[0m[2m_repo.py`
-     10[0m[2m. `app/db[0m[2m/session_repo.py`[0m[2m
-     11. `app[0m[2m/db/users_repo.py[0m[2m`
-     12. `[0m[2mapp/services/aud[0m[2mitor.py`
-     13[0m[2m. `app/services[0m[2m/exporter.py`[0m[2m
-     14. `app[0m[2m/services/ratelimiter[0m[2m.py`
-     15.[0m[2m `app/services/search[0m[2m_index.py`
-     16[0m[2m. `app/utils[0m[2m/format_utils.py`[0m[2m
-     17. `app[0m[2m/utils/permissions.py[0m[2m`
-     18. `[0m[2mapp/utils/session_utils[0m[2m.py`
-     19.[0m[2m `app/utils/token[0m[2m_utils.py`
-     20[0m[2m. `app/work[0m[2mers/indexer.py[0m[2m`
-     21. `[0m[2mapp/workers/m[0m[2metrics.py`
-     22[0m[2m. `app/work[0m[2mers/nightly[0m[2m_export.py`
-     
-     Wait[0m[2m, I[0m[2m need to double[0m[2m check[0m[2m —[0m[2m I[0m[2m should[0m[2m read some[0m[2m of these[0m[2m files to verify[0m[2m my[0m[2m categor[0m[2mization. Let me[0m[2m read a few that[0m[2m I'm uncertain[0m[2m about.[0m[2m Actually, the[0m[2m grep output[0m[2m already shows me[0m[2m the function[0m[2m bodies[0m[2m. Let me just[0m[2m verify[0m[2m my[0m[2m assumptions[0m[2m by[0m[2m reading a few more[0m[2m carefully[0m[2m.
-     
-     Actually, I[0m[2m realize[0m[2m I need[0m[2m to be[0m[2m more careful. Let[0m[2m me re[0m[2m-read the full content[0m[2m of files[0m[2m where there[0m[2m might be multiple[0m[2m `[0m[2mhandle_*[0m[2m` functions with[0m[2m different scopes. Let[0m[2m me check:[0m[2m
-     
-     - `app/services[0m[2m/billing.py`[0m[2m — has handle[0m[2m_0 (created[0m[2m) and handle_[0m[2m1 (updated)[0m[2m —[0m[2m both write
-     -[0m[2m `app/db/users[0m[2m_repo.py` —[0m[2m has handle_0[0m[2m and handle_1[0m[2m, both return[0m[2m `{'ok':[0m[2m True}` — both[0m[2m read
-     - `[0m[2mapp/utils/permissions[0m[2m.py` — has[0m[2m handle_0 and[0m[2m handle_1,[0m[2m both return `{'[0m[2mok': True}`[0m[2m — both read[0m[2m
-     - `app/api[0m[2m/comments_list.py`[0m[2m — has handle_[0m[2m0 and handle_[0m[2m1, both return[0m[2m `{'ok':[0m[2m True}` — both[0m[2m read
-     - `[0m[2mapp/api/feed.py[0m[2m` — has handle[0m[2m_0, handle[0m[2m_1, and[0m[2m handle_2,[0m[2m all return `{'[0m[2mok': True}`[0m[2m — all read[0m[2m
-     - `app/api[0m[2m/search.py` —[0m[2m has handle_0[0m[2m and handle_1[0m[2m, both return `[0m[2m{'ok': True[0m[2m}` — both[0m[2m read
-     
-     Now[0m[2m,[0m[2m for[0m[2m the actual[0m[2m migration[0m[2m, I need to[0m[2m:
-     1. In[0m[2m each file, replace[0m[2m `from app.auth[0m[2m import legacy_auth`[0m[2m with `from app[0m[2m.auth import new_auth[0m[2m`
-     2. In[0m[2m each file, replace[0m[2m `legacy_auth(user[0m[2m_id)` with `[0m[2mnew_auth(user_id[0m[2m, scope="read[0m[2m")` or `[0m[2mnew_auth(user_id[0m[2m, scope="write[0m[2m")` depending on[0m[2m context
-     3.[0m[2m Leave[0m[2m `app[0m[2m/auth.py` untouched[0m[2m (the legacy[0m[2m_auth[0m[2m definition must remain)[0m[2m
-     
-     Let me also note[0m[2m that some files use[0m[2m `legacy_auth(user[0m[2m_id_1)`[0m[2m or `legacy_auth[0m[2m(user_id_2[0m[2m)` — these[0m[2m need the[0m[2m same treatment[0m[2m with[0m[2m the same[0m[2m scope as[0m[2m the other[0m[2m calls[0m[2m in the same file[0m[2m.
-     
-     Let me create[0m[2m a todo[0m[2m list and start[0m[2m editing[0m[2m files[0m[2m. Given[0m[2m there are ~[0m[2m37 files to[0m[2m edit,[0m[2m I'll batch[0m[2m the[0m[2m edits efficiently.
-     
-     Actually[0m[2m, I[0m[2m can[0m[2m use a[0m[2m sed command to handle[0m[2m most of this[0m[2m efficiently[0m[2m. But[0m[2m let me be[0m[2m careful with[0m[2m the scope determination.[0m[2m
-     
-     Let me think about[0m[2m the most[0m[2m efficient approach:[0m[2m
-     1. For all[0m[2m files,[0m[2m change `[0m[2mfrom app.auth import[0m[2m legacy_auth` →[0m[2m `from app.auth[0m[2m import new_auth`[0m[2m
-     2. For read[0m[2m-s[0m[2mcope files, change[0m[2m `legacy_auth(user[0m[2m_id)` → `[0m[2mnew_auth(user_id[0m[2m, scope="read[0m[2m")` and similar[0m[2m for `user_id[0m[2m_1`, `[0m[2muser_id_2[0m[2m`
-     3. For[0m[2m write-scope files[0m[2m, change `legacy[0m[2m_auth(user_id)`[0m[2m → `new_auth[0m[2m(user_id, scope[0m[2m="write")`[0m[2m and similar
-     
-     Let[0m[2m me use sed[0m[2m commands[0m[2m for efficiency[0m[2m. I'll batch[0m[2m the read[0m[2m-scope and[0m[2m write-scope files[0m[2m separately.
-     
-     Wait[0m[2m, but[0m[2m I need to be[0m[2m careful with[0m[2m the scope[0m[2m for[0m[2m each file[0m[2m. Let me make[0m[2m a definitive[0m[2m list:[0m[2m
-     
-     **Write[0m[2m-s[0m[2mcope files (37[0m[2m files total[0m[2m, minus[0m[2m auth[0m[2m.py which[0m[2m we[0m[2m don't touch):[0m[2m**
-     
-     Let me list[0m[2m all[0m[2m 37 files that[0m[2m import `legacy_auth[0m[2m` (excluding `[0m[2mapp[0m[2m/auth.py`):[0m[2m
-     
-     From the grep results[0m[2m:[0m[2m
-     1. `app[0m[2m/api/comments_create.py[0m[2m` —[0m[2m WRITE ([0m[2mcreate)
-     2.[0m[2m `app/api/comments[0m[2m_list.py` —[0m[2m READ ([0m[2mlist)
-     3.[0m[2m `app/api/[0m[2mexports_get.py`[0m[2m — READ (get[0m[2m)
-     4. `[0m[2mapp/api/feed.py[0m[2m` — READ ([0m[2mfeed viewing)
-     5[0m[2m. `app/api[0m[2m/posts_create.py`[0m[2m — WRITE (create[0m[2m)
-     6. `[0m[2mapp/api/posts_get[0m[2m.py` — READ[0m[2m (get)
-     7[0m[2m. `app/api[0m[2m/posts_list.py`[0m[2m — READ (list[0m[2m)
-     8. `[0m[2mapp/api/posts_update[0m[2m.py` — WRITE[0m[2m (update)
-     9[0m[2m. `app/api[0m[2m/search.py` —[0m[2m READ (search)[0m[2m
-     10. `app[0m[2m/api/uploads_create.py[0m[2m` — WRITE ([0m[2mcreate)
-     11.[0m[2m `app/api/users[0m[2m_create.py` —[0m[2m WRITE (create)[0m[2m
-     12. `app[0m[2m/api/users_delete.py[0m[2m` — WRITE ([0m[2mdelete)
-     13.[0m[2m `app/api/users[0m[2m_get.py` —[0m[2m READ (get)[0m[2m
-     14. `app[0m[2m/api/users_list.py[0m[2m` — READ ([0m[2mlist)
-     15.[0m[2m `app/api/users[0m[2m_update.py` —[0m[2m WRITE (update)[0m[2m
-     16. `app[0m[2m/db/audit_repo[0m[2m.py` — WRITE[0m[2m (returns created[0m[2m)
-     17. `[0m[2mapp/db/posts_repo[0m[2m.py` — READ[0m[2m (returns ok)[0m[2m
-     18. `app[0m[2m/db/session_repo.py[0m[2m` — READ ([0m[2mreturns ok)
-     19[0m[2m. `app/db[0m[2m/tokens_repo.py[0m[2m` — WRITE ([0m[2mreturns created)
-     20[0m[2m. `app/db[0m[2m/users_repo.py`[0m[2m — READ (returns[0m[2m ok)
-     21.[0m[2m `app/services/[0m[2mauditor.py`[0m[2m — READ (returns[0m[2m ok)
-     22.[0m[2m `app/services/b[0m[2milling.py` —[0m[2m WRITE (returns[0m[2m created/[0m[2mupdated)
-     23.[0m[2m `app/services/export[0m[2mer.py` —[0m[2m READ (returns ok[0m[2m)
-     24. `[0m[2mapp/services/importer[0m[2m.py` — WRITE[0m[2m (returns created)[0m[2m
-     25. `app[0m[2m/services/mailer.py[0m[2m` — WRITE ([0m[2mreturns created)
-     26[0m[2m. `app/services[0m[2m/notifier.py`[0m[2m — WRITE (returns[0m[2m created)
-     27.[0m[2m `app/services/r[0m[2matelimiter.py`[0m[2m — READ (returns[0m[2m ok)
-     28.[0m[2m `app/services/search[0m[2m_index.py` —[0m[2m READ (returns ok[0m[2m)
-     29. `[0m[2mapp/utils/format[0m[2m_utils.py` —[0m[2m READ (returns ok[0m[2m)
-     30. `[0m[2mapp/utils/permissions[0m[2m.py` — READ[0m[2m (returns ok)[0m[2m
-     31. `app[0m[2m/utils/session_utils.py[0m[2m` — READ ([0m[2mreturns ok)
-     32[0m[2m. `app/utils[0m[2m/token_utils.py`[0m[2m — READ (returns[0m[2m ok)
-     33.[0m[2m `app/workers[0m[2m/cleanup.py`[0m[2m — WRITE (returns[0m[2m created)
-     34.[0m[2m `app/workers[0m[2m/indexer.py`[0m[2m — READ (returns[0m[2m ok)
-     35.[0m[2m `app/workers[0m[2m/metrics.py`[0m[2m — READ (returns[0m[2m ok)
-     36.[0m[2m `app/workers[0m[2m/nightly_export[0m[2m.py` — READ[0m[2m (returns ok)[0m[2m
-     37. `app[0m[2m/workers/sync[0m[2m.py` — WRITE[0m[2m (returns created)[0m[2m
-     
-     Now[0m[2m let me use[0m[2m sed to[0m[2m do the bulk replacements[0m[2m. I'll use[0m[2m two passes[0m[2m:
-     1. Replace[0m[2m the[0m[2m import in all files[0m[2m
-     2. Replace[0m[2m the function call,[0m[2m with the appropriate scope[0m[2m per[0m[2m file
-     
-     Actually,[0m[2m for[0m[2m efficiency, let me[0m[2m use a Python[0m[2m script or[0m[2m sed commands. Let[0m[2m me use sed since[0m[2m it's available[0m[2m.
-     
-     For[0m[2m the import[0m[2m line[0m[2m, I can[0m[2m do a global[0m[2m replacement across[0m[2m all files:
+     For[0m[2m write[0m[2m-scope files ([0m[2mscope[0m[2m="write[0m[2m"):
      ``[0m[2m`
-     sed -i[0m[2m ''[0m[2m 's[0m[2m/from app.auth import[0m[2m legacy_auth/from[0m[2m app.auth import new[0m[2m_auth/g[0m[2m'[0m[2m <files>
-     ```[0m[2m
+     app/services/import[0m[2mer.py
+     app[0m[2m/services/mailer.py[0m[2m
+     app/services/not[0m[2mifier.py
+     app[0m[2m/api/users_create.py[0m[2m
+     app/api/comments[0m[2m_create.py
+     app[0m[2m/services/billing.py[0m[2m
+     app/api/users[0m[2m_update.py
+     app[0m[2m/api/posts_create.py[0m[2m
+     app/api/posts[0m[2m_update.py
+     app[0m[2m/workers/cleanup[0m[2m.py
+     app/api[0m[2m/users_delete.py[0m[2m
+     app/api/uploads_create[0m[2m.py
+     app/work[0m[2mers/sync.py[0m[2m
+     app/db/t[0m[2mokens_repo.py[0m[2m
+     app/db/audit[0m[2m_repo.py
+     ``[0m[2m`
      
-     For the function calls[0m[2m, I need[0m[2m to be[0m[2m scope[0m[2m-aware.[0m[2m Let me handle[0m[2m this with[0m[2m two separate[0m[2m sed commands:[0m[2m
-     - For[0m[2m read-scope files[0m[2m: `legacy_auth[0m[2m(user[0m[2m_id)` → `[0m[2mnew_auth(user_id[0m[2m, scope="read[0m[2m")`
-     - For[0m[2m write-scope files[0m[2m: `legacy_auth[0m[2m(user_id)` →[0m[2m `new_auth(user[0m[2m_id, scope="[0m[2mwrite")`
+     For read-s[0m[2mcope files (scope[0m[2m="read"):
+     ``[0m[2m`
+     app/services/r[0m[2matelimiter.py[0m[2m
+     app/services/aud[0m[2mitor.py
+     app[0m[2m/services/exporter.py[0m[2m
+     app/workers[0m[2m/nightly_export[0m[2m.py
+     app/services[0m[2m/search_index.py[0m[2m
+     app/utils/token_utils[0m[2m.py
+     app/utils[0m[2m/session_utils.py[0m[2m
+     app/utils/permissions[0m[2m.py
+     app/work[0m[2mers/indexer.py[0m[2m
+     app/api/users[0m[2m_get.py
+     app[0m[2m/api/users_list.py[0m[2m
+     app/utils/format[0m[2m_utils.py
+     app[0m[2m/api/comments_list.py[0m[2m
+     app/api/[0m[2mexports_get.py[0m[2m
+     app/api/posts_get[0m[2m.py
+     app/api[0m[2m/feed.py
+     app[0m[2m/api/posts_list.py[0m[2m
+     app/api/search[0m[2m.py
+     app/work[0m[2mers/metrics.py[0m[2m
+     app/db/posts[0m[2m_repo.py
+     app[0m[2m/db/users_repo.py[0m[2m
+     app/db/session[0m[2m_repo.py
+     ``[0m[2m`
      
-     But[0m[2m the variable[0m[2m names vary[0m[2m:[0m[2m `user_id`,[0m[2m `user_id_[0m[2m1`, `user[0m[2m_id_2`.[0m[2m So[0m[2m I need a regex[0m[2m that captures the variable[0m[2m name[0m[2m.
+     I[0m[2m'll use sed[0m[2m to do the replacements[0m[2m. Let me construct[0m[2m the commands.
      
-     sed[0m[2m regex[0m[2m: `s[0m[2m/legacy_auth(\[0m[2m([^)]*\[0m[2m))/new[0m[2m_auth(\1,[0m[2m scope="read")[0m[2m/g`[0m[2m
-     sed[0m[2m regex: `s[0m[2m/legacy_auth(\[0m[2m([^)]*\))/[0m[2mnew_auth(\1[0m[2m, scope="write[0m[2m")/g`[0m[2m
-     
-     Let me batch[0m[2m this[0m[2m efficiently[0m[2m.[0m[2m
-     
-     Actually, let[0m[2m me just[0m[2m use a single[0m[2m Python[0m[2m script to do all[0m[2m the replacements at once[0m[2m. That would[0m[2m be cleaner and more[0m[2m reliable.
-     
-     Let me[0m[2m write a Python script[0m[2m to[0m[2m handle[0m[2m this[0m[2m.
-     
-     Wait, I[0m[2m should[0m[2m think[0m[2m about whether[0m[2m there[0m[2m are any other[0m[2m patterns[0m[2m I might[0m[2m miss[0m[2m. The[0m[2m grep shows[0m[2m all[0m[2m occurrences[0m[2m are of[0m[2m the form `legacy[0m[2m_auth(user_id)`[0m[2m or `legacy_auth[0m[2m(user_id_1[0m[2m)` or `legacy[0m[2m_auth(user_id_[0m[2m2)`. So[0m[2m the regex `[0m[2mlegacy_auth\[0m[2m(([^)]+)\[0m[2m)` will[0m[2m match[0m[2m all of them.[0m[2m
-     
-     Let me proceed[0m[2m with the edits[0m[2m using[0m[2m a combination[0m[2m of sed commands for[0m[2m efficiency.
-     
-     Let[0m[2m me first[0m[2m set[0m[2m up the todo[0m[2m list,[0m[2m then execute.[0m[2m
-     
-     Actually, given[0m[2m the number of files[0m[2m (37),[0m[2m I[0m[2m'll use a script[0m[2m approach. Let me[0m[2m write a small[0m[2m Python script that[0m[2m does all the replacements[0m[2m.
-     
-     Let me think[0m[2m about the approach:[0m[2m
-     1. Replace[0m[2m `[0m[2mfrom app.auth import[0m[2m legacy_auth` →[0m[2m `from app.auth[0m[2m import new_auth`[0m[2m in all 37[0m[2m files
-     2.[0m[2m Replace `legacy_auth[0m[2m(...[0m[2m)` →[0m[2m `new_auth(...[0m[2m, scope="read[0m[2m")` or `[0m[2mnew_auth(...,[0m[2m scope="write")[0m[2m` depending on the[0m[2m file
-     
-     I[0m[2m'll create[0m[2m a Python script to[0m[2m do all[0m[2m replacements[0m[2m at once.
-     
-     Let[0m[2m me define the scope[0m[2m for[0m[2m each file and[0m[2m create[0m[2m the script.
-     
-     Actually[0m[2m, I'll[0m[2m just use a[0m[2m series of Edit[0m[2m calls[0m[2m. But[0m[2m 37 files is a[0m[2m lot. Let me[0m[2m use Shell[0m[2m commands[0m[2m with[0m[2m sed for efficiency.[0m[2m
-     
-     Here[0m[2m's my plan:[0m[2m
-     1. Global[0m[2m import[0m[2m replacement across[0m[2m all files
-     2[0m[2m. Read[0m[2m-scope call[0m[2m replacement for[0m[2m read files[0m[2m
-     3. Write[0m[2m-scope call replacement[0m[2m for write files[0m[2m
-     4. Verify no[0m[2m remaining `legacy_auth[0m[2m(` calls outside[0m[2m auth[0m[2m.py
-     
-     Let me[0m[2m batch[0m[2m these[0m[2m with[0m[2m find[0m[2m +[0m[2m sed.
-     
-     Actually[0m[2m, the[0m[2m safest[0m[2m approach is to use[0m[2m a Python script since[0m[2m sed[0m[2m on[0m[2m macOS has[0m[2m some quir[0m[2mks. Let me[0m[2m write a script[0m[2m.[0m[2m
-  Now[0m[2m I have a full[0m[2m picture. Let me[0m[2m categorize scope[0m[2m for[0m[2m each file and execute[0m[2m the migration.[0m[2m
-     
-     **Plan[0m[2m:**
-     -[0m[2m 37 files import[0m[2m `legacy_auth`[0m[2m (excluding `app[0m[2m/auth.py` which[0m[2m keeps[0m[2m the definition)
-     -[0m[2m **[0m[2mWrite scope** (`[0m[2mscope="write[0m[2m"`): files[0m[2m with[0m[2m `create`[0m[2m/`update`[0m[2m/`delete`[0m[2m in the[0m[2m name[0m[2m, or returning[0m[2m `{'created':[0m[2m True}` /[0m[2m `{'updated':[0m[2m True}`
-     - **[0m[2mRead scope** (`[0m[2mscope="read"`[0m[2m): everything[0m[2m else ([0m[2mreturning `{'[0m[2mok': True}`)[0m[2m
-     - Replace[0m[2m imports:[0m[2m `legacy[0m[2m_auth` → `[0m[2mnew_auth`
-     -[0m[2m Replace calls: `[0m[2mlegacy_auth(X[0m[2m)` → `new[0m[2m_auth(X, scope[0m[2m="read"[0m[2m|"write")`[0m[2m
-     - Leave `app[0m[2m/auth.py` untouched[0m[2m
+     Actually[0m[2m wait[0m[2m,[0m[2m I need to be[0m[2m more careful. Let[0m[2m me re[0m[2m-read the[0m[2m billing[0m[2m.py file since[0m[2m it has two handlers[0m[2m with different contexts[0m[2m (one created,[0m[2m one updated).[0m[2m
+  Now I have a[0m[2m complete[0m[2m picture of[0m[2m all 37 consumer[0m[2m files.[0m[2m Let me classify[0m[2m each[0m[2m by[0m[2m scope[0m[2m and[0m[2m read a couple[0m[2m of the[0m[2m multi-handler files to[0m[2m confirm the patterns[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_5gsigr2u | TodoWrite {'todos': [{'done': False, 'status': 'in_progress', 'task': 'Replace imports and calls in all 37 files'}, {'done': False, 'status': 'pending', 'task': 'Verify zero legacy_auth call sites remain (except auth.py definition)'}, {'done': False, 'status': 'pending', 'task': 'Verify python -c "import app" still works'}]}
-[0m[2m
-  🔠 call_5gsigr2u Executed
-[0m[2m
-  🧠 Let[0m[2m me fix the todo[0m[2m format and then[0m[2m proceed with the migration[0m[2m using a Python script[0m[2m for[0m[2m efficiency.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_wltvq0zx | TodoWrite {'todos': [{'content': 'Replace imports and calls in all 37 files', 'status': 'in_progress'}, {'content': 'Verify zero legacy_auth call sites remain (except auth.py definition)', 'status': 'pending'}, {'content': 'Verify python -c "import app" still works', 'status': 'pending'}]}
-[0m📋 Todo list updated (3 items)
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_02kj7etj | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🧰 call_it4x7zuc | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🧰 call_y1q6hzur | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🧰 call_y726slrl | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🔠 call_y1q6hzur Executed
+[0m[2m
+  🔠 call_02kj7etj Executed
+[0m[2m
+  🔠 call_it4x7zuc Executed
+[0m[2m
+  🔠 call_y726slrl Executed
+[0m[2m
+  🧠 Good[0m[2m, I've confirmed[0m[2m the patterns. Now[0m[2m I[0m[2m have a clear classification[0m[2m.[0m[2m Let me update[0m[2m the todo list and[0m[2m proceed with the mass[0m[2m migration[0m[2m using[0m[2m sed.
+     
+     Let[0m[2m me organize[0m[2m the files by[0m[2m scope:
+     
+     **Write[0m[2m scope**[0m[2m (filename[0m[2m contains `create`,[0m[2m `update`, `[0m[2mdelete`, or return[0m[2m value contains[0m[2m `created`,[0m[2m `updated`[0m[2m):[0m[2m
+     1. `app[0m[2m/services/importer.py[0m[2m` - returns `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}`[0m[2m
+     2. `app[0m[2m/services/mailer.py[0m[2m` - returns `[0m[2m{'created': True[0m[2m, 'data':[0m[2m payload}`
+     3.[0m[2m `app/services/not[0m[2mifier.py` -[0m[2m returns `{'created[0m[2m': True, '[0m[2mdata': payload[0m[2m}`
+     4. `[0m[2mapp/api[0m[2m/users_create.py`[0m[2m - `_[0m[2mcreate` in[0m[2m name[0m[2m + `[0m[2m{'created': True[0m[2m}`[0m[2m
+     5. `app[0m[2m/api/comments_create.py[0m[2m` - `_create[0m[2m` in name +[0m[2m `{'created':[0m[2m True}`
+     6.[0m[2m `app/services/b[0m[2milling.py` -[0m[2m `{'created':[0m[2m True}` and `[0m[2m{'updated': True[0m[2m}`
+     7. `[0m[2mapp/api/users_update[0m[2m.py` - `_[0m[2mupdate` in name[0m[2m + `{'created[0m[2m': True}`
+     8[0m[2m. `app/api[0m[2m/posts_create.py`[0m[2m - `_create`[0m[2m in name + `[0m[2m{'created': True[0m[2m}`
+     9. `[0m[2mapp/api/posts_update[0m[2m.py` - `_[0m[2mupdate` in name[0m[2m + `{'created[0m[2m': True}`
+     10[0m[2m. `app/work[0m[2mers/cleanup.py[0m[2m` - `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}`
+     11. `[0m[2mapp/api/users_delete[0m[2m.py` - `_[0m[2mdelete` in name[0m[2m + `{'created[0m[2m': True}`
+     12[0m[2m. `app/api[0m[2m/uploads_create.py`[0m[2m - `_create`[0m[2m in name + `[0m[2m{'created': True[0m[2m}`
+     13. `[0m[2mapp/workers/s[0m[2mync.py` -[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}`
+     14[0m[2m. `app/db[0m[2m/tokens_repo.py[0m[2m` - `{'[0m[2mcreated': True,[0m[2m 'data': payload[0m[2m}`
+     15. `[0m[2mapp/db/audit[0m[2m_repo.py` -[0m[2m `{'created':[0m[2m True, 'data[0m[2m': payload}`[0m[2m
+     
+     **Read scope**[0m[2m (no[0m[2m write signals[0m[2m):[0m[2m
+     1. `app[0m[2m/services/ratelimiter[0m[2m.py`
+     2.[0m[2m `app/services/[0m[2mauditor.py`[0m[2m
+     3. `app[0m[2m/services/exporter.py[0m[2m`
+     4. `[0m[2mapp/workers/[0m[2mnightly_export.py[0m[2m`
+     5. `[0m[2mapp/services/search_index[0m[2m.py`
+     6.[0m[2m `app/utils/token[0m[2m_utils.py`
+     7[0m[2m. `app/utils[0m[2m/session_utils.py`[0m[2m
+     8. `app[0m[2m/utils/permissions.py[0m[2m`
+     9. `[0m[2mapp/workers/index[0m[2mer.py`
+     10[0m[2m. `app/api[0m[2m/users_get.py`[0m[2m
+     11. `app[0m[2m/api/users_list.py[0m[2m`
+     12. `[0m[2mapp/utils/format_utils[0m[2m.py`
+     13.[0m[2m `app/api/comments[0m[2m_list.py`
+     14[0m[2m. `app/api[0m[2m/exports_get.py[0m[2m`
+     15. `[0m[2mapp/api/posts_get[0m[2m.py`
+     16.[0m[2m `app/api/feed[0m[2m.py`
+     17.[0m[2m `app/api/posts[0m[2m_list.py`
+     18[0m[2m. `app/api[0m[2m/search.py`
+     19[0m[2m. `app/work[0m[2mers/metrics.py[0m[2m`
+     20. `[0m[2mapp/db/posts_repo[0m[2m.py`
+     21.[0m[2m `app/db/users[0m[2m_repo.py`
+     22[0m[2m. `app/db[0m[2m/session_repo.py`[0m[2m
+     
+     Now let[0m[2m me use sed to[0m[2m do the replacements.[0m[2m I need[0m[2m to:
+     1.[0m[2m Replace `from[0m[2m app.auth import legacy[0m[2m_auth` with `[0m[2mfrom app.auth import[0m[2m new_auth` in[0m[2m all[0m[2m 37 files
+     2[0m[2m. Replace `legacy[0m[2m_auth(user_id)`[0m[2m with `new_auth[0m[2m(user_id, scope[0m[2m="read")`[0m[2m or `new_auth[0m[2m(user_id, scope[0m[2m="write")`[0m[2m depending on file[0m[2m
+     3. Replace[0m[2m `legacy_auth(user[0m[2m_id_1)`[0m[2m similarly[0m[2m
+     4. Replace[0m[2m `legacy_auth(user[0m[2m_id_2)`[0m[2m similarly
+     
+     Let me[0m[2m use sed[0m[2m for this[0m[2m. I'll do[0m[2m it[0m[2m in two passes[0m[2m:
+     -[0m[2m First pass: replace[0m[2m imports in all files[0m[2m
+     - Second pass[0m[2m: replace call sites[0m[2m with appropriate scope[0m[2m
+     
+     Let me use[0m[2m a bash script for[0m[2m efficiency.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_xtg9c6qw | TodoWrite {'todos': [{'content': 'Read project docs and auth.py to understand current state', 'id': 1, 'status': 'completed'}, {'content': 'Find all legacy_auth call sites and imports', 'id': 2, 'status': 'completed'}, {'content': 'Analyze each call site for write/mutation context to determine scope', 'id': 3, 'status': 'completed'}, {'content': 'Migrate all call sites: replace legacy_auth with new_auth', 'id': 4, 'status': 'in_progress'}, {'content': 'Update all imports from legacy_auth to new_auth', 'id': 5, 'status': 'pending'}, {'content': 'Verify zero remaining legacy_auth call sites', 'id': 6, 'status': 'pending'}, {'content': 'Verify project still imports cleanly', 'id': 7, 'status': 'pending'}]}
+[0m📋 Todo list updated (7 items)
 
-📋 Todo List (0/3, 0%, ▶️ 1 in progress  ☐ 2 pending)
-  ▶️ [1] Replace imports and calls in all 37 files
-     [2] Verify zero legacy_auth call sites remain (except auth.py definition)
-     [3] Verify python -c "import app" still works
-~DATA~{"total":3,"completed":0,"in_progress":1,"pending":2}
+📋 Todo List (3/7, 42%, ✅ 3 completed  ▶️ 1 in progress  ☐ 3 pending)
+  ✅ [1] Read project docs and auth.py to understand current state
+  ✅ [2] Find all legacy_auth call sites and imports
+  ✅ [3] Analyze each call site for write/mutation context to determine scope
+  ▶️ [4] Migrate all call sites: replace legacy_auth with new_auth
+     [5] Update all imports from legacy_auth to new_auth
+     [6] Verify zero remaining legacy_auth call sites
+     [7] Verify project still imports cleanly
+~DATA~{"total":7,"completed":3,"in_progress":1,"pending":3}
 [2m
-  🔠 call_wltvq0zx Executed
+  🔠 call_xtg9c6qw Executed
 [0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_tr2igspw | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Batch-migrate all legacy_a ...'}
-[0m  [2mzsh:71: parse error near `\n'
-[0m[2m
-  🔠 call_tr2igspw Executed
-[0m[2m
-  🧠 The[0m[2m heredoc is[0m[2m causing issues with z[0m[2msh. Let me[0m[2m write the script to[0m[2m a file first,[0m[2m then execute it.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_tlcd3e6c | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': 'import re\nfrom pathlib imp ...'}
-[0m  ✓ LSP server 'pyright' started for /Users/gofrendigunawan/llm-challenges
-[2m
-  🔠 call_tlcd3e6c Executed
-[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_rftmmco7 | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Run the migration script'}
-[0m  [2mUpdated 37 files
-[0m[2m
-  🔠 call_rftmmco7 Executed
-[0m[2m
-  🧠 Good[0m[2m, 37 files[0m[2m updated. Now let[0m[2m me clean[0m[2m up the migration[0m[2m script,[0m[2m verify no[0m[2m `[0m[2mlegacy_auth(` call[0m[2m sites remain ([0m[2mexcept the[0m[2m definition in auth.py[0m[2m), and check[0m[2m that `python -[0m[2mc "import app[0m[2m"` works[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_2iqk1pt3 | RM {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🧰 call_n73iamqn | Grep {'pattern': 'legacy_auth\\(', 'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🔠 call_2iqk1pt3 Executed
-[0m[2m
-  🔠 call_n73iamqn Executed
-[0m[2m
-  🧠 Only[0m[2m one[0m[2m match for[0m[2m `legacy_auth(`[0m[2m — the definition[0m[2m in `app/auth[0m[2m.py`,[0m[2m which we[0m[2m must keep. Zero[0m[2m call sites remain[0m[2m. Now let me[0m[2m verify the import works[0m[2m.[0m[2m
-  Only[0m[2m the definition in `[0m[2mapp/auth.py`[0m[2m remains — exactly[0m[2m as[0m[2m required. Now[0m[2m verify[0m[2m the module[0m[2m still[0m[2m imports cleanly[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_q02juaom | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Verify app module imports  ...'}
-[0m[2m
-  🔠 call_q02juaom Executed
-[0m[2m
-  🧠 Let[0m[2m me also verify that[0m[2m no `[0m[2mimport[0m[2m legacy_auth` statements[0m[2m remain, and spot[0m[2m-check a few files[0m[2m to make[0m[2m sure the scope assignments[0m[2m are correct.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_2jxbpbll | Grep {'path': '/Users/gofrendigunawan/llm ...', 'pattern': 'import legacy_auth'}
-[0m[2m
-  🧰 call_wuvhf3z9 | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Spot-check write-scope and ...'}
-[0m[2m
-  🔠 call_2jxbpbll Executed
-[0m  [2mapp/api/comments_create.py:4:from app.auth import new_auth
-[0m  [2mapp/api/comments_create.py:8:    if not new_auth(user_id, scope="write"):
-[0m  [2mapp/api/posts_create.py:4:from app.auth import new_auth
-[0m  [2mapp/api/posts_create.py:8:    if not new_auth(user_id, scope="write"):
-[0m  [2mapp/api/posts_update.py:4:from app.auth import new_auth
-[0m  [2mapp/api/posts_update.py:8:    if not new_auth(user_id, scope="write"):
-[0m  [2mapp/api/users_delete.py:4:from app.auth import new_auth
-[0m  [2mapp/api/users_delete.py:8:    if not new_auth(user_id, scope="write"):
-[0m  [2mapp/api/users_get.py:4:from app.auth import new_auth
-[0m  [2mapp/api/users_get.py:8:    if not new_auth(user_id, scope="read"):
-[0m  [2mapp/api/feed.py:4:from app.auth import new_auth
-[0m  [2mapp/api/feed.py:8:    if not new_auth(user_id, scope="read"):
-[0m  [2mapp/api/feed.py:14:    if not new_auth(user_id_1, scope="read"):
-[0m  [2mapp/api/feed.py:20:    if not new_auth(user_id_2, scope="read"):
-[0m  [2mapp/services/billing.py:4:from app.auth import new_auth
-[0m  [2mapp/services/billing.py:8:    if not new_auth(user_id, scope="write"):
-[0m  [2mapp/services/billing.py:14:    if not new_auth(user_id_1, scope="write"):
-[0m  [2mapp/db/audit_repo.py:4:from app.auth import new_auth
-[0m  [2mapp/db/audit_repo.py:8:    if not new_auth(user_id, scope="write"):
-[0m  [2mapp/db/tokens_repo.py:4:from app.auth import new_auth
-[0m  [2mapp/db/tokens_repo.py:8:    if not new_auth(user_id, scope="write"):
-[0m  [2mapp/db/posts_repo.py:4:from app.auth import new_auth
-[0m  [2mapp/db/posts_repo.py:8:    if not new_auth(user_id, scope="read"):
-[0m[2m
-  🔠 call_wuvhf3z9 Executed
-[0m[2m
-  🧠 All[0m[2m checks pass:[0m[2m
-     1[0m[2m. Zero[0m[2m `import[0m[2m legacy_auth` statements[0m[2m remain
-     2.[0m[2m Zero `legacy_auth[0m[2m(` call[0m[2m sites remain (only[0m[2m the definition in auth[0m[2m.py)
-     3.[0m[2m `python -c[0m[2m "import app"`[0m[2m succeeds[0m[2m
-     4. Spot[0m[2m-check confirms[0m[2m correct scope assignments:[0m[2m
-        - Write[0m[2m files[0m[2m ([0m[2mcreate[0m[2m/update[0m[2m/delete): `scope[0m[2m="write"`[0m[2m ✓
-        -[0m[2m Read files (get[0m[2m/list/feed[0m[2m): `scope="[0m[2mread"` ✓[0m[2m
-        - billing[0m[2m.py handle[0m[2m_1 with[0m[2m `user_id_[0m[2m1`: `scope[0m[2m="write"` ✓[0m[2m
-        - feed[0m[2m.py multiple[0m[2m handles: all[0m[2m `scope="read[0m[2m"` ✓
+  🧠 Now[0m[2m I'll[0m[2m use[0m[2m sed to do the[0m[2m bulk replacements. I[0m[2m need[0m[2m to:[0m[2m
      
-     Let[0m[2m me update the todos[0m[2m and report[0m[2m completion[0m[2m.[0m[2m
-  All three[0m[2m verification[0m[2m checks pass. Let[0m[2m me update the todos[0m[2m.[0m[2m
+     1. Replace imports[0m[2m in all 37[0m[2m files[0m[2m:[0m[2m `from app.auth[0m[2m import legacy_auth`[0m[2m → `from app[0m[2m.auth import new_auth[0m[2m`
+     2. Replace[0m[2m call sites with appropriate[0m[2m scope[0m[2m
+     
+     Let me construct[0m[2m the sed[0m[2m commands. I'll[0m[2m do it[0m[2m in two steps:[0m[2m
+     
+     Step 1:[0m[2m Replace imports in all[0m[2m files[0m[2m
+     Step 2[0m[2m: Replace call sites[0m[2m - write[0m[2m scope files[0m[2m get[0m[2m `scope[0m[2m="write"[0m[2m`, read scope files[0m[2m get `scope="[0m[2mread"`
+     
+     For call[0m[2m sites, I need[0m[2m to handle:[0m[2m
+     - `legacy_auth[0m[2m(user_id)` →[0m[2m `new_auth(user[0m[2m_id, scope="[0m[2mread")` or[0m[2m `new_auth(user[0m[2m_id, scope="[0m[2mwrite")`
+     -[0m[2m `legacy_auth(user[0m[2m_id_1)`[0m[2m → `new_auth[0m[2m(user_id_1[0m[2m, scope="read[0m[2m")` or `[0m[2mnew_auth(user_id[0m[2m_1, scope[0m[2m="write")`[0m[2m
+     - `legacy_auth[0m[2m(user_id_2[0m[2m)` → `new[0m[2m_auth(user_id_[0m[2m2, scope="[0m[2mread")` or[0m[2m `new_auth(user[0m[2m_id_2,[0m[2m scope="write")[0m[2m`
+     
+     Let me use[0m[2m sed with[0m[2m a[0m[2m regex[0m[2m pattern[0m[2m:[0m[2m `legacy_auth(\[0m[2m([^)]*\[0m[2m))` → `[0m[2mnew_auth(\[0m[2m1, scope="[0m[2mread")`[0m[2m or `new_auth[0m[2m(\1, scope[0m[2m="write")`[0m[2m
+     
+     I'll run[0m[2m the[0m[2m sed commands using[0m[2m the[0m[2m Shell[0m[2m tool.[0m[2m
+  Now[0m[2m I'll do the[0m[2m bulk migration[0m[2m using[0m[2m sed. First,[0m[2m replace all[0m[2m imports,[0m[2m then replace call sites[0m[2m with the[0m[2m correct scope per[0m[2m file.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_6l7dk1zk | TodoWrite {'todos': [{'content': 'Replace imports and calls in all 37 files', 'status': 'completed'}, {'content': 'Verify zero legacy_auth call sites remain (except auth.py definition)', 'status': 'completed'}, {'content': 'Verify python -c "import app" still works', 'status': 'completed'}]}
-[0m📋 Todo list updated (3 items)
+  🧰 call_y85zwsg8 | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Bulk replace legacy_auth i ...'}
+[0m  [2mImport replacements done
+[0m  [2mWrite-scope call sites replaced
+[0m  [2mRead-scope call sites replaced
+[0m[2m
+  🔠 call_y85zwsg8 Executed
+[0m[2m
+  🧠 Good[0m[2m, the replacements ran[0m[2m successfully. Now let[0m[2m me verify by[0m[2m checking for any remaining[0m[2m `legacy_auth`[0m[2m call sites ([0m[2mexcluding the definition in[0m[2m `app/auth.py[0m[2m`), and spot[0m[2m-check a few files[0m[2m to make sure the[0m[2m replacements are[0m[2m correct.[0m[2m
+  Now[0m[2m let me verify —[0m[2m check[0m[2m for remaining `legacy[0m[2m_auth(` call sites[0m[2m and spot[0m[2m-check a few migrated[0m[2m files.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_99n7gs8r | Grep {'path': '/Users/gofrendigunawan/llm ...', 'pattern': 'legacy_auth\\('}
+[0m[2m
+  🧰 call_juxkzidt | Grep {'path': '/Users/gofrendigunawan/llm ...', 'pattern': 'from app\\.auth import lega ...'}
+[0m[2m
+  🔠 call_juxkzidt Executed
+[0m[2m
+  🔠 call_99n7gs8r Executed
+[0m[2m
+  🧠 The[0m[2m only remaining `legacy[0m[2m_auth(` is the[0m[2m function definition in `[0m[2mapp/auth.py`,[0m[2m which is correct[0m[2m — we need[0m[2m to keep that[0m[2m definition[0m[2m. No imports[0m[2m of `legacy_auth[0m[2m` remain,[0m[2m and no call[0m[2m sites remain.[0m[2m
+     
+     Now[0m[2m let me spot-check[0m[2m a few files to[0m[2m verify the[0m[2m migrations[0m[2m look correct,[0m[2m and[0m[2m then run[0m[2m `[0m[2mpython -c "[0m[2mimport app"` to[0m[2m verify the project[0m[2m still imports cleanly[0m[2m.[0m[2m
+  Only[0m[2m the definition[0m[2m in `app/auth[0m[2m.py` remains —[0m[2m exactly as[0m[2m required. No[0m[2m call[0m[2m sites or[0m[2m imports of[0m[2m `legacy_auth`[0m[2m left[0m[2m. Let me spot[0m[2m-check a few files[0m[2m and run the[0m[2m import check[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_9mub7qd1 | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🧰 call_hmloylos | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🧰 call_c7pea761 | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🧰 call_rkcdt2hn | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🔠 call_c7pea761 Executed
+[0m[2m
+  🔠 call_hmloylos Executed
+[0m[2m
+  🔠 call_9mub7qd1 Executed
+[0m[2m
+  🔠 call_rkcdt2hn Executed
+[0m[2m
+  🧠 All[0m[2m spot-checks look[0m[2m correct. Now[0m[2m let me run the[0m[2m import verification[0m[2m.[0m[2m
+  All spot[0m[2m-checks look correct[0m[2m. Now let me[0m[2m verify the project still[0m[2m imports cleanly.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_i9f3drbc | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Verify project still impor ...'}
+[0m[2m
+  🔠 call_i9f3drbc Executed
+[0m[2m
+  🧠 The[0m[2m project[0m[2m imports cleanly. Let[0m[2m me also verify that[0m[2m the[0m[2m auth[0m[2m.py still[0m[2m has the legacy_auth[0m[2m definition ([0m[2mwe[0m[2m need to keep it[0m[2m), and do a[0m[2m final comprehensive check.[0m[2m
+  Clean[0m[2m import[0m[2m. Let me do[0m[2m one[0m[2m final comprehensive[0m[2m verification:[0m[2m confirm `legacy_auth[0m[2m` definition is preserved[0m[2m in `auth[0m[2m.py`, and count[0m[2m all `new[0m[2m_auth` call[0m[2m sites to make[0m[2m sure nothing[0m[2m was missed.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_calxcxrj | Grep {'path': '/Users/gofrendigunawan/llm ...', 'pattern': 'new_auth\\('}
+[0m[2m
+  🧰 call_gh542int | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🔠 call_calxcxrj Executed
+[0m[2m
+  🔠 call_gh542int Executed
+[0m[2m
+  🧠 Everything[0m[2m checks[0m[2m out. Let me[0m[2m verify[0m[2m the final count[0m[2m:
+     
+     - `[0m[2mlegacy_auth(` call[0m[2m sites remaining[0m[2m: 0 ([0m[2monly the definition in[0m[2m `app/auth.py[0m[2m`)[0m[2m
+     - `from[0m[2m app.auth import legacy[0m[2m_auth` remaining[0m[2m: 0[0m[2m
+     - `new_auth[0m[2m(` call sites:[0m[2m 46 matches across[0m[2m 37 consumer files[0m[2m (excluding[0m[2m `[0m[2mapp[0m[2m/auth.py` which[0m[2m has the[0m[2m definition)
+     - `[0m[2mlegacy_auth` definition[0m[2m in[0m[2m `app/auth.py[0m[2m`: preserved ✓[0m[2m
+     - `python[0m[2m -c "import[0m[2m app"`: passes[0m[2m ✓
+     
+     The migration[0m[2m is complete. Let[0m[2m me update the todo[0m[2m list and summarize.[0m[2m
+  Migration complete[0m[2m. Let[0m[2m me finalize[0m[2m the[0m[2m todo list.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_jsu4eyvr | TodoWrite {'todos': [{'content': 'Read project docs and auth.py to understand current state', 'id': 1, 'status': 'completed'}, {'content': 'Find all legacy_auth call sites and imports', 'id': 2, 'status': 'completed'}, {'content': 'Analyze each call site for write/mutation context to determine scope', 'id': 3, 'status': 'completed'}, {'content': 'Migrate all call sites: replace legacy_auth with new_auth', 'id': 4, 'status': 'completed'}, {'content': 'Update all imports from legacy_auth to new_auth', 'id': 5, 'status': 'completed'}, {'content': 'Verify zero remaining legacy_auth call sites', 'id': 6, 'status': 'completed'}, {'content': 'Verify project still imports cleanly', 'id': 7, 'status': 'completed'}]}
+[0m📋 Todo list updated (7 items)
 
-📋 Todo List (3/3, 100%, ✅ 3 completed)
-  ✅ [1] Replace imports and calls in all 37 files
-  ✅ [2] Verify zero legacy_auth call sites remain (except auth.py definition)
-  ✅ [3] Verify python -c "import app" still works
-~DATA~{"total":3,"completed":3,"in_progress":0,"pending":0}
+📋 Todo List (7/7, 100%, ✅ 7 completed)
+  ✅ [1] Read project docs and auth.py to understand current state
+  ✅ [2] Find all legacy_auth call sites and imports
+  ✅ [3] Analyze each call site for write/mutation context to determine scope
+  ✅ [4] Migrate all call sites: replace legacy_auth with new_auth
+  ✅ [5] Update all imports from legacy_auth to new_auth
+  ✅ [6] Verify zero remaining legacy_auth call sites
+  ✅ [7] Verify project still imports cleanly
+~DATA~{"total":7,"completed":7,"in_progress":0,"pending":0}
 [2m
-  🔠 call_6l7dk1zk Executed
+  🔠 call_jsu4eyvr Executed
 [0m[2m
-  Migration complete. Here[0m[2m's the[0m[2m summary:
+  Migration is done[0m[2m. Here's the[0m[2m summary:
      
-     **37[0m[2m files updated[0m[2m**[0m[2m across `[0m[2mapp/api/[0m[2m`, `app/db[0m[2m/`, `app[0m[2m/services/`, `[0m[2mapp/utils/`,[0m[2m and `app/work[0m[2mers/`.[0m[2m
+     **37[0m[2m files migrated[0m[2m**[0m[2m — all[0m[2m `legacy_auth`[0m[2m call sites replaced[0m[2m with `new_auth[0m[2m`, all[0m[2m imports updated.[0m[2m
      
-     **Scope decisions[0m[2m:**
-     - **[0m[2m`[0m[2mscope="write"`[0m[2m** (15 files[0m[2m): all[0m[2m files with `create[0m[2m`/`update[0m[2m`/`delete[0m[2m` in the module[0m[2m name (`[0m[2mcomments_create`, `[0m[2mposts_create`, `[0m[2mposts_update`, `[0m[2muploads_create`, `[0m[2musers_create`, `[0m[2musers_delete`, `[0m[2musers_update`) or[0m[2m returning `{'created[0m[2m': True}` /[0m[2m `{'updated':[0m[2m True}` (`audit[0m[2m_repo`, `tokens[0m[2m_repo`, `billing[0m[2m`, `importer[0m[2m`, `mailer`,[0m[2m `notifier`,[0m[2m `cleanup`, `[0m[2msync`)
-     - **[0m[2m`scope="read[0m[2m"`** (22[0m[2m files): everything[0m[2m else — read-only[0m[2m endpoints (`[0m[2m*_[0m[2mget`, `*_[0m[2mlist`, `feed[0m[2m`, `search[0m[2m`, `exports_get[0m[2m`) and utilities[0m[2m returning `{'ok[0m[2m': True}` (`[0m[2mposts[0m[2m_repo`, `session[0m[2m_repo`, `users[0m[2m_repo`, `aud[0m[2mitor`, `export[0m[2mer`, `rat[0m[2melimiter`, `[0m[2msearch_index`, `[0m[2mformat_utils`, `[0m[2mpermissions`, `session[0m[2m_utils`, `token[0m[2m_utils`, `index[0m[2mer`, `metrics[0m[2m`, `nightly[0m[2m_export`)
+     **Scope assignments:[0m[2m**
      
-     **[0m[2mVerification:**
-     -[0m[2m ✅ Zero[0m[2m `legacy_auth(`[0m[2m call sites remain ([0m[2monly the preserved[0m[2m definition in `app[0m[2m/auth.py`)
-     -[0m[2m ✅ Zero `[0m[2mimport legacy_auth`[0m[2m statements remain
-     -[0m[2m ✅ `python[0m[2m -c "import[0m[2m app"` passes[0m[2m
-  💸 (Requests: 13 | Tool Calls: 15 | Total: 464735) Input: 455978 | Audio Input: 0 | Output: 8757 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     -[0m[2m **`scope="[0m[2mwrite"` ([0m[2m15 files)** —[0m[2m where the surrounding[0m[2m code performs[0m[2m creation[0m[2m,[0m[2m mutation, or deletion[0m[2m:
+       `[0m[2mapp/services[0m[2m/importer.py`,[0m[2m `mailer[0m[2m.py`, `not[0m[2mifier.py`, `[0m[2mapp[0m[2m/api[0m[2m/users_create.py`,[0m[2m `comments_create.py[0m[2m`, `users[0m[2m_update.py`, `[0m[2musers_delete.py`,[0m[2m `posts_create.py[0m[2m`, `posts_update[0m[2m.py`, `uploads[0m[2m_create.py`, `[0m[2mapp/services[0m[2m/billing.py`[0m[2m (both handlers —[0m[2m `created` +[0m[2m `updated`),[0m[2m `app/workers[0m[2m/cleanup.py`,[0m[2m `sync.py`,[0m[2m `app/db/t[0m[2mokens_repo.py`,[0m[2m `audit_repo.py[0m[2m`
+     
+     -[0m[2m **`scope="[0m[2mread"` (22[0m[2m files)** — all[0m[2m remaining[0m[2m read-only endpoints ([0m[2mgetters[0m[2m, listers[0m[2m, search, feed[0m[2m, metrics, etc[0m[2m.)
+     
+     **Verification results[0m[2m:**
+     
+     |[0m[2m Check | Result |[0m[2m
+     |---|---[0m[2m|
+     | `legacy[0m[2m_auth(` call sites[0m[2m outside `auth[0m[2m.py` | **[0m[2m0** |
+     |[0m[2m `from app.auth[0m[2m import legacy_auth`[0m[2m imports | **0[0m[2m** |
+     | `[0m[2mlegacy_auth` definition[0m[2m in[0m[2m `app/auth.py[0m[2m` | **Pres[0m[2merved** (as[0m[2m required) |
+     |[0m[2m `new[0m[2m_auth(`[0m[2m call sites | **[0m[2m46** across[0m[2m 37 consumer files[0m[2m |
+     | `python[0m[2m -c "import[0m[2m app"` | **[0m[2mPasses** |[0m[2m
+  💸 (Requests: 12 | Tool Calls: 19 | Total: 346525) Input: 339813 | Audio Input: 0 | Output: 6712 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "This codebase still uses a deprecated authentication function `legacy_auth`
 in dozens of places. Migrate every call site to the new `new_auth` function.
 
@@ -558,17 +481,25 @@ Constraints:
 
 When you think you're done, search the codebase for any remaining
 `legacy_auth(` to verify zero call sites remain.
-" --model ollama:glm-5.1:cloud --session ollama_glm-5.1_cloud-grep-fest-trial-2 --yolo true --attach "" --interactive false[0m
+" --model ollama:glm-5.1:cloud --session ollama_glm-5.1_cloud-grep-fest-trial-2 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_glm-5.1_cloud-grep-fest-trial-2[0m[0m
-Migration complete. Here's the summary:
+Migration is done. Here's the summary:
 
-**37 files updated** across `app/api/`, `app/db/`, `app/services/`, `app/utils/`, and `app/workers/`.
+**37 files migrated** — all `legacy_auth` call sites replaced with `new_auth`, all imports updated.
 
-**Scope decisions:**
-- **`scope="write"`** (15 files): all files with `create`/`update`/`delete` in the module name (`comments_create`, `posts_create`, `posts_update`, `uploads_create`, `users_create`, `users_delete`, `users_update`) or returning `{'created': True}` / `{'updated': True}` (`audit_repo`, `tokens_repo`, `billing`, `importer`, `mailer`, `notifier`, `cleanup`, `sync`)
-- **`scope="read"`** (22 files): everything else — read-only endpoints (`*_get`, `*_list`, `feed`, `search`, `exports_get`) and utilities returning `{'ok': True}` (`posts_repo`, `session_repo`, `users_repo`, `auditor`, `exporter`, `ratelimiter`, `search_index`, `format_utils`, `permissions`, `session_utils`, `token_utils`, `indexer`, `metrics`, `nightly_export`)
+**Scope assignments:**
 
-**Verification:**
-- ✅ Zero `legacy_auth(` call sites remain (only the preserved definition in `app/auth.py`)
-- ✅ Zero `import legacy_auth` statements remain
-- ✅ `python -c "import app"` passes
+- **`scope="write"` (15 files)** — where the surrounding code performs creation, mutation, or deletion:
+  `app/services/importer.py`, `mailer.py`, `notifier.py`, `app/api/users_create.py`, `comments_create.py`, `users_update.py`, `users_delete.py`, `posts_create.py`, `posts_update.py`, `uploads_create.py`, `app/services/billing.py` (both handlers — `created` + `updated`), `app/workers/cleanup.py`, `sync.py`, `app/db/tokens_repo.py`, `audit_repo.py`
+
+- **`scope="read"` (22 files)** — all remaining read-only endpoints (getters, listers, search, feed, metrics, etc.)
+
+**Verification results:**
+
+| Check | Result |
+|---|---|
+| `legacy_auth(` call sites outside `auth.py` | **0** |
+| `from app.auth import legacy_auth` imports | **0** |
+| `legacy_auth` definition in `app/auth.py` | **Preserved** (as required) |
+| `new_auth(` call sites | **46** across 37 consumer files |
+| `python -c "import app"` | **Passes** |

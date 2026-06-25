@@ -1,10 +1,6 @@
-# LLM Challenges HUD
+# Journal Index
 
-Welcome to the persistent memory for LLM Challenges.
+Welcome to Zaruba's persistent memory journal.
 
-## Projects
-- [Projects Directory](projects/index.md)
-- [failing-tests](projects/failing-tests.md) — project details and bug fixes
-
-## Activity Log
-- [Activity Log](activity-log/index.md)
+## Recent Activity
+- [2026-06-25 activity log](activity-log/2026/2026-06/2026-06-25.md)

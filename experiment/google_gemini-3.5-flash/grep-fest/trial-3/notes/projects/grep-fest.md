@@ -1,18 +1,12 @@
-# Grep Fest Project
+---
+slug: grep-fest
+---
+# Grep Fest Migration
 
-Details about the Grep Fest migration challenge.
-
-## Scope
-- Deprecate internal call sites of `legacy_auth(user_id)`.
-- Use `new_auth(user_id, scope=...)`.
-- Target: `scope="write"` for write-like actions and `scope="read"` for others.
-
-## Progress
-- Completed migrating all 44 call sites in the repository.
-- Verified cleanly importing the package post-migration.
+**Context:** When migrating legacy authentication functions within the repository.
+**Finding:** Successfully migrated 44 call sites of `legacy_auth(user_id)` to `new_auth(user_id, scope=...)`. Read-only actions map to `scope="read"`, while mutating/writing operations (where functions accept `payload: dict` or return `created`/`updated` status) map to `scope="write"`.
+**Source:** app/auth.py
 
 ## Backlinks
-- [HUD](../index.md)
-- [Projects Index](index.md)
-- [Auth Migration Insights](../technical/auth-migration.md)
-- [2026-06-23 Log](../activity-log/2026/2026-06/2026-06-23.md)
+- [projects/index.md](index.md) — project index listing
+- [2026-06-25 Log](../activity-log/2026/2026-06/2026-06-25.md) — task completion log

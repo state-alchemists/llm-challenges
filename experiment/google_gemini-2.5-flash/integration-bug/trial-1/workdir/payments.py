@@ -1,28 +1,23 @@
 import asyncio
 import random
-from typing import Dict, List
+from typing import List
 
 
 class PaymentGateway:
     def __init__(self, failure_rate: float = 0.25):
         self._failure_rate = failure_rate
         self.total_charged: float = 0.0
-        self.charges: Dict[str, dict] = {}
+        self.charges: List[dict] = []
+        self._processed_orders: set = set()
 
     async def charge(self, order_id: str, amount: float) -> bool:
-        if order_id in self.charges:
-            print(f"Order {order_id}: already charged, skipping duplicate")
-            return True
-        
         await asyncio.sleep(0.03)
+        if order_id in self._processed_orders:
+            print(f"Order {order_id}: already processed, preventing duplicate charge")
+            return False
         if random.random() < self._failure_rate:
             return False
         self.total_charged += amount
-        self.charges[order_id] = {"order_id": order_id, "amount": amount}
+        self.charges.append({"order_id": order_id, "amount": amount})
+        self._processed_orders.add(order_id)
         return True
-
-    async def refund(self, order_id: str) -> None:
-        if order_id in self.charges:
-            charge = self.charges.pop(order_id)
-            self.total_charged -= charge["amount"]
-            print(f"Order {order_id}: refunded ${charge['amount']:.2f}")

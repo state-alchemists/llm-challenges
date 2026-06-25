@@ -2,6 +2,10 @@ import asyncio
 
 
 class Inventory:
+    
+    async def can_decrement(self, quantity: int) -> bool:
+        return self._stock >= quantity
+
     def __init__(self, stock: int):
         self._stock = stock
 
@@ -23,10 +27,3 @@ class Inventory:
     @property
     def stock(self) -> int:
         return self._stock
-
-    async def reserve(self, quantity: int) -> bool:
-        await asyncio.sleep(0.02)
-        if self._stock >= quantity:
-            self._stock -= quantity
-            return True
-        return False

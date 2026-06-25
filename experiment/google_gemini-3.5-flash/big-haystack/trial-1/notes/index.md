@@ -1,13 +1,12 @@
 # HUD Index
 
-## Active Constraints
-- None
+Welcome to Zaruba's Persistent Memory.
 
-## Recent Insights
-- None
-
-## Navigation
+## Directory Navigation
 - [Activity Log](activity-log/index.md)
 
+## Recent Insights
+- None yet.
+
 ## Backlinks
-- None
+<!-- index.md has no backlinks -->

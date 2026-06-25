@@ -11,6 +11,8 @@ class PaymentGateway:
 
     async def charge(self, order_id: str, amount: float) -> bool:
         await asyncio.sleep(0.03)
+        if order_id in [c["order_id"] for c in self.charges]:
+            return False
         if random.random() < self._failure_rate:
             return False
         self.total_charged += amount

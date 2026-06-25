@@ -1,20 +1,12 @@
-# HUD (Heads-Up Display)
+# Zaruba's Knowledge Graph HUD
 
-Welcome to the journal.
-
-## Directories
-- [Projects Directory](projects/index.md)
-- [Technical Directory](technical/index.md)
-
-## Active Constraints & User Preferences
-- Model: Gemini 3.5 Flash
-- Task: Migrate deprecated `legacy_auth` function to `new_auth`.
-
-## Recent Insights
-- [Auth Migration Insights](technical/auth-migration.md)
+Welcome to the HUD. This graph records active insights and chronological logs.
 
 ## Active Projects
-- [Grep Fest Project](projects/grep-fest.md)
+- [Grep Fest](projects/index.md)
 
-## Chronological Logs
-- [Activity Log](activity-log/index.md)
+## Recent Activity Logs
+- [Activity Index](activity-log/index.md)
+
+## Backlinks
+- (None)

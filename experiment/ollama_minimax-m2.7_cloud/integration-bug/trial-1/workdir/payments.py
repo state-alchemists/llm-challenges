@@ -9,6 +9,13 @@ class PaymentGateway:
         self.total_charged: float = 0.0
         self.charges: List[dict] = []
 
+    async def refund(self, order_id: str, amount: float) -> bool:
+        """Refund a previously charged amount. Returns True if refund succeeded."""
+        await asyncio.sleep(0.03)
+        self.total_charged -= amount
+        self.charges.append({"order_id": order_id, "amount": -amount, "refund": True})
+        return True
+
     async def charge(self, order_id: str, amount: float) -> bool:
         await asyncio.sleep(0.03)
         if random.random() < self._failure_rate:

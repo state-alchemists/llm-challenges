@@ -1,137 +1,91 @@
 [2m
-  🧠 The[0m[2m user wants[0m[2m me to[0m[2m write a[0m[2m migration guide[0m[2m based[0m[2m on two[0m[2m spec files[0m[2m:[0m[2m `v[0m[2m1_spec[0m[2m.md`[0m[2m and `[0m[2mv2[0m[2m_spec.md[0m[2m`. Let[0m[2m me first[0m[2m read these[0m[2m files to[0m[2m understand what[0m[2m changes are[0m[2m being[0m[2m made.[0m[2m I'll[0m[2m also need[0m[2m to activate[0m[2m the `[0m[2mcore-writing[0m[2m` skill[0m[2m since this[0m[2m is[0m[2m a writing[0m[2m task.[0m[2m
+  🧠 The[0m[2m user wants[0m[2m me to[0m[2m write a[0m[2m migration guide[0m[2m from[0m[2m Z[0m[2mrb[0m[2m CLI v[0m[2m1 to[0m[2m v2[0m[2m. I[0m[2m need to[0m[2m:
+     1[0m[2m. Read[0m[2m `[0m[2mv1[0m[2m_spec.md[0m[2m` and[0m[2m `v[0m[2m2_spec[0m[2m.md`[0m[2m to understand[0m[2m the APIs[0m[2m
+     2[0m[2m. Compare[0m[2m them[0m[2m to identify[0m[2m breaking changes[0m[2m
+     3[0m[2m. Write[0m[2m `M[0m[2mIGRATION[0m[2m.md`[0m[2m with:[0m[2m
+        -[0m[2m Clear structure[0m[2m with headings[0m[2m
+        - Every[0m[2m breaking change[0m[2m called out[0m[2m
+        - Before[0m[2m/after[0m[2m code examples[0m[2m ([0m[2mfenced[0m[2m code blocks[0m[2m)[0m[2m
+        - Step[0m[2m-by-step[0m[2m migration checklist[0m[2m
+        - Upgrade[0m[2m command at[0m[2m the end[0m[2m
      
-     Let me[0m[2m start by[0m[2m checking[0m[2m if[0m[2m these files[0m[2m exist and[0m[2m reading them[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.TodoWrite:0 | TodoWrite {'todos': [{'content': 'Read v1_spec.md and v2_spec.md to understand breaking changes', 'id': '1', 'status': 'in_progress'}, {'content': 'Write MIGRATION.md with all required sections', 'id': '2', 'status': 'pending'}, {'content': 'Verify the file is complete and well-structured', 'id': '3', 'status': 'pending'}]}
-[0m📋 Todo list updated (3 items)
-
-📋 Todo List (0/3, 0%, ▶️ 1 in progress  ☐ 2 pending)
-  ▶️ [1] Read v1_spec.md and v2_spec.md to understand breaking changes
-     [2] Write MIGRATION.md with all required sections
-     [3] Verify the file is complete and well-structured
-~DATA~{"total":3,"completed":0,"in_progress":1,"pending":2}
-[2m
-  🔠 functions.TodoWrite:0 Executed
-[0m[2m
-  🧠 I[0m[2m need to[0m[2m read the[0m[2m spec[0m[2m files and[0m[2m then[0m[2m write the[0m[2m migration guide[0m[2m. Let[0m[2m me read[0m[2m both spec[0m[2m files first[0m[2m.[0m[2m
+     Let[0m[2m me start[0m[2m by reading[0m[2m the spec[0m[2m files.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Read:1 | Read {'path': 'v1_spec.md'}
+  🧰 functions.Read:0 | Read {'path': 'v1_spec.md'}
 [0m[2m
-  🧰 functions.Read:2 | Read {'path': 'v2_spec.md'}
-[0m[2m
-  🔠 functions.Read:2 Executed
+  🧰 functions.Read:1 | Read {'path': 'v2_spec.md'}
 [0m[2m
   🔠 functions.Read:1 Executed
 [0m[2m
-  🧠 I've[0m[2m read both[0m[2m spec[0m[2m files.[0m[2m Now I[0m[2m need to[0m[2m activate[0m[2m the core[0m[2m-writing skill[0m[2m since this[0m[2m is a[0m[2m writing task[0m[2m,[0m[2m then[0m[2m write the[0m[2m MIG[0m[2mRATION.md[0m[2m.[0m[2m Let me[0m[2m identify all[0m[2m the[0m[2m breaking changes[0m[2m:
-     
-     1[0m[2m. **[0m[2mAPI[0m[2m version[0m[2m prefix**:[0m[2m All endpoints[0m[2m now prefixed[0m[2m with `/[0m[2mv2[0m[2m/`[0m[2m (was[0m[2m unp[0m[2mrefixed[0m[2m in v[0m[2m1)[0m[2m
-     2.[0m[2m **Authentication[0m[2m header**:[0m[2m Changed from[0m[2m `X[0m[2m-Auth[0m[2m-Token[0m[2m` to[0m[2m `Authorization[0m[2m: Bearer[0m[2m`
-     3[0m[2m. **[0m[2mTask `[0m[2mid`[0m[2m type**:[0m[2m Changed from[0m[2m integer to[0m[2m UUID string[0m[2m
-     4[0m[2m. **[0m[2mTask[0m[2m field rename[0m[2m**: `[0m[2mdone`[0m[2m renamed to[0m[2m `completed[0m[2m`
-     5[0m[2m. **[0m[2mTask creation[0m[2m requires[0m[2m `project[0m[2m_id`[0m[2m**: New[0m[2m required[0m[2m field[0m[2m
-     6.[0m[2m **List[0m[2m endpoints return[0m[2m paginated[0m[2m envelope**:[0m[2m Instead of[0m[2m bare array[0m[2m,[0m[2m now returns[0m[2m `{[0m[2m items[0m[2m, total[0m[2m, next[0m[2m_cursor }[0m[2m`
-     
-     I[0m[2m should[0m[2m write a[0m[2m clear migration[0m[2m guide with[0m[2m:
-     -[0m[2m Clear structure[0m[2m with headings[0m[2m
-     -[0m[2m Each[0m[2m breaking change[0m[2m explicitly called[0m[2m out[0m[2m
-     - Before[0m[2m/after[0m[2m code examples[0m[2m ([0m[2mfenced[0m[2m code blocks[0m[2m)
-     -[0m[2m Step-by[0m[2m-step migration[0m[2m checklist at[0m[2m the end[0m[2m
-     -[0m[2m End with[0m[2m the[0m[2m upgrade command[0m[2m
-     
-     Let[0m[2m me activate[0m[2m core[0m[2m-writing[0m[2m and then[0m[2m write the[0m[2m file.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.ActivateSkill:3 | ActivateSkill {'name': 'core-writing'}
+  🔠 functions.Read:0 Executed
 [0m[2m
-  🔠 functions.ActivateSkill:3 Executed
-[0m[2m
-  🧠 Now[0m[2m I have[0m[2m both[0m[2m specs[0m[2m and the[0m[2m writing skill[0m[2m active[0m[2m. Let[0m[2m me identify[0m[2m all[0m[2m 6 breaking[0m[2m changes clearly[0m[2m and write[0m[2m the migration[0m[2m guide.[0m[2m The user[0m[2m wants:[0m[2m
-     1[0m[2m. Clear[0m[2m structure with[0m[2m headings[0m[2m
-     2.[0m[2m Every[0m[2m breaking change[0m[2m explicitly called[0m[2m out[0m[2m
-     3.[0m[2m Before/[0m[2mafter code[0m[2m examples for[0m[2m each breaking[0m[2m change ([0m[2mfenced[0m[2m code blocks[0m[2m)
-     4[0m[2m. Step[0m[2m-by-step[0m[2m migration checklist[0m[2m at the[0m[2m end[0m[2m
-     5.[0m[2m End with[0m[2m the upgrade[0m[2m command[0m[2m
-     6.[0m[2m Audience:[0m[2m experienced developers[0m[2m already using[0m[2m v1[0m[2m
+  🧠 Now[0m[2m I have[0m[2m both specs[0m[2m. Let[0m[2m me identify[0m[2m the[0m[2m 6 breaking[0m[2m changes and[0m[2m write the[0m[2m migration guide[0m[2m.[0m[2m The[0m[2m breaking[0m[2m changes are[0m[2m:
      
-     The[0m[2m breaking changes[0m[2m are:[0m[2m
-     1.[0m[2m All[0m[2m endpoints are[0m[2m now prefixed[0m[2m with `/[0m[2mv2[0m[2m/`[0m[2m
-     2.[0m[2m Authentication header[0m[2m changed from[0m[2m `X[0m[2m-Auth[0m[2m-Token[0m[2m` to[0m[2m `Authorization[0m[2m: Bearer[0m[2m`
-     3[0m[2m. Task[0m[2m `id[0m[2m` type[0m[2m changed from[0m[2m integer to[0m[2m UUID string[0m[2m
+     1[0m[2m. All[0m[2m endpoints prefixed[0m[2m with `/[0m[2mv2[0m[2m/`[0m[2m
+     2.[0m[2m Authentication[0m[2m header changed[0m[2m from `[0m[2mX-[0m[2mAuth-[0m[2mToken`[0m[2m to `[0m[2mAuthorization:[0m[2m Bearer`[0m[2m
+     3.[0m[2m Task `[0m[2mid`[0m[2m type[0m[2m changed from[0m[2m integer to[0m[2m UUID string[0m[2m
      4[0m[2m. Task[0m[2m field `[0m[2mdone`[0m[2m renamed to[0m[2m `completed[0m[2m`
      5[0m[2m. Task[0m[2m creation now[0m[2m requires `[0m[2mproject_id[0m[2m`
-     6[0m[2m. List[0m[2m endpoints return[0m[2m a pag[0m[2minated envelope[0m[2m instead of[0m[2m a bare[0m[2m array[0m[2m
+     6[0m[2m. List[0m[2m endpoints return[0m[2m paginated[0m[2m envelope instead[0m[2m of bare[0m[2m array[0m[2m
      
-     I should[0m[2m use the[0m[2m Before-[0m[2mAfter-[0m[2mBridge formula[0m[2m since this[0m[2m is a[0m[2m migration guide[0m[2m. Tone[0m[2m should[0m[2m be technical[0m[2m, precise[0m[2m for[0m[2m developers.[0m[2m
+     I need[0m[2m to write[0m[2m a clear[0m[2m migration guide[0m[2m with:[0m[2m
+     - Clear[0m[2m structure with[0m[2m headings[0m[2m
+     - Explicit[0m[2mly call[0m[2m out every[0m[2m breaking change[0m[2m
+     -[0m[2m Before[0m[2m/after[0m[2m code examples[0m[2m for each[0m[2m ([0m[2mfenced[0m[2m code blocks[0m[2m)
+     -[0m[2m Step-by[0m[2m-step migration[0m[2m checklist at[0m[2m the end[0m[2m
+     -[0m[2m End with[0m[2m upgrade command[0m[2m
      
-     I'll[0m[2m write the[0m[2m MIG[0m[2mRATION.md[0m[2m file now[0m[2m.[0m[2m
+     The[0m[2m audience is[0m[2m experienced developers[0m[2m already using[0m[2m v1[0m[2m.
+     
+     Let[0m[2m me also[0m[2m activate[0m[2m the core[0m[2m-writing[0m[2m skill since[0m[2m this is[0m[2m a writing[0m[2m deliverable[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.TodoWrite:4 | TodoWrite {'todos': [{'content': 'Read v1_spec.md and v2_spec.md to understand breaking changes', 'id': '1', 'status': 'completed'}, {'content': 'Write MIGRATION.md with all required sections', 'id': '2', 'status': 'in_progress'}, {'content': 'Verify the file is complete and well-structured', 'id': '3', 'status': 'pending'}]}
-[0m📋 Todo list updated (3 items)
-
-📋 Todo List (1/3, 33%, ✅ 1 completed  ▶️ 1 in progress  ☐ 1 pending)
-  ✅ [1] Read v1_spec.md and v2_spec.md to understand breaking changes
-  ▶️ [2] Write MIGRATION.md with all required sections
-     [3] Verify the file is complete and well-structured
-~DATA~{"total":3,"completed":1,"in_progress":1,"pending":1}
-[2m
-  🔠 functions.TodoWrite:4 Executed
+  🧰 functions.ActivateSkill:2 | ActivateSkill {'name': 'core-writing'}
 [0m[2m
-  🧠 I[0m[2m need to[0m[2m write the[0m[2m MIG[0m[2mRATION.md[0m[2m file now[0m[2m. I've[0m[2m read[0m[2m both specs[0m[2m and identified[0m[2m all[0m[2m 6[0m[2m breaking changes[0m[2m. Let[0m[2m me compose[0m[2m a[0m[2m well[0m[2m-structured[0m[2m migration guide[0m[2m for experienced[0m[2m developers.[0m[2m
+  🔠 functions.ActivateSkill:2 Executed
+[0m[2m
+  🧠 I[0m[2m have both[0m[2m specs and[0m[2m the core[0m[2m-writing skill[0m[2m is active[0m[2m. Let[0m[2m me now[0m[2m write the[0m[2m MIG[0m[2mRATION.md[0m[2m file.[0m[2m
      
-     The[0m[2m structure will[0m[2m be:[0m[2m
-     1.[0m[2m Title[0m[2m/intro[0m[2m
-     2[0m[2m. Overview[0m[2m of breaking[0m[2m changes ([0m[2mquick[0m[2m reference[0m[2m)
-     3[0m[2m. Each[0m[2m breaking change[0m[2m as[0m[2m its[0m[2m own section[0m[2m with before[0m[2m/after[0m[2m examples[0m[2m
-     4[0m[2m. Step[0m[2m-by-step[0m[2m migration checklist[0m[2m
-     5[0m[2m. Upgrade[0m[2m command[0m[2m
+     The breaking[0m[2m changes are[0m[2m:
+     1[0m[2m. Base[0m[2m URL prefix[0m[2m changed[0m[2m to[0m[2m `/v[0m[2m2/[0m[2m`
+     2[0m[2m. Auth[0m[2m header changed[0m[2m from `[0m[2mX-[0m[2mAuth-[0m[2mToken`[0m[2m to `[0m[2mAuthorization:[0m[2m Bearer`[0m[2m
+     3.[0m[2m Task `[0m[2mid`[0m[2m changed from[0m[2m integer to[0m[2m UUID string[0m[2m
+     4[0m[2m. Field[0m[2m `done[0m[2m` renamed[0m[2m to `[0m[2mcompleted`[0m[2m
+     5.[0m[2m Task creation[0m[2m requires[0m[2m `project[0m[2m_id`[0m[2m
+     6.[0m[2m List tasks[0m[2m returns pag[0m[2minated envelope[0m[2m instead of[0m[2m bare array[0m[2m
      
-     Let me[0m[2m write[0m[2m it now[0m[2m.[0m[2m
+     I'll[0m[2m structure it[0m[2m with[0m[2m:
+     -[0m[2m Intro[0m[2m/overview[0m[2m
+     -[0m[2m A breaking[0m[2m changes section[0m[2m with each[0m[2m change[0m[2m as[0m[2m a subsection[0m[2m, with[0m[2m before/[0m[2mafter examples[0m[2m
+     -[0m[2m Migration checklist[0m[2m
+     -[0m[2m Upgrade command[0m[2m
+     
+     Tone[0m[2m: technical[0m[2m, precise[0m[2m, for[0m[2m experienced developers[0m[2m. Using[0m[2m Before[0m[2m-After[0m[2m-Bridge[0m[2m formula[0m[2m.[0m[2m
+     
+     Let me[0m[2m draft this[0m[2m directly[0m[2m to[0m[2m the file[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Write:5 | Write {'content': '# Zrb Task API v1 → v2 Mig ...', 'path': 'MIGRATION.md'}
+  🧰 functions.Write:3 | Write {'path': 'MIGRATION.md', 'content': '# Zrb CLI Migration Guide: ...'}
 [0m[2m
-  🔠 functions.Write:5 Executed
+  🔠 functions.Write:3 Executed
 [0m[2m
-  🧠 The[0m[2m file was[0m[2m written successfully[0m[2m. Now[0m[2m I need[0m[2m to verify[0m[2m it by[0m[2m reading it[0m[2m back and[0m[2m checking[0m[2m all requirements[0m[2m:
-     1[0m[2m. Clear[0m[2m structure with[0m[2m headings -[0m[2m yes[0m[2m
-     2.[0m[2m Explicit[0m[2mly call[0m[2m out every[0m[2m breaking change[0m[2m - yes[0m[2m,[0m[2m 6 sections[0m[2m +[0m[2m overview[0m[2m table[0m[2m
-     3.[0m[2m Before/[0m[2mafter code[0m[2m examples for[0m[2m each breaking[0m[2m change ([0m[2mfenced[0m[2m code blocks[0m[2m) -[0m[2m yes[0m[2m
-     4.[0m[2m Step-by[0m[2m-step migration[0m[2m checklist at[0m[2m the end[0m[2m - yes[0m[2m
-     5[0m[2m. End[0m[2m with the[0m[2m upgrade command[0m[2m - yes[0m[2m
-     6[0m[2m. Audience[0m[2m is[0m[2m experienced developers[0m[2m -[0m[2m yes[0m[2m, technical[0m[2m tone[0m[2m
-     
-     Let me[0m[2m read[0m[2m the file[0m[2m back to[0m[2m verify,[0m[2m then[0m[2m update todos[0m[2m.[0m[2m
+  🧠 The[0m[2m file[0m[2m has[0m[2m been written[0m[2m successfully.[0m[2m Let me[0m[2m verify its[0m[2m content by[0m[2m reading it[0m[2m back,[0m[2m then[0m[2m provide[0m[2m a summary[0m[2m to the[0m[2m user.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Read:6 | Read {'path': 'MIGRATION.md'}
+  🧰 functions.Read:4 | Read {'path': 'MIGRATION.md'}
 [0m[2m
-  🔠 functions.Read:6 Executed
+  🔠 functions.Read:4 Executed
 [0m[2m
-  🧠 The[0m[2m file is[0m[2m complete[0m[2m and verified[0m[2m. Let[0m[2m me update[0m[2m the todos[0m[2m to mark[0m[2m everything as[0m[2m done and[0m[2m provide[0m[2m a summary[0m[2m to the[0m[2m user.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.TodoWrite:7 | TodoWrite {'todos': [{'content': 'Read v1_spec.md and v2_spec.md to understand breaking changes', 'id': '1', 'status': 'completed'}, {'content': 'Write MIGRATION.md with all required sections', 'id': '2', 'status': 'completed'}, {'content': 'Verify the file is complete and well-structured', 'id': '3', 'status': 'completed'}]}
-[0m📋 Todo list updated (3 items)
-
-📋 Todo List (3/3, 100%, ✅ 3 completed)
-  ✅ [1] Read v1_spec.md and v2_spec.md to understand breaking changes
-  ✅ [2] Write MIGRATION.md with all required sections
-  ✅ [3] Verify the file is complete and well-structured
-~DATA~{"total":3,"completed":3,"in_progress":0,"pending":0}
-[2m
-  🔠 functions.TodoWrite:7 Executed
-[0m[2m
-  🧠 Everything[0m[2m is done[0m[2m. The[0m[2m M[0m[2mIGRATION[0m[2m.md has[0m[2m been written[0m[2m and verified[0m[2m. Let[0m[2m me provide[0m[2m a concise[0m[2m summary to[0m[2m the user[0m[2m.[0m[2m
-  `[0m[2mMIG[0m[2mRATION.md[0m[2m` is[0m[2m saved[0m[2m and[0m[2m ready[0m[2m. It[0m[2m covers all[0m[2m six[0m[2m breaking changes[0m[2m identified[0m[2m in the[0m[2m specs[0m[2m:
+  🧠 The[0m[2m file[0m[2m has[0m[2m been written[0m[2m and[0m[2m verified.[0m[2m The[0m[2m migration[0m[2m guide covers[0m[2m all[0m[2m 6 breaking[0m[2m changes from[0m[2m the specs[0m[2m, with[0m[2m before/[0m[2mafter code[0m[2m examples in[0m[2m fenced[0m[2m code blocks[0m[2m, a[0m[2m step-by[0m[2m-step checklist[0m[2m, and[0m[2m the upgrade[0m[2m command at[0m[2m the end[0m[2m. Everything[0m[2m looks[0m[2m correct[0m[2m and[0m[2m complete.[0m[2m I[0m[2m should provide[0m[2m a concise[0m[2m summary to[0m[2m the user[0m[2m.[0m[2m
+  Done.[0m[2m `M[0m[2mIGRATION[0m[2m.md`[0m[2m is written[0m[2m and[0m[2m covers all[0m[2m six[0m[2m breaking changes[0m[2m from `[0m[2mv1[0m[2m_spec.md[0m[2m` →[0m[2m `v[0m[2m2_spec[0m[2m.md`:[0m[2m
      
-     1[0m[2m. **[0m[2mAPI version[0m[2m prefix**[0m[2m (`/[0m[2mv2[0m[2m/[0m[2m`)
-     2[0m[2m. **[0m[2mAuthentication header[0m[2m** (`[0m[2mAuthorization[0m[2m: Bearer[0m[2m`)
-     3[0m[2m. **[0m[2mTask `[0m[2mid`[0m[2m type**[0m[2m (integer[0m[2m → UUID[0m[2m string[0m[2m)
-     4[0m[2m. **[0m[2mField rename[0m[2m** (`[0m[2mdone`[0m[2m → `[0m[2mcompleted`)[0m[2m
-     5.[0m[2m **Required[0m[2m `project[0m[2m_id`**[0m[2m on creation[0m[2m
-     6[0m[2m. **[0m[2mPaginated[0m[2m list envelope[0m[2m** (`[0m[2mitems`,[0m[2m `total[0m[2m`, `[0m[2mnext_cursor[0m[2m`)
+     1.[0m[2m Base URL[0m[2m prefix `/[0m[2mv2[0m[2m/`[0m[2m
+     2.[0m[2m Auth header[0m[2m changed to[0m[2m `Authorization[0m[2m: Bearer[0m[2m`
+     3[0m[2m. `[0m[2mid`[0m[2m type changed[0m[2m from integer[0m[2m to UUID[0m[2m
+     4[0m[2m. `[0m[2mdone`[0m[2m renamed to[0m[2m `completed[0m[2m`
+     5[0m[2m. Task[0m[2m creation requires[0m[2m `project[0m[2m_id`[0m[2m
+     6.[0m[2m List endpoints[0m[2m return pag[0m[2minated envelope[0m[2m
      
-     Each[0m[2m section includes[0m[2m before[0m[2m/after[0m[2m fenced[0m[2m code examples[0m[2m, followed[0m[2m by an[0m[2m 8-item[0m[2m migration checklist[0m[2m and the[0m[2m upgrade command[0m[2m `[0m[2mzrb[0m[2m update --[0m[2mversion[0m[2m 2`[0m[2m at the[0m[2m end.[0m[2m
-  💸 (Requests: 8 | Tool Calls: 8 | Total: 139853) Input: 136913 | Audio Input: 0 | Output: 2940 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     Each[0m[2m has[0m[2m **[0m[2mBefore/[0m[2mAfter**[0m[2m `[0m[2mcurl[0m[2m` and[0m[2m JSON examples[0m[2m,[0m[2m followed by[0m[2m a checklist[0m[2m and the[0m[2m upgrade command[0m[2m.[0m[2m
+  💸 (Requests: 5 | Tool Calls: 5 | Total: 72570) Input: 70135 | Audio Input: 0 | Output: 2435 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "The Zrb CLI is releasing v2, which has several breaking changes from v1. Our developer community needs a clear migration guide.
 
 `v1_spec.md` describes the current v1 API. `v2_spec.md` describes the new v2 API.
@@ -144,15 +98,15 @@ Write a developer migration guide and save it as `MIGRATION.md`. It should:
 - End with the upgrade command
 
 The audience is experienced developers who are already using v1.
-" --model ollama:kimi-k2.6:cloud --session ollama_kimi-k2.6_cloud-copywriting-trial-1 --yolo true --attach "" --interactive false[0m
+" --model ollama:kimi-k2.6:cloud --session ollama_kimi-k2.6_cloud-copywriting-trial-1 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_kimi-k2.6_cloud-copywriting-trial-1[0m[0m
-`MIGRATION.md` is saved and ready. It covers all six breaking changes identified in the specs:
+Done. `MIGRATION.md` is written and covers all six breaking changes from `v1_spec.md` → `v2_spec.md`:
 
-1. **API version prefix** (`/v2/`)
-2. **Authentication header** (`Authorization: Bearer`)
-3. **Task `id` type** (integer → UUID string)
-4. **Field rename** (`done` → `completed`)
-5. **Required `project_id`** on creation
-6. **Paginated list envelope** (`items`, `total`, `next_cursor`)
+1. Base URL prefix `/v2/`
+2. Auth header changed to `Authorization: Bearer`
+3. `id` type changed from integer to UUID
+4. `done` renamed to `completed`
+5. Task creation requires `project_id`
+6. List endpoints return paginated envelope
 
-Each section includes before/after fenced code examples, followed by an 8-item migration checklist and the upgrade command `zrb update --version 2` at the end.
+Each has **Before/After** `curl` and JSON examples, followed by a checklist and the upgrade command.

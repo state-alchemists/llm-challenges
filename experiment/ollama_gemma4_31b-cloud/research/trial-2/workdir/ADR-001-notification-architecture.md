@@ -4,49 +4,46 @@
 Proposed
 
 ## Context
-The current notification system is synchronous and embedded within the HTTP request cycle, leading to request timeouts (spikes up to 8s), silent failures during provider outages, and cascading failures that exhaust connection pools. 
-
-The system must evolve to support:
-- Asynchronous processing to decouple notifications from user requests.
-- Robust retry mechanisms with exponential backoff.
-- Delivery guarantees: at-least-once for general notifications and exactly-once for critical billing events.
-- Future support for real-time WebSocket push notifications.
-- Ability to handle 10x current peak traffic (~5,000 req/s).
+The current notification system operates synchronously within the HTTP request cycle of our Python/Flask monolith. This has led to critical production issues:
+- **Performance Degradation**: Average response times of 800ms, spiking to 8s, causing request timeouts.
+- **Reliability Gaps**: Lack of retry mechanisms leads to silent failures of emails and webhooks.
+- **System Instability**: Connection pool exhaustion caused by slow external webhook endpoints has triggered cascading failures across unrelated features.
+- **Consistency Issues**: Billing-critical notifications (e.g., "payment failed") lack delivery guarantees.
 
 **Constraints:**
-- Team: 6 engineers (no dedicated infra expert), no prior Kafka experience.
-- Infrastructure: Existing Redis deployment in production.
-- Timeline: Value must be delivered within 2 weeks of setup/migration.
-- Budget: Modest; managed Kafka services (e.g., Confluent) are currently cost-prohibitive.
+- **Team**: 6 engineers; no dedicated DevOps/Infrastructure role.
+- **Knowledge**: Zero internal experience with Apache Kafka.
+- **Infrastructure**: Already running Redis for session/rate limiting.
+- **Timeline**: Maximum 2 weeks for setup/migration to deliver immediate value.
+- **Budget**: Modest; managed Confluent Cloud is currently cost-prohibitive.
+- **Requirements**: Must support 10x growth (5,000 req/s peak), exactly-once semantics for billing, and future WebSocket integration.
 
 ## Decision
-We will use **Redis Streams** as the primary message backbone for the notification subsystem.
+We will implement **Redis Streams** as the backbone for the notification subsystem.
 
 ### Justification
-Redis Streams provides the necessary primitives for a reliable distributed queue (consumer groups, message acknowledgement, and persistence) while aligning with our current operational capabilities and constraints.
+Redis Streams provides the optimal balance between the required technical guarantees and the team's operational capacity.
 
-1. **Operational Simplicity**: We already run Redis in production. Adding Streams requires no new infrastructure software, no new monitoring stacks, and no specialized "Kafka-engineer" knowledge, fitting the 2-week delivery window.
-2. **Performance**: Redis Streams can easily handle the targeted 5,000 req/s throughput with sub-millisecond latency, far exceeding our current needs.
-3. **Consumer Groups**: Support for consumer groups allows us to scale processing horizontally across multiple workers, providing the decoupling needed to prevent cascading failures.
-4. **Delivery Guarantees**: Through the use of `XACK` (acknowledgments) and the Pending Entries List (PEL), we can implement at-least-once delivery. For critical billing events, we will implement **idempotent consumers** (checking a `processed_event_id` in PostgreSQL) to achieve effectively exactly-once semantics.
-5. **Future Proofing**: Redis's pub/sub and stream capabilities provide a direct path to integrating WebSocket push notifications.
+1. **Operational Simplicity**: We already maintain Redis in production. Adopting Redis Streams requires no new infrastructure software, no new monitoring stacks, and no specialized knowledge, fitting within the 2-week delivery window.
+2. **Throughput & Performance**: At 500 req/s (and 10x growth to 5,000 req/s), Redis Streams easily handles the load with sub-millisecond latency, removing the blocking overhead from the Flask request cycle.
+3. **Consumer Groups**: Redis Streams' consumer group feature allows us to scale the notification workers horizontally and ensures that each message is processed by only one worker in a group, providing the necessary foundation for at-least-once delivery.
+4. **Exactly-Once Semantics**: While neither system provides "true" exactly-once delivery to external third-party APIs (emails/webhooks), we will achieve effectively exactly-once processing for billing events by combining Redis Streams' acknowledgment (`XACK`) with an idempotency layer in PostgreSQL (recording processed event IDs).
+5. **Future Proofing**: Redis's pub/sub and stream capabilities align perfectly with the upcoming requirement for real-time WebSocket push notifications.
 
 ## Consequences
 ### Pros
-- **Rapid Deployment**: Zero new infrastructure overhead; minimal setup time.
-- **Low Latency**: Extremely fast ingestion and consumption.
-- **Reduced Complexity**: Keeps the stack lean; avoids the "operational tax" of managing a Zookeeper/Kafka cluster.
-- **Resource Efficiency**: Leverages existing memory and hardware allocated to Redis.
+- **Immediate Velocity**: Low barrier to entry; development can start immediately using existing Redis instances.
+- **Reduced Resource Overhead**: Avoids the significant RAM and CPU overhead of a JVM-based Kafka cluster.
+- **Unified Tooling**: Maintains a slim infrastructure footprint, critical for a team without a dedicated infra engineer.
+- **Decoupling**: Successfully moves notification logic out of the request cycle, eliminating the risk of cascading failures from slow external APIs.
 
 ### Cons
-- **Memory Constraints**: Unlike Kafka, which stores data on disk, Redis is primarily in-memory. We must implement strict stream capping (`XADD ... MAXLEN ~`) to prevent memory exhaustion.
-- **Limited Retention**: Long-term archival of messages is not native to Redis Streams; we must move old messages to PostgreSQL or S3 if auditing is required beyond a few days.
-- **At-Most-Once Risk**: Without a carefully implemented ACK loop and recovery worker for pending messages, we risk losing data on consumer crashes.
+- **Memory Bound**: Redis stores streams in memory. While we can use `MAXLEN` to cap stream size, we must monitor memory usage more closely as throughput grows.
+- **Persistence Trade-off**: While Redis provides AOF/RDB persistence, it is not as durable as Kafka's distributed commit log. This is acceptable given our use of PostgreSQL as the primary source of truth for billing events.
 
 ## Alternatives Considered
 ### Apache Kafka
-While Kafka is the industry standard for high-throughput event streaming, it was rejected for the following reasons:
-- **Operational Complexity**: Kafka requires a significant management overhead (JVM tuning, Zookeeper/KRaft management, partition balancing). With no dedicated infra engineer, the risk of misconfiguration is high.
-- **Steep Learning Curve**: The team has zero Kafka experience. The time required to reach operational proficiency would exceed the 2-week delivery constraint.
-- **Cost**: Self-hosting Kafka at the required reliability level increases AWS spend, and managed versions like Confluent Cloud are currently outside the modest budget.
-- **Overkill**: Kafka's strengths (massive multi-terabyte retention, complex stream processing) are not required for a notification system at our current and targeted scale.
+Kafka was rejected for the following reasons:
+- **Operational Complexity**: Introducing Kafka would require managing a Zookeeper or KRaft quorum, configuring partitions, and tuning JVM settings. This is unrealistic for a 6-person team with no Kafka expertise.
+- **Infrastructure Cost**: The budget cannot support managed services like Confluent, and self-hosting would divert significant engineering effort away from product features.
+- **Over-Engineering**: Kafka's massive scale capabilities (millions of events/sec) far exceed our 10x growth target. The "cost of carry" for Kafka's complexity outweighs its benefits at our current and projected scale.

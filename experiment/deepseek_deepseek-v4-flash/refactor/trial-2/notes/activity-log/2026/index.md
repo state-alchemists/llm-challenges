@@ -1,6 +1,3 @@
 # 2026
 
-- [June](2026-06/index.md)
-
-## Backlinks
-- [activity-log root](../index.md)
+- [2026-07](2026-07/index.md)

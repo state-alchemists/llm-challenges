@@ -1,3 +1,3 @@
-# Projects
+# Projects Index
 
-- [ADR-001: Notification Architecture](./adr-001-notification-architecture.md)
+- [trial-3](trial-3.md) — notification architecture decision (Redis Streams vs Kafka ADR)

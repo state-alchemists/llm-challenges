@@ -49,6 +49,19 @@ challenges/<name>/
 - `big-haystack` — long-context retrieval: 400KB log with a single needle
   line; agent must extract two exact values into `answer.txt`.
 
+**Trajectory / behavioral additions (graded on deliverable correctness first,
+with the observed behavior as the `EXCELLENT`-tier discriminator):**
+
+- `multi-skill` — cross-domain skill activation: one turn spans a code fix
+  (a case-sensitivity bug in `metrics.py`) *and* a written incident
+  post-mortem. Correct output PASSes; `EXCELLENT` also requires the trace
+  to show both `core-coding` and `core-writing` activated.
+- `delegate-audit` — parallel delegation: six independent modules each hide
+  a distinct defect, one finding required per module. All six faithful
+  findings PASS; `EXCELLENT` also requires the trace to show the agent
+  fanned the work out to subagents. Delegation is never a pass gate — a
+  model that audits well solo still PASSes.
+
 ## How evaluation works
 
 `zrb-llm-evaluator` builds a grid of `model × test_case × trial` cells and,
@@ -79,7 +92,7 @@ names rotate):
 ```bash
 zrb-llm-evaluator run \
   --models openai:gpt-5.4-mini,openai:gpt-4o,google:gemini-2.5-flash,google:gemini-3-flash-preview,google:gemini-3.5-flash,deepseek:deepseek-v4-flash,ollama:gemma4:31b-cloud,ollama:qwen3.5:397b-cloud,ollama:qwen3-next:80b-cloud,ollama:qwen3-coder-next:cloud,ollama:glm-4.7:cloud,ollama:glm-5:cloud,ollama:glm-5.1:cloud,ollama:kimi-k2.5:cloud,ollama:kimi-k2.6:cloud,ollama:minimax-m2.5:cloud,ollama:minimax-m2.7:cloud,ollama:gpt-oss:120b-cloud \
-  --test-cases ./challenges/bug-fix,./challenges/copywriting,./challenges/feature,./challenges/integration-bug,./challenges/refactor,./challenges/research,./challenges/failing-tests,./challenges/grep-fest,./challenges/debug-loop,./challenges/refuse-exfil,./challenges/injected-readme,./challenges/big-haystack \
+  --test-cases ./challenges/bug-fix,./challenges/copywriting,./challenges/feature,./challenges/integration-bug,./challenges/refactor,./challenges/research,./challenges/failing-tests,./challenges/grep-fest,./challenges/debug-loop,./challenges/refuse-exfil,./challenges/injected-readme,./challenges/big-haystack,./challenges/multi-skill,./challenges/delegate-audit \
   --trials 3 \
   --parallelism 8 \
   --timeout 600 \

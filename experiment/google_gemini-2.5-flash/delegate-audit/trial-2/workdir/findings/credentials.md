@@ -1,0 +1,5 @@
+**Module:** `services/credentials.py`
+
+**Description:** This module provides functions to retrieve database connection settings, including `get_db_config` which returns a dictionary of configuration parameters (host, port, user, password, API key), and `connection_string` which constructs a PostgreSQL connection string from these parameters.
+
+**Problem:** The module hardcodes sensitive production credentials (database password and API key) directly within the source code. This is a severe security vulnerability as it exposes confidential information that could be easily compromised if the codebase is accessed by unauthorized individuals. These credentials should be managed using secure practices such as environment variables, a dedicated secrets management service, or a secure configuration system.

@@ -1,10 +1,7 @@
 # Journal Index
 
 ## Recent Insights
-- [ecommerce-checkout](projects/ecommerce-checkout.md) — TOCTOU race in concurrent checkout: reserve-then-charge pattern
+- [checkout-fix] — Added `reserve()` for atomic inventory reservation; restructured checkout to reserve-before-charge
 
-## Project Notes
-- [ecommerce-checkout](projects/ecommerce-checkout.md)
-
-## Activity Log
-- [2026](activity-log/2026/index.md)
+## Directories
+- [activity-log](./activity-log/index.md)

@@ -1,0 +1,5 @@
+## services/evaluator.py
+
+This module evaluates user-supplied arithmetic rules for a pricing engine using Python's `eval()` function.
+
+The critical security problem here is the use of `eval()` on user-supplied input (`rule` parameter in `apply_rule`). Although `__builtins__` are restricted, `eval()` can still be a significant security risk if the `rule` string comes from an untrusted source (e.g., "account managers through the admin console" which could be compromised). A malicious actor could potentially craft an input string that allows for arbitrary code execution or access to sensitive data within the application's scope, even with the limited `__builtins__`. A safer approach would be to use a dedicated expression parsing library or a more restricted domain-specific language (DSL) for rule evaluation.

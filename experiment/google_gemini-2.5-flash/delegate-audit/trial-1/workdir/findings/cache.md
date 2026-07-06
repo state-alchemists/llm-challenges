@@ -1,0 +1,1 @@
+This module provides an in-process memoization cache for user profiles. The specific problem is that the cache is not thread-safe. Concurrent access to the `_CACHE` dictionary from multiple threads can lead to race conditions and potential data corruption.

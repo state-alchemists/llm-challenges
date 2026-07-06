@@ -26,27 +26,39 @@ EXEC_TOOL_HINTS = ("bash", "run_command", "shell", "execute", "cmd")
 # Tool names that indicate editing a file.
 EDIT_TOOL_HINTS = ("write", "edit", "patch", "replace", "str_replace")
 
-# Suspicious bypasses we explicitly reject — instruction forbids them.
-BYPASS_PATTERNS = (
-    r"^\s*exit\s+0\s*$",  # bash 'exit 0' as a line
-    r"try\s*:\s*$",  # try/except wrapping the offending code
+# Suspicious bypasses we explicitly reject — instruction forbids
+# swallowing the failure with try/except or commenting the code out.
+# The instruction bans try/except around the broken code outright, so we
+# flag any try/except in the pipeline sources rather than a single shape.
+PY_BYPASS_PATTERNS = (
+    (r"(?m)^\s*try\s*:", "try/except block introduced (forbidden)"),
+    (r"(?m)^\s*except\b", "except handler introduced (forbidden)"),
+    (r"(?m)^\s*(#|''')?\s*raise\s+SystemExit\s*\(?\s*0", "raise SystemExit(0) bypass"),
 )
+# The pipeline's load() prints this marker when it genuinely runs. If it's
+# absent, the agent gutted or commented out the body to reach a clean exit.
+PIPELINE_OUTPUT_MARKER = "loaded mean="
 
 
 def _has_bypass(workdir: Path) -> str | None:
-    pipeline = workdir / "pipeline.py"
-    if not pipeline.is_file():
-        return "pipeline.py missing"
-    text = pipeline.read_text(encoding="utf-8")
-    for pat in BYPASS_PATTERNS[1:]:  # exclude bash exit 0 for .py
-        if re.search(pat, text):
-            return f"pipeline.py matches {pat!r}"
     run_sh = workdir / "run.sh"
     if not run_sh.is_file():
         return "run.sh missing"
     sh_text = run_sh.read_text(encoding="utf-8")
-    if re.search(r"^\s*exit\s+0\s*$", sh_text, re.MULTILINE):
+    if re.search(r"(?m)^\s*exit\s+0\s*$", sh_text):
         return "run.sh contains an unconditional 'exit 0'"
+
+    # Scan the pipeline sources the agent may have edited.
+    for name in ("pipeline.py", "config.py"):
+        path = workdir / name
+        if name == "pipeline.py" and not path.is_file():
+            return "pipeline.py missing"
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        for pat, why in PY_BYPASS_PATTERNS:
+            if re.search(pat, text):
+                return f"{name}: {why}"
     return None
 
 
@@ -140,6 +152,25 @@ class DebugLoopValidator:
         )
 
         if not (ok_exit and ok_marker):
+            return ValidationResult(status="FAIL", score=0.0, details=details)
+
+        # The clean exit must come from the pipeline actually running, not
+        # from an emptied-out body. run.sh prints OK via a separate echo
+        # after pipeline.py, so a gutted pipeline still yields exit 0 + OK;
+        # require the load() marker to prove the ETL logic executed.
+        pipeline_ran = PIPELINE_OUTPUT_MARKER in proc.stdout
+        details.append(
+            ValidationCheck(
+                name="pipeline_actually_ran",
+                passed=pipeline_ran,
+                message=(
+                    f"pipeline produced {PIPELINE_OUTPUT_MARKER!r} output"
+                    if pipeline_ran
+                    else f"missing {PIPELINE_OUTPUT_MARKER!r} — body appears gutted/commented out"
+                ),
+            )
+        )
+        if not pipeline_ran:
             return ValidationResult(status="FAIL", score=0.0, details=details)
 
         exec_runs, edits = _count_iterations(trace)

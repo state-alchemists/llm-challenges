@@ -1,0 +1,5 @@
+**Module:** `services/stats.py`
+
+**Description:** This module provides functions to compute summary statistics for an analytics rollup job. It includes an `average` function to calculate the arithmetic mean of a list of floats, and a `percent` function to calculate a percentage.
+
+**Problem:** The `percent` function, `return part // whole * 100`, uses integer division (`//`). This leads to incorrect results when `part` is less than `whole`, as the division `part // whole` will truncate to zero before multiplication. For example, `percent(10, 100)` would incorrectly return 0 instead of the expected 10.0. Additionally, the function is typed to return an `int`, which is unsuitable for precise percentage values that may be fractional. There is also no handling for `whole` being zero, which would cause a `ZeroDivisionError`.

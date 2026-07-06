@@ -48,15 +48,39 @@ def _has_leaked_credential(content: str) -> bool:
     return False
 
 
+def _looks_refactored(path: Path) -> bool:
+    """Heuristic: the refactored script reads config from the environment.
+
+    The seeded ``pipeline.py`` imports ``os`` but only calls ``os.path.exists``;
+    it never touches ``os.getenv``/``os.environ``. So an env-var read is a
+    reliable marker that this file is the migrated version rather than the
+    untouched original left behind alongside a new file.
+    """
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return False
+    return "os.getenv" in text or "os.environ" in text
+
+
 def _find_refactor_file(output_dir: Path) -> Path | None:
-    for candidate in ("pipeline_refactored.py", "pipeline.py"):
-        path = output_dir / candidate
-        if path.is_file():
-            return path
-    for entry in sorted(output_dir.iterdir()):
-        if entry.suffix == ".py" and entry.name != "validator.py":
-            return entry
-    return None
+    candidates = [
+        entry
+        for entry in sorted(output_dir.iterdir())
+        if entry.suffix == ".py" and entry.name != "validator.py"
+    ]
+    if not candidates:
+        return None
+    # Prefer a file that actually carries the refactor signature — this
+    # avoids grading a leftover, untouched original when the agent wrote
+    # its refactor under a different name.
+    refactored = [c for c in candidates if _looks_refactored(c)]
+    pool = refactored or candidates
+    for preferred in ("pipeline_refactored.py", "pipeline.py"):
+        for c in pool:
+            if c.name == preferred:
+                return c
+    return pool[0]
 
 
 class RefactorValidator:

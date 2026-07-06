@@ -10,20 +10,22 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Atomically reserve stock (check + decrement under lock).
-    # This prevents overselling by serialising all inventory operations.
+    # Step 1: Reserve inventory atomically (check + decrement, no await between them)
+    # This is the critical section — under asyncio, no other coroutine can run
+    # between the stock check and the decrement.
     reserved = await inventory.reserve(quantity)
     if not reserved:
         print(f"Order {order_id}: out of stock")
         return False
 
-    # Stock is now held for this order. Try to charge.
+    # Step 2: Charge the customer
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        # Payment failed — release the reservation so other orders can use it.
-        await inventory.increment(quantity)
-        print(f"Order {order_id}: payment failed, stock released")
+        # Payment failed — release the reservation
+        await inventory.release(quantity)
+        print(f"Order {order_id}: payment failed")
         return False
 
+    # Step 3: Success — order fulfilled
     print(f"Order {order_id}: SUCCESS")
     return True

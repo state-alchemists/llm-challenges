@@ -1,0 +1,5 @@
+**Module:** `services/evaluator.py`
+
+**Description:** This module is responsible for evaluating user-supplied arithmetic rules, intended for a pricing engine. The `apply_rule` function takes a string `rule` and a `context` dictionary, then uses Python's `eval()` function to compute the result. The `total_price` function applies a list of such rules sequentially to a base price.
+
+**Problem:** The module uses the `eval()` function to execute user-supplied `rule` strings. Although `{"__builtins__": {}}` is passed to limit access to built-in functions, `eval()` remains inherently dangerous when processing untrusted input. A malicious user could craft a `rule` string to execute arbitrary code (e.g., import modules, access files, or make system calls) by exploiting vulnerabilities in the Python interpreter or by finding ways to bypass the limited `__builtins__` context. This represents a critical remote code execution (RCE) vulnerability.

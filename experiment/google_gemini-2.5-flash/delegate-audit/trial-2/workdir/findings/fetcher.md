@@ -1,0 +1,5 @@
+**Module:** `services/fetcher.py`
+
+**Description:** This module provides functionality to fetch data from partner inventory feeds over HTTP. The `fetch_feed` function takes a URL and downloads its raw bytes using `urllib.request.urlopen`, while `fetch_all` fetches multiple URLs concurrently using a dictionary comprehension.
+
+**Problem:** The module uses `urllib.request.urlopen` directly with user-supplied URLs without any validation or sanitization. This can lead to several security issues, including Server-Side Request Forgery (SSRF) and potential arbitrary file reads (via `file://` or other local URI schemes supported by `urlopen`). An attacker could manipulate the `url` parameter to make the application send requests to internal network resources, local files, or other sensitive endpoints that are not intended to be publicly accessible.

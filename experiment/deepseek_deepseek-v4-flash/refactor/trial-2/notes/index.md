@@ -1,10 +1,5 @@
-# Notes — refactor challenge, trial 2
+# Knowledge Base Index
 
-## Recent Insights
-*(none yet)*
+## Activity Log
 
-## Directories
-- [activity-log](activity-log/index.md)
-
-## Backlinks
-*(root — no backlinks needed)*
+- [2026-07-06](activity-log/2026/2026-07/2026-07-06.md) — Pipeline refactor: ETL restructure, regex parsing, SQL injection fix

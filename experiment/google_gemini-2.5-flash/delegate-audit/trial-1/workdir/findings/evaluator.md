@@ -1,0 +1,1 @@
+This module evaluates user-supplied arithmetic rules. The specific problem is the use of `eval()` with user-controlled input. This allows arbitrary code execution, posing a severe security risk. An attacker could inject malicious code through the `rule` parameter, compromising the system.

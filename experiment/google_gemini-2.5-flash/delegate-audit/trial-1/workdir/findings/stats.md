@@ -1,0 +1,1 @@
+This module computes summary statistics. The specific problem is that the `percent` function uses integer division (`//`) before multiplying by 100. This will lead to incorrect results due to truncation, especially for percentages less than 100%. For example, `percent(1, 3)` would incorrectly evaluate to `0` instead of `33`.

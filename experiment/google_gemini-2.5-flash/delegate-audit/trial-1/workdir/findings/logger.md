@@ -1,0 +1,1 @@
+This module provides structured request logging for the auth service. The specific problem is that it logs sensitive information (passwords) in plain text. This is a security risk as these logs could be accessed by unauthorized individuals, exposing user credentials.

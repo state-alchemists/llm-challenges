@@ -1,0 +1,5 @@
+**Module:** `services/logger.py`
+
+**Description:** This module provides a logging utility specifically for the authentication service, designed to record login attempts for audit purposes. The `log_login_attempt` function takes a username, password, and a success boolean, then logs this information using Python's `logging` module.
+
+**Problem:** The module uses Python's default logging, which does not redact sensitive information. It logs the user's plaintext password directly. This is a critical security vulnerability as it stores sensitive user credentials in logs, making them vulnerable to unauthorized access. If the logs are compromised, user accounts can be easily breached. Passwords should never be logged, even temporarily. Instead, only the username and the outcome of the login attempt should be recorded, or a hashed representation of the password if absolutely necessary for debugging (but not in production logs).

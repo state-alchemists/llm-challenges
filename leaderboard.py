@@ -71,45 +71,45 @@ def main(argv: list[str]) -> int:
     print(f"Overall:     {dict(overall)}")
 
     # ---- Leaderboard ----
+    # Ranked by the STRICT average: every trial counts, and a trial that
+    # produced no validator verdict (ERROR) or blew the wall clock
+    # (TIMEOUT) counts as 0.0. Averaging only the trials that happened to
+    # complete would let throttled/hanging models rank on their best cells
+    # (survivorship bias). `avg*` is that completed-only average, shown
+    # for reference.
     by_model: dict[str, Counter] = defaultdict(Counter)
-    scores_by: dict[str, list[float]] = defaultdict(list)
+    strict_by: dict[str, list[float]] = defaultdict(list)
+    completed_by: dict[str, list[float]] = defaultdict(list)
     for d in data:
         by_model[d["model"]][d["status"]] += 1
         vr = d.get("verification_result") or {}
         s = vr.get("score")
-        if s is not None:
-            scores_by[d["model"]].append(float(s))
+        if d["status"] in ("ERROR", "TIMEOUT") or s is None:
+            strict_by[d["model"]].append(0.0)
+        else:
+            strict_by[d["model"]].append(float(s))
+            completed_by[d["model"]].append(float(s))
+
+    def _avg(scores: list[float]) -> float:
+        return sum(scores) / len(scores) if scores else 0.0
 
     def rank_key(item: tuple[str, Counter]) -> tuple:
         m, c = item
-        n = sum(c.values())
-        ok = c.get("EXCELLENT", 0) + c.get("PASS", 0)
-        pass_rate = ok / n if n else 0.0
         excellent = c.get("EXCELLENT", 0)
-        scores = scores_by.get(m, [])
-        avg = sum(scores) / len(scores) if scores else -1.0
-        # Rank order:
-        #   1. pass rate (status-level outcomes — what actually worked)
-        #   2. EXCELLENT count (quality among passes)
-        #   3. avg validator score (granular tiebreaker)
-        # Putting pass rate first avoids letting a validator that scores a
-        # FAIL leniently (e.g., 1.0 alongside status=FAIL) buoy a model
-        # above one that actually passed every challenge.
-        return (-pass_rate, -excellent, -avg)
+        return (-_avg(strict_by.get(m, [])), -excellent)
 
-    print("\nLeaderboard (sorted by pass rate, then EXCELLENT count, then avg score):")
+    print("\nLeaderboard (sorted by strict avg validator score; ERROR/TIMEOUT = 0):")
     print(
-        f"  {'#':>2}  {'model':50s}  {'avg':>5s}  {'pass':>4s}  {'n':>3s}  cells"
+        f"  {'#':>2}  {'model':50s}  {'avg':>5s}  {'avg*':>5s}  {'pass':>4s}  {'n':>3s}  cells"
     )
-    print(f"  {'-'*2}  {'-'*50}  {'-'*5}  {'-'*4}  {'-'*3}  -----")
+    print(f"  {'-'*2}  {'-'*50}  {'-'*5}  {'-'*5}  {'-'*4}  {'-'*3}  -----")
     for i, (m, c) in enumerate(sorted(by_model.items(), key=rank_key), start=1):
         n = sum(c.values())
         ok = c.get("EXCELLENT", 0) + c.get("PASS", 0)
         rate = (100 * ok // n) if n else 0
-        scores = scores_by.get(m, [])
-        avg = sum(scores) / len(scores) if scores else 0.0
         print(
-            f"  {i:>2}  {m:50s}  {avg:5.3f}  {rate:3d}%  {len(scores):>3d}  {fmt_cells(c)}"
+            f"  {i:>2}  {m:50s}  {_avg(strict_by.get(m, [])):5.3f}  "
+            f"{_avg(completed_by.get(m, [])):5.3f}  {rate:3d}%  {n:>3d}  {fmt_cells(c)}"
         )
 
     # ---- By test case ----

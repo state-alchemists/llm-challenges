@@ -1,0 +1,1 @@
+This module fetches partner inventory feeds over HTTP. The specific problem is that it is vulnerable to Server-Side Request Forgery (SSRF) attacks. The `fetch_feed` function directly uses the `url` parameter without validation, allowing an attacker to supply a malicious URL to access internal network resources or arbitrary external resources.

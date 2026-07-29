@@ -1,6 +1,6 @@
 # Activity Log Index
 
-Historical log of tasks executed in this repository.
+- [2026 Activity](2026/index.md)
 
-## Years
-- [2026](2026/index.md)
+## Backlinks
+- [HUD](../index.md)

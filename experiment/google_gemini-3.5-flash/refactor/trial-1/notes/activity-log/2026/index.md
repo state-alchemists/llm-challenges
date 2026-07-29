@@ -1,4 +1,6 @@
-# 2026 Activity Log Index
+# 2026 Activity Log
 
-## Months
-- [June (2026-06)](2026-06/index.md)
+- [July 2026](2026-07/index.md)
+
+## Backlinks
+- [Activity Log Index](../index.md)

@@ -1,5 +1,6 @@
 import asyncio
 
+
 class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
@@ -13,7 +14,11 @@ class Inventory:
         if self._stock >= quantity:
             self._stock -= quantity
             return True
-        print(f"Cannot decrement {quantity}: stock is {self._stock}")  # Log the condition
+        return False
+        await asyncio.sleep(0.02)
+        if self._stock >= quantity:
+            self._stock -= quantity
+            return True
         return False
 
     async def increment(self, quantity: int) -> None:

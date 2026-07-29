@@ -1,6 +1,9 @@
-# Journal Index
+# Notes Index
 
-Welcome to Zaruba's persistent memory journal.
+Welcome to the LLM Challenges notes.
 
-## Recent Activity
-- [2026-06-25 activity log](activity-log/2026/2026-06/2026-06-25.md)
+## Sections
+- [Activity Log](activity-log/index.md)
+
+## Recent Insights
+- None yet.

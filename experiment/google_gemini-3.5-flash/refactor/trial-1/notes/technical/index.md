@@ -1,6 +1,6 @@
-# Technical Insights
+# Technical Insights Index
 
-Durable learnings and conventions about software systems.
+- [Python ETL Pipeline Pattern](python-etl-pipeline.md) — Structural pattern for robust Python pipelines.
 
-## Insights
-- [Refactoring Secure ETL Pipelines](refactoring-secure-etl.md)
+## Backlinks
+- [HUD](../index.md)

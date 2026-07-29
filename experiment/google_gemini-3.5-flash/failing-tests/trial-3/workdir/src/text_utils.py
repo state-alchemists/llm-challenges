@@ -14,17 +14,14 @@ def slugify(text: str) -> str:
     'multiple-spaces'
     """
     result_chars: list[str] = []
-    last_was_dash = False
     for char in text:
         if char.isalnum():
             result_chars.append(char.lower())
-            last_was_dash = False
         elif char.isspace() or char == "-":
-            if not last_was_dash:
+            if result_chars and result_chars[-1] != "-":
                 result_chars.append("-")
-                last_was_dash = True
-    collapsed = "".join(result_chars)
-    return collapsed.strip("-")
+    collapsed = "".join(result_chars).strip("-")
+    return collapsed
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
@@ -34,5 +31,4 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-    slice_idx = max(0, max_len - len(suffix))
-    return text[:slice_idx] + suffix
+    return text[:max(0, max_len - len(suffix))] + suffix

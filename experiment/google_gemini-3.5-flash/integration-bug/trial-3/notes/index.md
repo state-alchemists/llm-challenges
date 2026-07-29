@@ -1,12 +1,14 @@
-# Journal Index
+# HUD
 
-Welcome to your Heads-Up Display (HUD) and persistent memory.
+Welcome to the checkout service notes journal.
+
+## Index Directories
+- [Projects Index](projects/index.md)
+- [Technical Insights Index](technical/index.md)
+- [Activity Log Index](activity-log/index.md)
 
 ## Projects
-- [Checkout Service](projects/index.md)
+- [Checkout Integration Bug](projects/checkout-service.md)
 
-## Technical Reference
-- [Distributed Transactions](technical/index.md)
-
-## Activity Log
-- [Activity Log Root](activity-log/index.md)
+## Recent Insights
+- [Asyncio Concurrency Patterns](technical/python-concurrency.md)

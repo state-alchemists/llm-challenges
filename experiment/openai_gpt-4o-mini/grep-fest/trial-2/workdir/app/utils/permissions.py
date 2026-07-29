@@ -5,12 +5,12 @@ from app.auth import new_auth
 
 def handle_0(user_id: str) -> dict:
     """Authorized endpoint."""
-    if not new_auth(user_id, scope="read"):  # Migrated from legacy_auth
+    if not new_auth(user_id):
         return {}
     return {'ok': True}
 
 def handle_1(user_id_1: str) -> dict:
     """Authorized endpoint."""
-    if not new_auth(user_id_1, scope="read"):
+    if not new_auth(user_id_1):
         return {}
     return {'ok': True}

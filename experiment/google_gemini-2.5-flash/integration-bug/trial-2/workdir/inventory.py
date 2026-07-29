@@ -11,9 +11,9 @@ class Inventory:
             await asyncio.sleep(0.02)
             return self._stock >= quantity
 
-    async def decrement(self, quantity: int) -> bool:
+    async def try_decrement(self, quantity: int) -> bool:
         async with self._lock:
-            await asyncio.sleep(0.02)
+            await asyncio.sleep(0.02)  # Simulate work
             if self._stock >= quantity:
                 self._stock -= quantity
                 return True

@@ -1,10 +1,8 @@
-# Journal Index
+# Zaruba's HUD - LLM Challenges Notes
 
-Welcome to Zaruba's persistent memory.
+Welcome to persistent journal index.
 
-## Navigation
-- [Activity Log](activity-log/index.md)
+## Directory Navigation
+- [Projects](projects/index.md)
 - [Technical Insights](technical/index.md)
-
-## Recent Insights
-- [Refactoring Secure ETL Pipelines](technical/refactoring-secure-etl.md)
+- [Activity Log](activity-log/index.md)

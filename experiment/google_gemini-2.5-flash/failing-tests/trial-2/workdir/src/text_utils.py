@@ -1,7 +1,7 @@
 """Text normalization helpers."""
 
 from __future__ import annotations
-import re
+
 
 def slugify(text: str) -> str:
     """Convert text to a URL-safe slug.
@@ -13,10 +13,17 @@ def slugify(text: str) -> str:
     >>> slugify("  multiple   spaces  ")
     'multiple-spaces'
     """
+    result_chars: list[str] = []
     text = text.lower()
-    text = re.sub(r"[^a-z0-9\s-]", "", text)
-    text = re.sub(r"[\s-]+", "-", text)
-    return text.strip("-")
+    for char in text:
+        if char.isalnum():
+            result_chars.append(char)
+        elif char.isspace() or char == "-":
+            result_chars.append("-")
+    collapsed = "".join(result_chars)
+    while "--" in collapsed:
+        collapsed = collapsed.replace("--", "-")
+    return collapsed.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
@@ -26,8 +33,4 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-
-    if max_len <= len(suffix):
-        return suffix
-
     return text[:max_len - len(suffix)] + suffix

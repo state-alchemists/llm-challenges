@@ -1,10 +1,10 @@
-# Zaruba Journal Root
+# HUD - Heads-Up Display
 
-## HUD
-- **Active Constraints**: Do not change public method signatures.
-- **Recent Insights**: Fix concurrency issues in asyncio by mutating state before any `await` calls. Fix worker-level errors by properly calling `queue.fail()` rather than swallowing exceptions.
+## Recent Insights
+- [Background Job Processor](projects/background-job-processor.md) - concurrency and error handling fixes in background job processor.
 
-## Navigation
-- [Activity Log](activity-log/index.md)
-- [Projects](projects/index.md)
-- [Technical Notes](technical/index.md)
+## Active Projects
+- [projects/index.md](projects/index.md) - list of active projects.
+
+## Chronological Log
+- [activity-log/index.md](activity-log/index.md) - activity log.

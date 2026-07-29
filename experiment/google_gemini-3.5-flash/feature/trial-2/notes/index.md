@@ -1,6 +1,11 @@
-# Journal Index
+# Zaruba HUD
 
-Welcome to Zaruba's persistent memory.
+## Active Constraints & Context
+- OS: macOS
+- Working on FastAPI Project Management API
 
-## Navigation
+## Recent Insights
+- None yet
+
+## Index
 - [Activity Log](activity-log/index.md)

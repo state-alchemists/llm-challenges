@@ -1,6 +1,3 @@
-# Technical Index
+# Technical Directory
 
-- [Distributed Transactions](distributed-transactions.md)
-
-## Backlinks
-- [Journal Index](../index.md)
+- [Python Asyncio Concurrency & Lock Pattern](python-concurrency.md)

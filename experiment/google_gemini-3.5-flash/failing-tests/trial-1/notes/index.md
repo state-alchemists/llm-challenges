@@ -1,9 +1,4 @@
-# Journal Index
+# HUD / Index
 
-HUD - Main navigation.
-
-## Projects
-- [Projects Index](projects/index.md)
-
-## Activity Log
-- [Activity Log Index](activity-log/index.md)
+## Recent Activity
+- [2026-07-29 Log](activity-log/2026/2026-07/2026-07-29.md)

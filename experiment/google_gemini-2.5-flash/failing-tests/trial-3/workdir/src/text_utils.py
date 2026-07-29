@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 
+import re
+
 def slugify(text: str) -> str:
     """Convert text to a URL-safe slug.
 
@@ -13,18 +15,16 @@ def slugify(text: str) -> str:
     >>> slugify("  multiple   spaces  ")
     'multiple-spaces'
     """
-    import re
     text = text.lower()
     result_chars: list[str] = []
     for char in text:
         if char.isalnum():
             result_chars.append(char)
-        elif char.isspace() or char == "-":
+        elif char.isspace() or not char.isalnum():
             result_chars.append("-")
     collapsed = "".join(result_chars)
-    # Replace multiple hyphens with a single hyphen
-    collapsed = re.sub(r'-+', '-', collapsed)
-    return collapsed.strip("-")
+    # Replace multiple hyphens with a single hyphen, and strip leading/trailing hyphens
+    return re.sub(r"-+", "-", collapsed).strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
@@ -34,5 +34,6 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-    # Ensure truncated text + suffix does not exceed max_len
+    if max_len < len(suffix):
+        return suffix[:max_len]
     return text[:max_len - len(suffix)] + suffix

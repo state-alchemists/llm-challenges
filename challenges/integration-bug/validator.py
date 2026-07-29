@@ -2,6 +2,17 @@
 
 Runs the concurrent checkout simulation in a subprocess to keep the
 asyncio loop / module state independent across trials.
+
+Each trial asserts all three requirements from the brief:
+- inventory reconciles with sales (``stock == INITIAL_STOCK - successful``),
+  which covers both negative stock and stock that is never decremented
+- every successful order is charged exactly once (``charged == successful *
+  UNIT_PRICE``)
+- no order is charged twice (no duplicate order_ids in ``gateway.charges``)
+
+Note the 6 trials share one interpreter, so module-level state leaking
+between ``Inventory``/``PaymentGateway`` instances shows up as later trials
+failing after the first succeeds — that is a real defect, not flakiness.
 """
 
 from __future__ import annotations
@@ -17,6 +28,9 @@ from zrb_llm_evaluator.protocols import ValidatorProtocol
 
 REQUIRED_FILES = ("inventory.py", "payments.py", "checkout.py")
 TRIALS = 6
+INITIAL_STOCK = 5
+UNIT_PRICE = 100.0
+ORDER_COUNT = 12
 CONCURRENCY_PRIMITIVES = {"Lock", "RLock", "Semaphore", "BoundedSemaphore", "Event", "Condition"}
 
 
@@ -53,14 +67,24 @@ with open("checkout.py") as f: checkout_src = f.read()
 
 async def run_one(seed):
     random.seed(seed)
-    inventory = Inventory(5)
+    inventory = Inventory(__INITIAL_STOCK__)
     gateway = PaymentGateway(failure_rate=0.25)
-    orders = [checkout(f"order_{i}", 1, 100.0, inventory, gateway) for i in range(12)]
+    orders = [
+        checkout(f"order_{i}", 1, __UNIT_PRICE__, inventory, gateway)
+        for i in range(__ORDER_COUNT__)
+    ]
     results = await asyncio.gather(*orders)
     successful = sum(results)
     charge_ids = [c["order_id"] for c in gateway.charges]
     duplicates = len(charge_ids) - len(set(charge_ids))
-    return [inventory.stock, gateway.total_charged, successful, duplicates, successful * 100.0]
+    return {
+        "stock": inventory.stock,
+        "charged": gateway.total_charged,
+        "successful": successful,
+        "duplicates": duplicates,
+        "expected_charge": successful * __UNIT_PRICE__,
+        "expected_stock": __INITIAL_STOCK__ - successful,
+    }
 
 results = []
 for t in range(__TRIALS__):
@@ -70,7 +94,11 @@ for t in range(__TRIALS__):
         results.append({"error": traceback.format_exc()})
 
 print("__RESULT__" + json.dumps({"trials": results, "inv_src": inv_src, "checkout_src": checkout_src}))
-""".replace("__TRIALS__", str(TRIALS))
+""".replace("__TRIALS__", str(TRIALS)).replace(
+    "__INITIAL_STOCK__", str(INITIAL_STOCK)
+).replace("__UNIT_PRICE__", repr(UNIT_PRICE)).replace(
+    "__ORDER_COUNT__", str(ORDER_COUNT)
+)
 
 
 def _missing_files(output_dir: Path) -> list[str]:
@@ -133,7 +161,7 @@ class IntegrationBugValidator:
 
         passes = 0
         for idx, trial in enumerate(payload["trials"], start=1):
-            if isinstance(trial, dict) and "error" in trial:
+            if "error" in trial:
                 details.append(
                     ValidationCheck(
                         name=f"trial_{idx}",
@@ -142,10 +170,25 @@ class IntegrationBugValidator:
                     )
                 )
                 continue
-            stock, charged, successful, dupes, expected = trial
+            stock = trial["stock"]
+            charged = trial["charged"]
+            successful = trial["successful"]
+            dupes = trial["duplicates"]
+            expected = trial["expected_charge"]
+            expected_stock = trial["expected_stock"]
             errors = []
             if stock < 0:
                 errors.append(f"negative stock ({stock})")
+            elif stock != expected_stock:
+                # Guards the overselling half of the brief. Without this, a
+                # checkout that never touches inventory still balances its
+                # charges and would score PASS while selling unlimited units
+                # from finite stock — `stock < 0` alone cannot see that,
+                # because stock that is never decremented never goes negative.
+                errors.append(
+                    f"stock not reconciled with sales (stock={stock}, expected="
+                    f"{expected_stock} after {successful} sale(s) from {INITIAL_STOCK})"
+                )
             if abs(charged - expected) > 0.01:
                 errors.append(f"charge mismatch (charged={charged:.2f}, expected={expected:.2f})")
             if dupes > 0:

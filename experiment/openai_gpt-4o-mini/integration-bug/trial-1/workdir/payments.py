@@ -2,6 +2,7 @@ import asyncio
 import random
 from typing import List
 
+
 class PaymentGateway:
     def __init__(self, failure_rate: float = 0.25):
         self._failure_rate = failure_rate
@@ -10,13 +11,11 @@ class PaymentGateway:
 
     async def charge(self, order_id: str, amount: float) -> bool:
         await asyncio.sleep(0.03)
-        if random.random() < self._failure_rate:
-            print(f"Order {order_id}: payment failed due to failure rate.")
+        if order_id in [charge["order_id"] for charge in self.charges] or random.random() < self._failure_rate:
             return False
-        if any(charge["order_id"] == order_id for charge in self.charges):
-            print(f"Order {order_id} already charged.")
-            return False  # Prevent duplicate charges
+        await asyncio.sleep(0.03)
+        if random.random() < self._failure_rate:
+            return False
         self.total_charged += amount
         self.charges.append({"order_id": order_id, "amount": amount})
-        print(f"Order {order_id}: charged ${amount} successfully.")
         return True

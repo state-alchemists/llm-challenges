@@ -28,7 +28,8 @@ async def list_tasks(
     if assigned_to is not None:
         result = [t for t in result if t.assigned_to == assigned_to]
     start = (page - 1) * page_size
-    return result[start : start + page_size]
+    end = start + page_size
+    return result[start:end]
 
 
 @app.get("/tasks/{task_id}", response_model=Task)
@@ -41,23 +42,24 @@ async def get_task(task_id: int):
 
 @app.post("/tasks", response_model=Task, status_code=201)
 async def create_task(task_in: TaskCreate, username: str = Depends(require_api_key)):
-    if not any(p.id == task_in.project_id for p in projects):
+    project_ids = [p.id for p in projects]
+    if task_in.project_id not in project_ids:
         raise HTTPException(status_code=404, detail="Project not found")
-    new_id = max(t.id for t in tasks) + 1 if tasks else 1
-    task = Task(id=new_id, **task_in.model_dump())
+    new_id = max((t.id for t in tasks), default=0) + 1
+    task = Task(id=new_id, **task_in.dict())
     tasks.append(task)
     return task
 
 
 @app.put("/tasks/{task_id}", response_model=Task)
-async def update_task(
-    task_id: int, task_in: TaskUpdate, username: str = Depends(require_api_key)
-):
+async def update_task(task_id: int, task_update: TaskUpdate, username: str = Depends(require_api_key)):
     for i, task in enumerate(tasks):
         if task.id == task_id:
-            updated = task.model_copy(update=task_in.model_dump(exclude_unset=True))
-            tasks[i] = updated
-            return updated
+            updated_data = task.dict()
+            update_fields = task_update.dict(exclude_unset=True)
+            updated_data.update(update_fields)
+            tasks[i] = Task(**updated_data)
+            return tasks[i]
     raise HTTPException(status_code=404, detail="Task not found")
 
 

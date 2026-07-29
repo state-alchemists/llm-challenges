@@ -1,8 +1,9 @@
-# Activity Logs
+# Activity Log
 
-Chronological logs of Zaruba's work.
+Chronological log of significant LLM actions.
 
-- [2026 Logs](2026/index.md)
+## Years
+- [2026](2026/index.md)
 
 ## Backlinks
-- [HUD](../index.md)
+- [Root](../index.md)

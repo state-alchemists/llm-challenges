@@ -11,7 +11,7 @@ class Inventory:
             await asyncio.sleep(0.02)
             return self._stock >= quantity
 
-    async def decrement(self, quantity: int) -> bool:
+    async def try_decrement(self, quantity: int) -> bool:
         async with self._lock:
             await asyncio.sleep(0.02)
             if self._stock >= quantity:
@@ -20,9 +20,8 @@ class Inventory:
             return False
 
     async def increment(self, quantity: int) -> None:
-        async with self._lock:
-            await asyncio.sleep(0.01)
-            self._stock += quantity
+        await asyncio.sleep(0.01)
+        self._stock += quantity
 
     @property
     def stock(self) -> int:

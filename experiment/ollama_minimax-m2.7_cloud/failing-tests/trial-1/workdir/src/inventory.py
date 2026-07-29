@@ -1,6 +1,7 @@
 """Inventory tracking with reservation support."""
 
 from __future__ import annotations
+from typing import Optional
 
 
 class OutOfStock(Exception):
@@ -10,8 +11,8 @@ class OutOfStock(Exception):
 class Inventory:
     """Tracks on-hand stock per SKU and outstanding reservations."""
 
-    def __init__(self, initial: dict[str, int] | None = None) -> None:
-        self._stock: dict[str, int] = {} if initial is None else initial
+    def __init__(self, initial: Optional[dict[str, int]] = None) -> None:  # noqa: B006
+        self._stock = dict(initial) if initial else {}
         self._reserved: dict[str, int] = {}
 
     def add(self, sku: str, qty: int) -> None:
@@ -34,5 +35,5 @@ class Inventory:
             raise ValueError("qty must be positive")
         current = self._reserved.get(sku, 0)
         if current - qty < 0:
-            raise ValueError("release cannot go negative")
+            raise ValueError("cannot release more than reserved")
         self._reserved[sku] = current - qty

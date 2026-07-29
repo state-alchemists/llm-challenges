@@ -14,7 +14,7 @@ async def main() -> None:
 
     print(f"Starting simulation: {NUM_ORDERS} concurrent orders, stock={INITIAL_STOCK}")
     orders = [
-        checkout(f"order_{i}", 1, ITEM_PRICE, inventory, gateway, gateway.total_charged)
+        checkout(f"order_{i}", 1, ITEM_PRICE, inventory, gateway)
         for i in range(NUM_ORDERS)
     ]
     results = await asyncio.gather(*orders)

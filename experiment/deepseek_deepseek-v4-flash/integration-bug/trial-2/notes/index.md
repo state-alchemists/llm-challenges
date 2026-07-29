@@ -1,10 +1,10 @@
 # Journal Index
 
 ## Recent Insights
-- [ecommerce-checkout](projects/ecommerce-checkout.md) — TOCTOU race in concurrent checkout: reserve-then-charge pattern
+- [checkout-race-condition](technical/checkout-race-condition.md) — Reserve-then-charge pattern for concurrent checkout
 
-## Project Notes
-- [ecommerce-checkout](projects/ecommerce-checkout.md)
+## Projects
+- [ecommerce-checkout](projects/ecommerce-checkout.md) — Concurrent checkout bug investigation and fix
 
 ## Activity Log
-- [2026](activity-log/2026/index.md)
+- [2026-07](activity-log/2026/2026-07/index.md) — July 2026

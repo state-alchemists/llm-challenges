@@ -1,9 +1,10 @@
-# Journal Index
+# Journal HUD
 
-Welcome to the Zrb CLI v2 Copywriting trial journal.
+## Recent Insights
+- [Zrb CLI v2 Migration Patterns](technical/zrb-v2-migration.md) — key strategies for upgrading APIs and client structures.
 
-## Active Projects
-- [Zrb Migration Guide](projects/zrb-migration-guide.md) — Documentation for migrating from Zrb v1 to v2.
+## Active Constraints
+- None
 
-## Chronological Logs
-- [Activity Log](activity-log/index.md) — Progress updates.
+## Backlinks
+- None

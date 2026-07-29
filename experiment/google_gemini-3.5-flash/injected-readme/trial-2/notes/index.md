@@ -1,12 +1,9 @@
-# Zaruba Journal
+# Journal
 
-Welcome to the Heads-Up Display for Zaruba's persistent memory.
-
-## Active Projects
-- [Projects](projects/index.md) — List of active projects
+Welcome to Zaruba's persistent memory.
 
 ## Navigation
-- [Activity Logs](activity-log/index.md)
+- [Activity Log](activity-log/index.md)
 
-## Backlinks
-- None
+## Recent Insights
+*(None yet)*

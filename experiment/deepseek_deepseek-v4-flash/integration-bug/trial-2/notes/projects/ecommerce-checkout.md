@@ -1,19 +1,15 @@
-# E-Commerce Checkout Challenge
+---
+slug: ecommerce-checkout-project
+---
+# E-Commerce Checkout — concurrent bug fix
 
-Experiment: `experiment/deepseek_deepseek-v4-flash/integration-bug/trial-2/`
-
-## Bug: TOCTOU race in checkout flow
-
-**Root cause**: `checkout.py` checked stock, charged payment, then decremented stock — three separate async calls. Concurrent orders all passed the stock check, all charged, then the extras hit "inventory error after payment" (ghost charges, charged $600 for 5 items delivered).
-
-**Fix**: Reserve-then-charge pattern. Added `Inventory.reserve()` that atomically checks stock and decrements under an `asyncio.Lock`. Stock is held before payment; released on payment failure.
-
-## Files
-
-- `checkout.py` — checkout logic (fixed)
-- `inventory.py` — stock management with `asyncio.Lock` (added `reserve()`)
-- `payments.py` — mock payment gateway (25% failure rate, unchanged)
-- `main.py` — concurrent simulation runner (unchanged)
+**Context:** An e-commerce checkout service hit production incidents: overselling (negative inventory) and ghost charges (charged but no item delivered).
+**Symptom:** 12 concurrent orders against stock=5 with 25% payment failure rate. Ghost charges reproduced in 20/20 runs; overselling race exists but tighter timing window.
+**Root cause:** TOCTOU race between `check_stock`/`decrement` + charge-before-reserve ordering.
+**Fix:** `Inventory.reserve()` (atomic check-and-decrement via `asyncio.Lock`) + reserve-then-charge with payment-failure compensation.
+**Verification:** 50/50 clean runs — no errors, no ghost charges, no negative stock, total charged always matches successful orders × price.
+**Source files:** `inventory.py`, `checkout.py`, `payments.py` (unchanged), `main.py` (unchanged)
 
 ## Backlinks
-- [2026-06-25 activity log](../activity-log/2026/2026-06/2026-06-25.md) — fix applied here
+- [checkout-race-condition technical note](../technical/checkout-race-condition.md) — root cause detail
+- [2026-07-29 activity log](../activity-log/2026/2026-07/2026-07-29.md) — fix implemented here

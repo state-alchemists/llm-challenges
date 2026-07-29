@@ -1,7 +1,4 @@
-# Journal HUD
+# Journal Index
 
-## Recent Insights
-None
-
-## Navigation
-- [Activity Log](activity-log/index.md)
+## Activity Log
+- [2026-07-29](activity-log/2026/2026-07/2026-07-29.md)

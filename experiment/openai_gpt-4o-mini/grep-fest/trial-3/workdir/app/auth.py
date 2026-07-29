@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+# Importing new_auth directly
+
 
 def legacy_auth(user_id: str) -> bool:
     """DEPRECATED: use new_auth(user_id, scope=...) instead.
@@ -10,7 +12,6 @@ def legacy_auth(user_id: str) -> bool:
     sites must be migrated.
     """
     return bool(user_id)
-
 
 def new_auth(user_id: str, scope: str = "read") -> bool:
     """Authorize a user for a given scope (``read`` or ``write``)."""

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from config import settings
+
 
 def extract() -> list[int]:
     return [10, 20, 30, 40]

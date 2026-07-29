@@ -1,168 +1,0 @@
-[2m
-  🧠 The[0m[2m user[0m[2m wants[0m[2m me[0m[2m to[0m[2m write[0m[2m a[0m[2m migration[0m[2m guide[0m[2m from[0m[2m Z[0m[2mrb[0m[2m CLI[0m[2m v[0m[2m1[0m[2m to[0m[2m v[0m[2m2[0m[2m.[0m[2m Let[0m[2m me[0m[2m first[0m[2m read[0m[2m the[0m[2m two[0m[2m spec[0m[2m files[0m[2m to[0m[2m understand[0m[2m the[0m[2m breaking[0m[2m changes[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m
-  🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m[0m[2m
-  🧰 call_00_NPk9MGunzHMMAtGnmL6v1545 | Read {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🧰 call_01_EZAxGZtSl8VVlij1zvzX8327 | Read {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🔠 call_01_EZAxGZtSl8VVlij1zvzX8327 Executed
-[0m[2m
-  🔠 call_00_NPk9MGunzHMMAtGnmL6v1545 Executed
-[0m[2m
-  🧠 Let[0m[2m me[0m[2m analyze[0m[2m all[0m[2m the[0m[2m breaking[0m[2m changes[0m[2m between[0m[2m v[0m[2m1[0m[2m and[0m[2m v[0m[2m2[0m[2m:
-     
-[0m[2m1[0m[2m.[0m[2m **[0m[2mAuthentication[0m[2m header[0m[2m**:[0m[2m `[0m[2mX[0m[2m-A[0m[2muth[0m[2m-T[0m[2moken[0m[2m`[0m[2m →[0m[2m `[0m[2mAuthorization[0m[2m:[0m[2m Bear[0m[2mer[0m[2m <[0m[2mtoken[0m[2m>[0m[2m`
-[0m[2m2[0m[2m.[0m[2m **[0m[2mEndpoint[0m[2m prefix[0m[2m**:[0m[2m `/[0m[2mtasks[0m[2m`[0m[2m →[0m[2m `/[0m[2mv[0m[2m2[0m[2m/t[0m[2masks[0m[2m`[0m[2m ([0m[2mall[0m[2m endpoints[0m[2m pref[0m[2mixed[0m[2m with[0m[2m `/[0m[2mv[0m[2m2[0m[2m/[0m[2m`)
-[0m[2m3[0m[2m.[0m[2m **[0m[2mTask[0m[2m `[0m[2mid[0m[2m`[0m[2m type[0m[2m**:[0m[2m integer[0m[2m →[0m[2m UUID[0m[2m string[0m[2m
-[0m[2m4[0m[2m.[0m[2m **[0m[2mTask[0m[2m field[0m[2m `[0m[2mdone[0m[2m`[0m[2m**:[0m[2m renamed[0m[2m to[0m[2m `[0m[2mcompleted[0m[2m`
-[0m[2m5[0m[2m.[0m[2m **[0m[2mTask[0m[2m creation[0m[2m requires[0m[2m `[0m[2mproject[0m[2m_id[0m[2m`[0m[2m**:[0m[2m new[0m[2m required[0m[2m field[0m[2m
-[0m[2m6[0m[2m.[0m[2m **[0m[2mList[0m[2m endpoints[0m[2m**:[0m[2m bare[0m[2m array[0m[2m →[0m[2m pag[0m[2minated[0m[2m envelope[0m[2m with[0m[2m `[0m[2m{[0m[2mitems[0m[2m,[0m[2m total[0m[2m,[0m[2m next[0m[2m_c[0m[2mursor[0m[2m}`[0m[2m
-     
-[0m[2mI[0m[2m need[0m[2m to[0m[2m write[0m[2m a[0m[2m clear[0m[2m migration[0m[2m guide[0m[2m with[0m[2m:
-[0m[2m-[0m[2m Clear[0m[2m headings[0m[2m
-[0m[2m-[0m[2m Every[0m[2m breaking[0m[2m change[0m[2m called[0m[2m out[0m[2m
-[0m[2m-[0m[2m Before[0m[2m/[0m[2mafter[0m[2m code[0m[2m examples[0m[2m
-[0m[2m-[0m[2m Step[0m[2m-by[0m[2m-step[0m[2m checklist[0m[2m at[0m[2m the[0m[2m end[0m[2m
-[0m[2m-[0m[2m Upgrade[0m[2m command[0m[2m at[0m[2m the[0m[2m end[0m[2m
-     
-[0m[2mThe[0m[2m audience[0m[2m is[0m[2m experienced[0m[2m developers[0m[2m already[0m[2m using[0m[2m v[0m[2m1[0m[2m.[0m[2m So[0m[2m I[0m[2m can[0m[2m assume[0m[2m they[0m[2m know[0m[2m the[0m[2m v[0m[2m1[0m[2m API[0m[2m and[0m[2m focus[0m[2m on[0m[2m what[0m[2m changed[0m[2m and[0m[2m how[0m[2m to[0m[2m migrate[0m[2m.
-     
-[0m[2mLet[0m[2m me[0m[2m also[0m[2m activate[0m[2m the[0m[2m core[0m[2m-writing[0m[2m skill[0m[2m since[0m[2m this[0m[2m is[0m[2m a[0m[2m substantial[0m[2m prose[0m[2m deliver[0m[2mable[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m[0m[2m
-  🧰 call_00_3Ybqw33rwOAPmMCtdV6p6098 | ActivateSkill {'skill': 'core-writing'}
-[0m[2m
-  🔠 call_00_3Ybqw33rwOAPmMCtdV6p6098 Executed
-[0m[2m
-  🧠 The[0m[2m Act[0m[2mivate[0m[2mSkill[0m[2m function[0m[2m has[0m[2m different[0m[2m parameter[0m[2m requirements[0m[2m.[0m[2m Let[0m[2m me[0m[2m check[0m[2m how[0m[2m to[0m[2m call[0m[2m it[0m[2m properly[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m[0m[2m
-  🧰 call_00_C36Il37qE6NV6Cnu5ldg1258 | search_tools {'queries': ['ActivateSkill']}
-[0m[2m
-  🔠 call_00_C36Il37qE6NV6Cnu5ldg1258 Executed
-[0m[2m
-  🧠 The[0m[2m tool[0m[2m description[0m[2m says[0m[2m the[0m[2m parameter[0m[2m is[0m[2m `[0m[2mname[0m[2m`.[0m[2m Let[0m[2m me[0m[2m check[0m[2m the[0m[2m function[0m[2m definition[0m[2m again[0m[2m from[0m[2m the[0m[2m available[0m[2m tools[0m[2m list[0m[2m:
-     
-[0m[2m```
-[0m[2m"[0m[2mname[0m[2m":[0m[2m "[0m[2mAct[0m[2mivate[0m[2mSkill[0m[2m",
-[0m[2m"[0m[2mdescription[0m[2m":[0m[2m "[0m[2mActiv[0m[2mates[0m[2m specialized[0m[2m expertise[0m[2m from[0m[2m a[0m[2m skill[0m[2m.",
-[0m[2m"[0m[2mparameters[0m[2m":[0m[2m {
-[0m[2m [0m[2m "[0m[2mproperties[0m[2m":[0m[2m {
-[0m[2m   [0m[2m "[0m[2mname[0m[2m":[0m[2m {"[0m[2mtype[0m[2m":[0m[2m "[0m[2mstring[0m[2m"}
-[0m[2m [0m[2m },
-[0m[2m [0m[2m "[0m[2mrequired[0m[2m":[0m[2m ["[0m[2mname[0m[2m"],
-[0m[2m [0m[2m "[0m[2mtype[0m[2m":[0m[2m "[0m[2mobject[0m[2m"
-[0m[2m}
-[0m[2m```
-     
-[0m[2mSo[0m[2m the[0m[2m parameter[0m[2m is[0m[2m `[0m[2mname[0m[2m`[0m[2m not[0m[2m `[0m[2mskill[0m[2m`.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m[0m[2m
-  🧰 call_00_fKCcMipDpZZEdGnk6HQV6965 | ActivateSkill {'name': 'core-writing'}
-[0m[2m
-  🔠 call_00_fKCcMipDpZZEdGnk6HQV6965 Executed
-[0m[2m
-  🧠 The[0m[2m skill[0m[2m says[0m[2m "[0m[2mMigration[0m[2m guides[0m[2m"[0m[2m maps[0m[2m to[0m[2m the[0m[2m **[0m[2mBefore[0m[2m-A[0m[2mfter[0m[2m-B[0m[2mridge[0m[2m**[0m[2m formula[0m[2m ([0m[2mCurrent[0m[2m →[0m[2m Des[0m[2mired[0m[2m →[0m[2m How[0m[2m to[0m[2m get[0m[2m there[0m[2m).[0m[2m That[0m[2m's[0m[2m perfect[0m[2m for[0m[2m this[0m[2m deliver[0m[2mable[0m[2m.
-     
-[0m[2mLet[0m[2m me[0m[2m also[0m[2m check[0m[2m —[0m[2m the[0m[2m task[0m[2m is[0m[2m writing[0m[2m an[0m[2m API[0m[2m migration[0m[2m guide[0m[2m.[0m[2m The[0m[2m companion[0m[2m templates[0m[2m mention[0m[2m `[0m[2mt[0m[2memplates[0m[2m/api[0m[2m-d[0m[2moc[0m[2m.md[0m[2m`[0m[2m for[0m[2m "[0m[2mDocument[0m[2ming[0m[2m a[0m[2m function[0m[2m,[0m[2m endpoint[0m[2m,[0m[2m or[0m[2m CLI[0m[2m command[0m[2m."[0m[2m This[0m[2m is[0m[2m close[0m[2m enough[0m[2m to[0m[2m be[0m[2m worth[0m[2m reading[0m[2m for[0m[2m inspiration[0m[2m.
-     
-[0m[2mActually[0m[2m,[0m[2m let[0m[2m me[0m[2m just[0m[2m write[0m[2m the[0m[2m guide[0m[2m directly[0m[2m.[0m[2m I[0m[2m have[0m[2m both[0m[2m specs[0m[2m fully[0m[2m loaded[0m[2m.[0m[2m Let[0m[2m me[0m[2m work[0m[2m through[0m[2m the[0m[2m brief[0m[2m first[0m[2m:
-     
-[0m[2m**[0m[2mBrief[0m[2m:[0m[2m**
-[0m[2m-[0m[2m **[0m[2mAud[0m[2mience[0m[2m**:[0m[2m Exper[0m[2mienced[0m[2m developers[0m[2m already[0m[2m using[0m[2m v[0m[2m1[0m[2m.[0m[2m They[0m[2m know[0m[2m the[0m[2m v[0m[2m1[0m[2m API[0m[2m —[0m[2m I[0m[2m don[0m[2m't[0m[2m need[0m[2m to[0m[2m explain[0m[2m what[0m[2m a[0m[2m task[0m[2m is[0m[2m or[0m[2m how[0m[2m endpoints[0m[2m work[0m[2m in[0m[2m general[0m[2m.[0m[2m I[0m[2m need[0m[2m to[0m[2m tell[0m[2m them[0m[2m what[0m[2m changed[0m[2m and[0m[2m how[0m[2m to[0m[2m update[0m[2m their[0m[2m code[0m[2m.
-[0m[2m-[0m[2m **[0m[2mOut[0m[2mcome[0m[2m**:[0m[2m Developers[0m[2m can[0m[2m update[0m[2m their[0m[2m integrations[0m[2m from[0m[2m v[0m[2m1[0m[2m to[0m[2m v[0m[2m2[0m[2m with[0m[2m minimal[0m[2m friction[0m[2m.
-[0m[2m-[0m[2m **[0m[2mT[0m[2mone[0m[2m**:[0m[2m Technical[0m[2m,[0m[2m precise[0m[2m.[0m[2m No[0m[2m fl[0m[2muff[0m[2m.[0m[2m Assume[0m[2m competence[0m[2m.
-[0m[2m-[0m[2m **[0m[2mStructure[0m[2m**:[0m[2m Before[0m[2m-A[0m[2mfter[0m[2m-B[0m[2mridge[0m[2m.[0m[2m For[0m[2m each[0m[2m change[0m[2m:[0m[2m show[0m[2m v[0m[2m1[0m[2m code[0m[2m,[0m[2m show[0m[2m v[0m[2m2[0m[2m code[0m[2m,[0m[2m explain[0m[2m what[0m[2m changed[0m[2m.
-     
-[0m[2m**[0m[2mBreaking[0m[2m Changes[0m[2m ([0m[2mder[0m[2mived[0m[2m from[0m[2m specs[0m[2m):[0m[2m**
-[0m[2m1[0m[2m.[0m[2m **[0m[2mEndpoint[0m[2m paths[0m[2m**[0m[2m —[0m[2m `/[0m[2mtasks[0m[2m`[0m[2m →[0m[2m `/[0m[2mv[0m[2m2[0m[2m/t[0m[2masks[0m[2m`[0m[2m ([0m[2mall[0m[2m endpoints[0m[2m now[0m[2m pref[0m[2mixed[0m[2m with[0m[2m `/[0m[2mv[0m[2m2[0m[2m/[0m[2m`)
-[0m[2m2[0m[2m.[0m[2m **[0m[2mAuthentication[0m[2m**[0m[2m —[0m[2m `[0m[2mX[0m[2m-A[0m[2muth[0m[2m-T[0m[2moken[0m[2m`[0m[2m header[0m[2m →[0m[2m `[0m[2mAuthorization[0m[2m:[0m[2m Bear[0m[2mer[0m[2m <[0m[2mtoken[0m[2m>[0m[2m`
-[0m[2m3[0m[2m.[0m[2m **[0m[2mTask[0m[2m ID[0m[2m type[0m[2m**[0m[2m —[0m[2m integer[0m[2m →[0m[2m UUID[0m[2m string[0m[2m
-[0m[2m4[0m[2m.[0m[2m **[0m[2mTask[0m[2m field[0m[2m rename[0m[2m**[0m[2m —[0m[2m `[0m[2mdone[0m[2m`[0m[2m →[0m[2m `[0m[2mcompleted[0m[2m`
-[0m[2m5[0m[2m.[0m[2m **[0m[2mTask[0m[2m creation[0m[2m requires[0m[2m `[0m[2mproject[0m[2m_id[0m[2m`[0m[2m**[0m[2m —[0m[2m new[0m[2m required[0m[2m field[0m[2m
-[0m[2m6[0m[2m.[0m[2m **[0m[2mList[0m[2m tasks[0m[2m response[0m[2m format[0m[2m**[0m[2m —[0m[2m bare[0m[2m array[0m[2m →[0m[2m pag[0m[2minated[0m[2m envelope[0m[2m (`[0m[2m{[0m[2mitems[0m[2m,[0m[2m total[0m[2m,[0m[2m next[0m[2m_c[0m[2mursor[0m[2m}`[0m[2m)
-     
-[0m[2mLet[0m[2m me[0m[2m draft[0m[2m this[0m[2m out[0m[2m.
-     
-[0m[2m**[0m[2mStructure[0m[2m:[0m[2m**
-[0m[2m1[0m[2m.[0m[2m Title[0m[2m +[0m[2m brief[0m[2m intro[0m[2m explaining[0m[2m v[0m[2m2[0m[2m focus[0m[2m
-[0m[2m2[0m[2m.[0m[2m Quick[0m[2m reference[0m[2m table[0m[2m of[0m[2m all[0m[2m breaking[0m[2m changes[0m[2m
-[0m[2m3[0m[2m.[0m[2m Each[0m[2m breaking[0m[2m change[0m[2m with[0m[2m before[0m[2m/[0m[2mafter[0m[2m examples[0m[2m
-[0m[2m4[0m[2m.[0m[2m Step[0m[2m-by[0m[2m-step[0m[2m migration[0m[2m checklist[0m[2m
-[0m[2m5[0m[2m.[0m[2m Upgrade[0m[2m command[0m[2m
-     
-[0m[2mLet[0m[2m me[0m[2m write[0m[2m the[0m[2m full[0m[2m document[0m[2m now[0m[2m.[0m[2m
-  Following[0m[2m the[0m[2m **[0m[2mBefore[0m[2m-A[0m[2mfter[0m[2m-B[0m[2mridge[0m[2m**[0m[2m formula[0m[2m ([0m[2mCurrent[0m[2m →[0m[2m Des[0m[2mired[0m[2m →[0m[2m How[0m[2m to[0m[2m get[0m[2m there[0m[2m)[0m[2m per[0m[2m the[0m[2m core[0m[2m-writing[0m[2m skill[0m[2m.[0m[2m The[0m[2m audience[0m[2m knows[0m[2m v[0m[2m1[0m[2m —[0m[2m no[0m[2m re[0m[2m-expl[0m[2maining[0m[2m fundamentals[0m[2m.[0m[2m Each[0m[2m breaking[0m[2m change[0m[2m gets[0m[2m v[0m[2m1[0m[2m code[0m[2m,[0m[2m v[0m[2m2[0m[2m code[0m[2m,[0m[2m and[0m[2m the[0m[2m delta[0m[2m.
-     
-[0m[2mNow[0m[2m writing[0m[2m the[0m[2m guide[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m  🔄 Prepare tool parameters ⠸[0m[2m  🔄 Prepare tool parameters ⠼[0m[2m  🔄 Prepare tool parameters ⠴[0m[2m  🔄 Prepare tool parameters ⠦[0m[2m  🔄 Prepare tool parameters ⠧[0m[2m[0m[2m
-  🧰 call_00_uU2sEvVQbRJpqIaJ8r8Z1591 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Zrb CLI v1 → v2 Migratio ...'}
-[0m[2m
-  🔠 call_00_uU2sEvVQbRJpqIaJ8r8Z1591 Executed
-[0m[2m
-  🧠 The[0m[2m file[0m[2m was[0m[2m written[0m[2m successfully[0m[2m.[0m[2m Let[0m[2m me[0m[2m do[0m[2m a[0m[2m quick[0m[2m verification[0m[2m —[0m[2m re[0m[2m-read[0m[2m the[0m[2m file[0m[2m to[0m[2m confirm[0m[2m it[0m[2m's[0m[2m correct[0m[2m,[0m[2m and[0m[2m check[0m[2m against[0m[2m the[0m[2m requirements[0m[2m:
-     
-[0m[2m1[0m[2m.[0m[2m ✅[0m[2m Clear[0m[2m structure[0m[2m with[0m[2m headings[0m[2m
-[0m[2m2[0m[2m.[0m[2m ✅[0m[2m Explicit[0m[2mly[0m[2m calls[0m[2m out[0m[2m every[0m[2m breaking[0m[2m change[0m[2m ([0m[2m6[0m[2m changes[0m[2m listed[0m[2m in[0m[2m table[0m[2m,[0m[2m each[0m[2m with[0m[2m its[0m[2m own[0m[2m section[0m[2m)
-[0m[2m3[0m[2m.[0m[2m ✅[0m[2m Before[0m[2m/[0m[2mafter[0m[2m code[0m[2m examples[0m[2m for[0m[2m each[0m[2m breaking[0m[2m change[0m[2m ([0m[2mf[0m[2menced[0m[2m code[0m[2m blocks[0m[2m)
-[0m[2m4[0m[2m.[0m[2m ✅[0m[2m Step[0m[2m-by[0m[2m-step[0m[2m migration[0m[2m checklist[0m[2m at[0m[2m the[0m[2m end[0m[2m
-[0m[2m5[0m[2m.[0m[2m ✅[0m[2m Ends[0m[2m with[0m[2m the[0m[2m upgrade[0m[2m command[0m[2m
-     
-[0m[2mThe[0m[2m specs[0m[2m are[0m[2m complete[0m[2m and[0m[2m correct[0m[2m —[0m[2m no[0m[2m need[0m[2m to[0m[2m verify[0m[2m against[0m[2m the[0m[2m source[0m[2m specs[0m[2m again[0m[2m since[0m[2m I[0m[2m already[0m[2m read[0m[2m them[0m[2m.
-     
-[0m[2mLet[0m[2m me[0m[2m also[0m[2m check[0m[2m if[0m[2m the[0m[2m journal[0m[2m protocol[0m[2m requires[0m[2m me[0m[2m to[0m[2m log[0m[2m anything[0m[2m.[0m[2m I[0m[2m wrote[0m[2m a[0m[2m new[0m[2m file[0m[2m —[0m[2m that[0m[2m's[0m[2m a[0m[2m durable[0m[2m output[0m[2m.[0m[2m Let[0m[2m me[0m[2m search[0m[2m the[0m[2m journal[0m[2m for[0m[2m any[0m[2m relevant[0m[2m prior[0m[2m context[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠇[0m[2m  🔄 Prepare tool parameters ⠏[0m[2m[0m[2m
-  🧰 call_00_KkitV1QnGyX3LoCqx08S4085 | SearchJournal {'query': 'MIGRATION'}
-[0m[2m
-  🔠 call_00_KkitV1QnGyX3LoCqx08S4085 Executed
-[0m[2m
-  🧠 No[0m[2m prior[0m[2m journal[0m[2m entries[0m[2m about[0m[2m migration[0m[2m guides[0m[2m.[0m[2m Let[0m[2m me[0m[2m check[0m[2m if[0m[2m I[0m[2m need[0m[2m to[0m[2m record[0m[2m this[0m[2m.[0m[2m The[0m[2m work[0m[2m is[0m[2m self[0m[2m-contained[0m[2m —[0m[2m I[0m[2m read[0m[2m two[0m[2m specs[0m[2m and[0m[2m wrote[0m[2m a[0m[2m guide[0m[2m.[0m[2m The[0m[2m output[0m[2m file[0m[2m is[0m[2m the[0m[2m deliver[0m[2mable[0m[2m.[0m[2m Nothing[0m[2m here[0m[2m is[0m[2m a[0m[2m durable[0m[2m learning[0m[2m that[0m[2m needs[0m[2m recording[0m[2m beyond[0m[2m the[0m[2m file[0m[2m itself[0m[2m.[0m[2m The[0m[2m journal[0m[2m rules[0m[2m say[0m[2m to[0m[2m skip[0m[2m what[0m[2m's[0m[2m already[0m[2m in[0m[2m context[0m[2m/the[0m[2m deliver[0m[2mable[0m[2m.[0m[2m The[0m[2m M[0m[2mIG[0m[2mRATION[0m[2m.md[0m[2m file[0m[2m is[0m[2m the[0m[2m durable[0m[2m record[0m[2m.[0m[2m This[0m[2m is[0m[2m fine[0m[2m.
-     
-[0m[2mLet[0m[2m me[0m[2m verify[0m[2m the[0m[2m file[0m[2m reads[0m[2m back[0m[2m correctly[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m  🔄 Prepare tool parameters ⠙[0m[2m  🔄 Prepare tool parameters ⠹[0m[2m[0m[2m
-  🧰 call_00_UxyLBIOW31JweI74Jpy65701 | Read {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🔠 call_00_UxyLBIOW31JweI74Jpy65701 Executed
-[0m[2m
-  🧠 The[0m[2m file[0m[2m is[0m[2m verified[0m[2m.[0m[2m Let[0m[2m me[0m[2m check[0m[2m against[0m[2m all[0m[2m the[0m[2m requirements[0m[2m:
-     
-[0m[2m1[0m[2m.[0m[2m ✅[0m[2m Clear[0m[2m structure[0m[2m with[0m[2m headings[0m[2m —[0m[2m has[0m[2m a[0m[2m hierarchy[0m[2m of[0m[2m headings[0m[2m ([0m[2mH[0m[2m1[0m[2m,[0m[2m H[0m[2m2[0m[2m,[0m[2m H[0m[2m3[0m[2m)
-[0m[2m2[0m[2m.[0m[2m ✅[0m[2m Explicit[0m[2mly[0m[2m calls[0m[2m out[0m[2m every[0m[2m breaking[0m[2m change[0m[2m —[0m[2m [0m[2m6[0m[2m changes[0m[2m in[0m[2m the[0m[2m summary[0m[2m table[0m[2m,[0m[2m each[0m[2m with[0m[2m its[0m[2m own[0m[2m numbered[0m[2m section[0m[2m
-[0m[2m3[0m[2m.[0m[2m ✅[0m[2m Before[0m[2m/[0m[2mafter[0m[2m code[0m[2m examples[0m[2m for[0m[2m each[0m[2m breaking[0m[2m change[0m[2m —[0m[2m each[0m[2m section[0m[2m has[0m[2m "[0m[2mv[0m[2m1[0m[2m"[0m[2m and[0m[2m "[0m[2mv[0m[2m2[0m[2m"[0m[2m f[0m[2menced[0m[2m code[0m[2m blocks[0m[2m
-[0m[2m4[0m[2m.[0m[2m ✅[0m[2m Step[0m[2m-by[0m[2m-step[0m[2m migration[0m[2m checklist[0m[2m at[0m[2m the[0m[2m end[0m[2m —[0m[2m [0m[2m8[0m[2m checkbox[0m[2m items[0m[2m
-[0m[2m5[0m[2m.[0m[2m ✅[0m[2m Ends[0m[2m with[0m[2m the[0m[2m upgrade[0m[2m command[0m[2m —[0m[2m `[0m[2mpip[0m[2m install[0m[2m --[0m[2mup[0m[2mgrade[0m[2m z[0m[2mrb[0m[2m`[0m[2m and[0m[2m `[0m[2mz[0m[2mrb[0m[2m --[0m[2mversion[0m[2m`
-     
-[0m[2mAll[0m[2m requirements[0m[2m met[0m[2m.[0m[2m The[0m[2m evidence[0m[2m is[0m[2m in[0m[2m the[0m[2m file[0m[2m content[0m[2m I[0m[2m just[0m[2m re[0m[2m-read[0m[2m.[0m[2m
-  Del[0m[2mivered[0m[2m —[0m[2m `[0m[2mM[0m[2mIG[0m[2mRATION[0m[2m.md[0m[2m`[0m[2m written[0m[2m to[0m[2m the[0m[2m work[0m[2mdir[0m[2m.[0m[2m All[0m[2m six[0m[2m breaking[0m[2m changes[0m[2m from[0m[2m the[0m[2m spec[0m[2m diff[0m[2m are[0m[2m covered[0m[2m:
-     
-[0m[2m1[0m[2m.[0m[2m **[0m[2mEndpoint[0m[2m prefix[0m[2m**[0m[2m —[0m[2m `/[0m[2mtasks[0m[2m`[0m[2m →[0m[2m `/[0m[2mv[0m[2m2[0m[2m/t[0m[2masks[0m[2m`[0m[2m ([0m[2mHTTP[0m[2m request[0m[2m examples[0m[2m)
-[0m[2m2[0m[2m.[0m[2m **[0m[2mAuthentication[0m[2m**[0m[2m —[0m[2m `[0m[2mX[0m[2m-A[0m[2muth[0m[2m-T[0m[2moken[0m[2m`[0m[2m →[0m[2m `[0m[2mAuthorization[0m[2m:[0m[2m Bear[0m[2mer[0m[2m`[0m[2m ([0m[2mheader[0m[2m examples[0m[2m)
-[0m[2m3[0m[2m.[0m[2m **[0m[2mID[0m[2m type[0m[2m**[0m[2m —[0m[2m integer[0m[2m →[0m[2m UUID[0m[2m string[0m[2m ([0m[2mJSON[0m[2m payload[0m[2m comparison[0m[2m)
-[0m[2m4[0m[2m.[0m[2m **[0m[2mField[0m[2m rename[0m[2m**[0m[2m —[0m[2m `[0m[2mdone[0m[2m`[0m[2m →[0m[2m `[0m[2mcompleted[0m[2m`[0m[2m ([0m[2mPython[0m[2m read[0m[2m +[0m[2m JSON[0m[2m write[0m[2m examples[0m[2m)
-[0m[2m5[0m[2m.[0m[2m **[0m[2mRequired[0m[2m `[0m[2mproject[0m[2m_id[0m[2m`[0m[2m**[0m[2m —[0m[2m newly[0m[2m mandatory[0m[2m on[0m[2m create[0m[2m ([0m[2mHTTP[0m[2m request[0m[2m comparison[0m[2m +[0m[2m [0m[2m422[0m[2m error[0m[2m note[0m[2m)
-[0m[2m6[0m[2m.[0m[2m **[0m[2mList[0m[2m pag[0m[2mination[0m[2m**[0m[2m —[0m[2m bare[0m[2m array[0m[2m →[0m[2m `[0m[2m{[0m[2mitems[0m[2m,[0m[2m total[0m[2m,[0m[2m next[0m[2m_c[0m[2mursor[0m[2m}`[0m[2m envelope[0m[2m ([0m[2mJavaScript[0m[2m iteration[0m[2m pattern[0m[2m before[0m[2m/[0m[2mafter[0m[2m)
-     
-[0m[2mEach[0m[2m section[0m[2m follows[0m[2m:[0m[2m v[0m[2m1[0m[2m example[0m[2m →[0m[2m v[0m[2m2[0m[2m example[0m[2m →[0m[2m action[0m[2m item[0m[2m.[0m[2m Ends[0m[2m with[0m[2m an[0m[2m [0m[2m8[0m[2m-step[0m[2m checklist[0m[2m and[0m[2m the[0m[2m upgrade[0m[2m command[0m[2m.[0m[2m
-  💸 (Requests: 8 | Tool Calls: 7 | Total: 118417) Input: 114854 | Audio Input: 0 | Output: 3563 | Audio Output: 0 | Cache Read: 92160 | Cache Write: 0 | Details: {'prompt_cache_hit_tokens': 92160, 'prompt_cache_miss_tokens': 22694, 'reasoning_tokens': 1195}
-[0m[2mTo run again:[0m [1;33mzrb chat --message "The Zrb CLI is releasing v2, which has several breaking changes from v1. Our developer community needs a clear migration guide.
-
-`v1_spec.md` describes the current v1 API. `v2_spec.md` describes the new v2 API.
-
-Write a developer migration guide and save it as `MIGRATION.md`. It should:
-- Have a clear structure with headings
-- Explicitly call out every breaking change
-- Include before/after code examples for each breaking change (use fenced code blocks)
-- Have a step-by-step migration checklist at the end
-- End with the upgrade command
-
-The audience is experienced developers who are already using v1.
-" --model deepseek:deepseek-v4-flash --session deepseek_deepseek-v4-flash-copywriting-trial-1 --yolo true --attach "" --interactive false --sandbox ""[0m
-[2m[2mSession[0m: [1;33mdeepseek_deepseek-v4-flash-copywriting-trial-1[0m[0m
-Delivered — `MIGRATION.md` written to the workdir. All six breaking changes from the spec diff are covered:
-
-1. **Endpoint prefix** — `/tasks` → `/v2/tasks` (HTTP request examples)
-2. **Authentication** — `X-Auth-Token` → `Authorization: Bearer` (header examples)
-3. **ID type** — integer → UUID string (JSON payload comparison)
-4. **Field rename** — `done` → `completed` (Python read + JSON write examples)
-5. **Required `project_id`** — newly mandatory on create (HTTP request comparison + 422 error note)
-6. **List pagination** — bare array → `{items, total, next_cursor}` envelope (JavaScript iteration pattern before/after)
-
-Each section follows: v1 example → v2 example → action item. Ends with an 8-step checklist and the upgrade command.

@@ -1,11 +1,13 @@
-# HUD
+# Zaruba Journal Index
 
-## Active Constraints
-- None
+Welcome to Zaruba's persistent memory and knowledge base.
 
 ## Recent Insights
-- [Debugging Loop](technical/debug-loop.md)
+*None yet*
 
-## Navigation
-- [Activity Log](activity-log/index.md)
+## Directory Indexes
 - [Technical Notes](technical/index.md)
+- [Project Facts](projects/index.md)
+- [Preferences](preferences/index.md)
+- [User Context](user/index.md)
+- [Activity Log](activity-log/index.md)

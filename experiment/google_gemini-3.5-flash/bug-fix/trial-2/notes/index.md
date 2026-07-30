@@ -1,10 +1,7 @@
-# Zaruba Journal Root
+# Notes Index
 
-## HUD
-- **Active Constraints**: Do not change public method signatures.
-- **Recent Insights**: Fix concurrency issues in asyncio by mutating state before any `await` calls. Fix worker-level errors by properly calling `queue.fail()` rather than swallowing exceptions.
+Welcome to Zaruba's persistent memory.
 
-## Navigation
-- [Activity Log](activity-log/index.md)
 - [Projects](projects/index.md)
-- [Technical Notes](technical/index.md)
+- [Technical Insights](technical/index.md)
+- [Activity Log](activity-log/index.md)

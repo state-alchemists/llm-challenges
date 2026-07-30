@@ -1,6 +1,3 @@
-# Technical Notes
+# Technical Notes Index
 
-- [Debugging Loop](debug-loop.md)
-
-## Backlinks
-- [HUD](../index.md)
+*None yet*

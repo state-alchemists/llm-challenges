@@ -1,3 +1,3 @@
-# 2026 Activity Log
+# 2026
 
-- [06 — June](2026-06/index.md)
+- [2026-07](2026-07/index.md)

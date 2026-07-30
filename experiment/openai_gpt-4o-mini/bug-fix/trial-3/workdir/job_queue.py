@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 class JobQueue:
     def __init__(self, max_retries: int = 3):
         self._jobs: Dict[int, Dict[str, Any]] = {}
+        self.lock = asyncio.Lock()  # Initialize lock for synchronization
         self._next_id = 1
         self.max_retries = max_retries
 
@@ -21,12 +22,13 @@ class JobQueue:
         return job_id
 
     async def dequeue(self) -> Optional[Dict]:
-        for job in self._jobs.values():
-            if job["status"] == "pending":
-                await asyncio.sleep(0.01)
-                return job
-                return job
+        async with self.lock:  # Protect against race conditions
+            for job in self._jobs.values():
+                if job["status"] == "pending":
+                    job["status"] = "processing"
+                    return job
         return None
+
 
     def complete(self, job_id: int, result: Any) -> None:
         self._jobs[job_id]["status"] = "done"

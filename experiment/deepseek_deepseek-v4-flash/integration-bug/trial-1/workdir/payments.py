@@ -11,11 +11,14 @@ class PaymentGateway:
 
     async def charge(self, order_id: str, amount: float) -> bool:
         await asyncio.sleep(0.03)
-        # Idempotency: return True if already charged (no double-charge)
-        if any(c["order_id"] == order_id for c in self.charges):
-            return True
         if random.random() < self._failure_rate:
             return False
         self.total_charged += amount
         self.charges.append({"order_id": order_id, "amount": amount})
+        return True
+
+    async def refund(self, order_id: str, amount: float) -> bool:
+        await asyncio.sleep(0.02)
+        self.total_charged -= amount
+        self.charges = [c for c in self.charges if c["order_id"] != order_id]
         return True

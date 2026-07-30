@@ -22,10 +22,8 @@ async def checkout(
 
     decremented = await inventory.decrement(quantity)
     if not decremented:
-        print(f"Order {order_id}: inventory error after payment — item not delivered")
-        # Refund the customer if inventory decrement fails after payment
+        print(f"Order {order_id}: inventory error after payment — item not delivered. Refunding...")
         await gateway.refund(order_id, quantity * price)
-        print(f"Order {order_id}: refunded due to inventory error")
         return False
 
     print(f"Order {order_id}: SUCCESS")

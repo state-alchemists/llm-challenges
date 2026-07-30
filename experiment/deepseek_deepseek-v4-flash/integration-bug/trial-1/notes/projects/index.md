@@ -1,3 +1,6 @@
 # Projects
 
-- [ecommerce-checkout-fix](ecommerce-checkout-fix.md)
+- [integration-bug](./integration-bug.md) — checkout concurrency fix
+
+## Backlinks
+- [root index](../index.md)

@@ -1,10 +1,6 @@
-# HUD Index
+# Journal
 
-Welcome to the LLM Journal HUD.
+Heads-Up Display for Zaruba.
 
-## Navigation
-- [Projects](projects/index.md)
+## Sections
 - [Activity Log](activity-log/index.md)
-
-## Recent Insights
-- [Debug Loop Pipeline Fix](projects/debug-loop.md)

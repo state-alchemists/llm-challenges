@@ -1,6 +1,6 @@
 # Projects Index
 
-- [Project Management API](project-management-api.md)
+- [Project Management API Feature](project-management-api.md)
 
 ## Backlinks
-- [Journal Index](../index.md)
+- [Index](../index.md)

@@ -1,6 +1,3 @@
-# Projects Index
+# Projects
 
-- [Checkout Service](checkout-service.md)
-
-## Backlinks
-- [Journal Index](../index.md)
+- [E-Commerce Checkout](ecommerce-checkout.md)

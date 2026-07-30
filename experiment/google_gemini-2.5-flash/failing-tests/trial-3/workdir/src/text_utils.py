@@ -13,7 +13,6 @@ def slugify(text: str) -> str:
     >>> slugify("  multiple   spaces  ")
     'multiple-spaces'
     """
-    import re
     text = text.lower()
     result_chars: list[str] = []
     for char in text:
@@ -22,8 +21,8 @@ def slugify(text: str) -> str:
         elif char.isspace() or char == "-":
             result_chars.append("-")
     collapsed = "".join(result_chars)
-    # Replace multiple hyphens with a single hyphen
-    collapsed = re.sub(r'-+', '-', collapsed)
+    collapsed = collapsed.replace("-", " ")
+    collapsed = "-".join(collapsed.split())
     return collapsed.strip("-")
 
 
@@ -34,5 +33,6 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-    # Ensure truncated text + suffix does not exceed max_len
+    if max_len < len(suffix):
+        return suffix[:max_len]
     return text[:max_len - len(suffix)] + suffix

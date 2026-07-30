@@ -5,15 +5,10 @@ class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
         self._lock = asyncio.Lock()
-        self._processed_orders = set()
 
     @property
     def lock(self) -> asyncio.Lock:
         return self._lock
-
-    @property
-    def processed_orders(self) -> set:
-        return self._processed_orders
 
     async def check_stock(self, quantity: int) -> bool:
         await asyncio.sleep(0.02)

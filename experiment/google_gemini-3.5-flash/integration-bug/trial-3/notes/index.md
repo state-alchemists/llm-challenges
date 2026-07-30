@@ -1,12 +1,14 @@
-# Journal Index
+# Zaruba HUD
 
-Welcome to your Heads-Up Display (HUD) and persistent memory.
+## Active Constraints & Rules
+- correctness > speed, evidence > assumption
+- Verify before asserting or done
+
+## Recent Insights
+- [E-Commerce Checkout Integration Bug Fix](projects/ecommerce-checkout.md) — Solved overselling and ghost charges with decrement-first lock pattern
 
 ## Projects
-- [Checkout Service](projects/index.md)
-
-## Technical Reference
-- [Distributed Transactions](technical/index.md)
+- [Projects Index](projects/index.md)
 
 ## Activity Log
 - [Activity Log Root](activity-log/index.md)

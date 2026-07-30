@@ -14,16 +14,16 @@ def slugify(text: str) -> str:
     'multiple-spaces'
     """
     result_chars: list[str] = []
-    last_was_dash = False
     for char in text.lower():
         if char.isalnum():
             result_chars.append(char)
-            last_was_dash = False
         elif char.isspace() or char == "-":
-            if not last_was_dash:
-                result_chars.append("-")
-                last_was_dash = True
-    return "".join(result_chars).strip("-")
+            result_chars.append("-")
+    collapsed = "".join(result_chars)
+    # Collapse any runs of dashes
+    while "--" in collapsed:
+        collapsed = collapsed.replace("--", "-")
+    return collapsed.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:

@@ -1,7 +1,6 @@
 import asyncio
 from typing import Any, Dict, Optional
 
-
 class JobQueue:
     def __init__(self, max_retries: int = 3):
         self._jobs: Dict[int, Dict[str, Any]] = {}
@@ -23,22 +22,25 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
-                job["status"] = "processing"
+                job["status"] = "processing"  # Lock job for processing
                 return job
+            await asyncio.sleep(0.01)  # Emulate processing delay
         return None
+
+    def fail(self, job_id: int, error: str) -> None:
+        job = self._jobs[job_id]
+        if job["status"] == "processing":  # Only allow failing if currently processing
+            if job["retries"] < self.max_retries:
+                job["retries"] += 1
+                job["status"] = "pending"
+            else:
+                job["status"] = "failed"
+                job["result"] = error
+                print(f"Job {job_id} has been marked as failed after maximum retries.")
 
     def complete(self, job_id: int, result: Any) -> None:
         self._jobs[job_id]["status"] = "done"
         self._jobs[job_id]["result"] = result
-
-    def fail(self, job_id: int, error: str) -> None:
-        job = self._jobs[job_id]
-        if job["retries"] < self.max_retries:
-            job["retries"] += 1
-            job["status"] = "pending"
-        else:
-            job["status"] = "failed"
-            job["result"] = error
 
     @property
     def all_jobs(self) -> Dict[int, Dict]:

@@ -1,7 +1,6 @@
-# Journal HUD
+# HUD index
 
 ## Recent Insights
-None
+- None yet.
 
-## Navigation
-- [Activity Log](activity-log/index.md)
+## Backlinks

@@ -1,3 +1,6 @@
-# Technical Notes Index
+# Technical Insights Index
 
-No technical notes indexed yet.
+- [Asyncio Race Conditions](asyncio-race-conditions.md)
+
+## Backlinks
+- [Root Index](../index.md)

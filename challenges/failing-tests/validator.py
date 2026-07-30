@@ -5,7 +5,12 @@ The contract:
   ``tests/`` (stored alongside the validator) and assert byte-equality
   with what the agent has in its workdir — any divergence means the
   agent edited the tests, which is a hard FAIL.
-- Then run ``pytest -q`` in a subprocess; ALL tests must pass.
+- Then run ``pytest -q`` in a subprocess; ALL tests must pass. The
+  interpreter is resolved by ``_resolve_pytest_cmd`` rather than assumed to
+  be ``sys.executable`` — the evaluator often runs from a pipx venv with no
+  pytest installed, which would fail every trial regardless of the agent's
+  work. If no interpreter with pytest exists, the ``pytest_available`` check
+  reports it as a harness error so it is never misread as a model failure.
 - Inspect the source under ``src/`` for ``pytest.skip``, ``xfail``, or
   similar bypass markers and FAIL if any are introduced.
 
@@ -16,7 +21,9 @@ clean or the agent didn't fix the bugs.
 from __future__ import annotations
 
 import hashlib
+import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -51,6 +58,77 @@ def _golden_test_hashes() -> dict[str, str]:
         rel = path.relative_to(_GOLDEN_TESTS_DIR).as_posix()
         out[rel] = _sha256(path)
     return out
+
+
+def _probe(cmd: list[str], cwd: Path) -> bool:
+    """True if ``cmd`` exits 0 when run from ``cwd``.
+
+    Always probed from the cwd the suite will run in: version-manager shims
+    (pyenv, asdf) resolve to a different interpreter per directory, so a shim
+    that works here may resolve to a pytest-less python inside the workdir.
+    """
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(cwd),
+            capture_output=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return proc.returncode == 0
+
+
+def _has_pytest(python: str, cwd: Path) -> bool:
+    """True if ``python`` can import pytest when run from ``cwd``."""
+    return _probe([python, "-c", "import pytest"], cwd)
+
+
+def _resolve_pytest_cmd(output_dir: Path) -> list[str] | None:
+    """Find a runnable pytest, or None if the host has none.
+
+    ``sys.executable`` is whatever interpreter the evaluator itself runs
+    under (e.g. a pipx venv), which frequently has no pytest installed —
+    so it is a candidate, not the answer. Candidates are tried in order of
+    how closely they match the environment the agent itself used, and every
+    candidate is probed before use rather than assumed:
+
+    1. a virtualenv the agent created inside its workdir
+    2. ``$PYTEST_PYTHON`` / ``$FAILING_TESTS_PYTHON`` override
+    3. the evaluator's own interpreter
+    4. plain ``python3`` / ``python`` from PATH
+    5. ``pytest`` as a console script on PATH
+    """
+    cwd = output_dir if output_dir.is_dir() else Path.cwd()
+
+    for venv in (".venv", "venv", "env"):
+        candidate = output_dir / venv / ("Scripts" if os.name == "nt" else "bin") / "python"
+        if candidate.is_file() and _has_pytest(str(candidate), cwd):
+            return [str(candidate), "-m", "pytest"]
+
+    for env_var in ("PYTEST_PYTHON", "FAILING_TESTS_PYTHON"):
+        override = os.environ.get(env_var)
+        if override and _has_pytest(override, cwd):
+            return [override, "-m", "pytest"]
+
+    seen = {sys.executable}
+    if _has_pytest(sys.executable, cwd):
+        return [sys.executable, "-m", "pytest"]
+
+    # Prefer a concrete interpreter over the bare console script: `-m pytest`
+    # pins which python runs the suite, while a shim can silently switch.
+    for name in ("python3", "python"):
+        found = shutil.which(name)
+        if found and found not in seen:
+            seen.add(found)
+            if _has_pytest(found, cwd):
+                return [found, "-m", "pytest"]
+
+    console_script = shutil.which("pytest")
+    if console_script and _probe([console_script, "--version"], cwd):
+        return [console_script]
+
+    return None
 
 
 def _scan_for_bypass(root: Path) -> list[str]:
@@ -138,9 +216,34 @@ class FailingTestsValidator:
             )
         )
 
+        pytest_cmd = _resolve_pytest_cmd(output_dir)
+        if pytest_cmd is None:
+            details.append(
+                ValidationCheck(
+                    name="pytest_available",
+                    passed=False,
+                    message=(
+                        "HARNESS ENVIRONMENT ERROR — not a model failure. No "
+                        "interpreter with pytest was found, so the agent's fix "
+                        f"was never executed. Tried: {sys.executable}, a venv in "
+                        "the workdir, $PYTEST_PYTHON, and python3/python on "
+                        "PATH. Install pytest into the evaluator's environment "
+                        "or set $PYTEST_PYTHON, then re-run this test case."
+                    ),
+                )
+            )
+            return ValidationResult(status="FAIL", score=0.0, details=details)
+        details.append(
+            ValidationCheck(
+                name="pytest_available",
+                passed=True,
+                message=f"Using {' '.join(pytest_cmd)}",
+            )
+        )
+
         try:
             proc = subprocess.run(
-                [sys.executable, "-m", "pytest", "-q", "--tb=short"],
+                [*pytest_cmd, "-q", "--tb=short"],
                 cwd=str(output_dir),
                 capture_output=True,
                 text=True,

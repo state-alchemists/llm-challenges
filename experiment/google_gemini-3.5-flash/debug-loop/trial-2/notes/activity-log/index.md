@@ -1,6 +1,5 @@
-# Activity Log
+# Activity Log Index
 
-- [2026](2026/index.md)
+Chronological log of significant agent activities.
 
-## Backlinks
-- [HUD](../index.md)
+- [2026 Log](2026/index.md)

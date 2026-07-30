@@ -1,12 +1,6 @@
-# Zaruba's Knowledge Graph HUD
+# Journal Root
 
-Welcome to the HUD. This graph records active insights and chronological logs.
+Welcome to the journal.
 
-## Active Projects
-- [Grep Fest](projects/index.md)
-
-## Recent Activity Logs
-- [Activity Index](activity-log/index.md)
-
-## Backlinks
-- (None)
+## Sections
+- [Activity Log](activity-log/index.md)

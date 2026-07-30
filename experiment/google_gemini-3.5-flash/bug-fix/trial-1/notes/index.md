@@ -1,9 +1,10 @@
-# Zaruba's Memory Journal
+# Journal Index
 
-Welcome to the HUD index.
+Welcome to Zaruba's persistent memory.
 
-## Directory Index
+## Navigation
 - [Activity Log](activity-log/index.md)
+- [Technical Insights](technical/index.md)
 
-## Backlinks
-- None
+## Recent Insights
+- [Asyncio Cooperative Concurrency](technical/asyncio-concurrency.md)

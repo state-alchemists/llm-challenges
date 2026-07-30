@@ -1,8 +1,11 @@
-# Journal Index
+# Zaruba's Journal HUD
 
-Welcome to the journal.
+## Recent Insights
+None in this session.
 
-## Sections
-- [Projects](projects/index.md)
-- [Technical](technical/index.md)
+## Projects
+- [Projects Index](projects/index.md)
+- [Project Management API Feature](projects/project-management-api.md) — Feature implementation details.
+
+## Activity Log
 - [Activity Log](activity-log/index.md)

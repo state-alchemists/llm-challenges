@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 
 def slugify(text: str) -> str:
     """Convert text to a URL-safe slug.
@@ -19,10 +21,8 @@ def slugify(text: str) -> str:
             result_chars.append(char.lower())
         elif char.isspace() or char == "-":
             result_chars.append("-")
-    import re
     collapsed = "".join(result_chars)
-    collapsed = collapsed.strip("-")
-    return re.sub(r"-+", "-", collapsed)
+    return re.sub(r"-+", "-", collapsed.strip("-"))
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:

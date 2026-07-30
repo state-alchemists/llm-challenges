@@ -1,10 +1,13 @@
-# Journal
-
-## Active Projects
-- [ecommerce-checkout-fix](projects/ecommerce-checkout-fix.md) — Concurrency bug fix for overselling and ghost charges
+# Journal Index
 
 ## Recent Insights
-- [TOCTOU race pattern](technical/toctou-race-pattern.md) — Reserve-before-charge pattern for concurrent checkout
+
+## Projects
+- [projects index](./projects/index.md)
+- [integration-bug](./projects/integration-bug.md) — checkout concurrency fix
+
+## Technical Notes
 
 ## Activity Log
-- [2026-06-25](activity-log/2026/2026-06/2026-06-25.md)
+- [activity-log index](./activity-log/index.md)
+- [2026-07-30](./activity-log/2026/2026-07/2026-07-30.md)

@@ -1,6 +1,7 @@
 """Inventory tracking with reservation support."""
 
 from __future__ import annotations
+from typing import Optional
 
 
 class OutOfStock(Exception):
@@ -10,11 +11,8 @@ class OutOfStock(Exception):
 class Inventory:
     """Tracks on-hand stock per SKU and outstanding reservations."""
 
-    def __init__(self, initial: dict[str, int] = {}) -> None:  # noqa: B006
-        self._stock = {}
-        self._reserved = {}
-        for sku, qty in initial.items():
-            self.add(sku, qty) 
+    def __init__(self, initial: Optional[dict[str, int]] = None) -> None:
+        self._stock = initial or {}
         self._reserved: dict[str, int] = {}
 
     def add(self, sku: str, qty: int) -> None:

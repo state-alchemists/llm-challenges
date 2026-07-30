@@ -1,12 +1,3 @@
-# Zaruba's Journal HUD
+# Journal Index
 
-Welcome to the persistent knowledge base and activity log.
-
-## Directory Index
-- [Activity Log](activity-log/index.md)
-
-## Recent Insights
-- None
-
-## Backlinks
-- None
+- [[activity_log]]: Completed Zrb CLI v1 to v2 migration guide writing and local validation.

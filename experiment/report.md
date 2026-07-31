@@ -167,6 +167,7 @@ Based on failure patterns across all models:
 - **Started**: 2026-07-31T07:40:31.174275+00:00
 - **Completed**: 2026-07-31T09:19:40.012272+00:00
 - **Generated**: 2026-07-31T09:19:40.012272+00:00
+- **Version**: 2.51.0 (beta)
 
 **Total trials**: 288
 

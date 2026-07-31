@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from config import CONFIG
+from config import CONFIG as settings
 
 
 def extract() -> list[int]:
@@ -11,7 +11,7 @@ def extract() -> list[int]:
 
 def transform(values: list[int]) -> float:
     total = sum(values)
-    return total / CONFIG["batch_size"]
+    return total / settings["batch_size"]
 
 
 def load(value: float) -> None:

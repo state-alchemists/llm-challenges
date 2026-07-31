@@ -23,9 +23,3 @@ class Inventory:
     @property
     def stock(self) -> int:
         return self._stock
-
-    async def decrement_if_available(self, quantity: int) -> bool:
-        if self._stock >= quantity:
-            self._stock -= quantity
-            return True
-        return False

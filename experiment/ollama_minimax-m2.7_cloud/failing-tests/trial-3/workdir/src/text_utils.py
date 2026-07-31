@@ -20,7 +20,6 @@ def slugify(text: str) -> str:
         elif char.isspace() or char == "-":
             result_chars.append("-")
     collapsed = "".join(result_chars)
-    # Collapse any runs of dashes
     while "--" in collapsed:
         collapsed = collapsed.replace("--", "-")
     return collapsed.strip("-")
@@ -33,4 +32,4 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-    return text[: max_len - len(suffix)] + suffix
+    return text[:max_len - len(suffix)] + suffix

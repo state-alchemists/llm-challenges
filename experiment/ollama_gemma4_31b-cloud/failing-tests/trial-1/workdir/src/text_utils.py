@@ -14,15 +14,20 @@ def slugify(text: str) -> str:
     'multiple-spaces'
     """
     result_chars: list[str] = []
-    for char in text:
+    for char in text.lower():
         if char.isalnum():
-            result_chars.append(char.lower())
+            result_chars.append(char)
         elif char.isspace() or char == "-":
             result_chars.append("-")
-    collapsed = "".join(result_chars)
     
-    import re
-    return re.sub(r"-+", "-", collapsed).strip("-")
+    # Collapse repeated separators by filtering or using a loop
+    collapsed_chars = []
+    for i, char in enumerate(result_chars):
+        if char == "-" and i > 0 and result_chars[i-1] == "-":
+            continue
+        collapsed_chars.append(char)
+        
+    return "".join(collapsed_chars).strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
@@ -33,8 +38,11 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     if len(text) <= max_len:
         return text
     
-    cutoff = max_len - len(suffix)
-    if cutoff < 0:
+    # Subtract suffix length from max_len to determine how much of text to keep
+    keep_len = max_len - len(suffix)
+    if keep_len < 0:
+        # If max_len is smaller than suffix, we can't even fit the suffix.
+        # Usually max_len >= len(suffix) is assumed, but let's be safe.
         return suffix[:max_len]
         
-    return text[:cutoff] + suffix
+    return text[:keep_len] + suffix

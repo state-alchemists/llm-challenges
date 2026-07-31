@@ -14,10 +14,11 @@ class PaymentGateway:
         if random.random() < self._failure_rate:
             return False
         self.total_charged += amount
-        if amount > 0:
-            if not self.has_charged(order_id):
-                self.charges.append({"order_id": order_id, "amount": amount})
+        self.charges.append({"order_id": order_id, "amount": amount})
         return True
 
-    def has_charged(self, order_id: str) -> bool:
-        return any(charge["order_id"] == order_id for charge in self.charges)
+    async def refund(self, order_id: str, amount: float) -> bool:
+        await asyncio.sleep(0.03)  # Simulate refund delay
+        self.total_charged -= amount
+        self.charges = [charge for charge in self.charges if not (charge['order_id'] == order_id and charge['amount'] == amount)]
+        return True

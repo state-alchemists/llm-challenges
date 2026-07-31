@@ -1,7 +1,4 @@
-# Notes Index
+# Journal Index
 
-Welcome to Zaruba's persistent memory.
-
-- [Projects](projects/index.md)
-- [Technical Insights](technical/index.md)
-- [Activity Log](activity-log/index.md)
+## Technical Notes
+- [Job Queue Bugfix](technical/job-queue-bugfix.md) — Fixed duplicate processing and vanishing failures.

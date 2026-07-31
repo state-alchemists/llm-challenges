@@ -24,7 +24,8 @@ class JobQueue:
         for job in self._jobs.values():
             if job["status"] == "pending":
                 await asyncio.sleep(0.01)
-                # Job status is not changed here
+                # Ensure status is changed only if it's still pending
+                job["status"] = "processing"
                 return job
         return None
 

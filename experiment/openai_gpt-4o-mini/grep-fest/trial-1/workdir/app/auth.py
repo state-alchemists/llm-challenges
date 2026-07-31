@@ -1,9 +1,19 @@
-def legacy_auth(user_id: str) -> bool:
-    """DEPRECATED: use new_auth(user_id, scope=...) instead."""
-    return False
+"""Authentication helpers — new_auth is deprecated, use new_auth instead."""
 
-def new_auth(user_id: str, scope: str = "read") -> bool:
+from __future__ import annotations
+
+
+def legacy_auth(user_id: str, scope="read") -> bool:
+    """DEPRECATED: use new_auth(user_id, scope=...) instead.
+
+    Still exposed for external consumers we don't control. Internal call
+    sites must be migrated.
+    """
+    return bool(user_id)
+
+
+def new_auth_func(user_id: str, scope: str = "read") -> bool:
     """Authorize a user for a given scope (``read`` or ``write``)."""
     if scope not in ("read", "write"):
-        raise ValueError("Invalid scope")
-    return True # Placeholder for actual authentication logic
+        raise ValueError(f"unknown scope: {scope}")
+    return bool(user_id)

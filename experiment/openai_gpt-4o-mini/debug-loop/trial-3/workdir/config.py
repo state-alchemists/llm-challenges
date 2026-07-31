@@ -1,8 +1,10 @@
-"""Configuration constants for the pipeline.\n\n"""
+"""Configuration constants for the pipeline."""
 
-settings = {
-    "source": "events.csv",
-    "batch_size": 1
+settings = { 
+    'source': 'events.csv', 
+    'batch_size': 1
 }
-
-CONFIG = settings
+CONFIG = {
+    "source": "events.csv",
+    "batch_size": 0,
+}

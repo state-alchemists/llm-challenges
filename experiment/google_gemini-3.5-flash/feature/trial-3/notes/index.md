@@ -1,6 +1,3 @@
-# Zaruba Journal Index
+# Journal Index
 
-Welcome to Zaruba's persistent memory and knowledge graph index.
-
-## Activity Logs
-- [All Activity Logs](activity-log/index.md)
+- [Activity Log 2026-07-31](activity-log/2026/2026-07/2026-07-31.md)

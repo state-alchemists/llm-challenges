@@ -1,135 +1,159 @@
-# Zrb CLI Migration Guide: v1 to v2
+# Zrb CLI v1 → v2 Migration Guide
 
-This guide covers every breaking change when upgrading from Zrb CLI v1 to v2. Each section shows the v1 behavior, the v2 replacement, and what you need to do.
+This guide covers every breaking change from v1 to v2 and how to update your integration.
 
 ## Breaking Changes
 
-### 1. All Endpoints Are Now Prefixed with `/v2/`
+### 1. URL Prefix: `/tasks` → `/v2/tasks`
 
-Every endpoint path has changed. There is no v1 compatibility mode.
+All endpoints now live under the `/v2/` prefix.
 
-**v1:**
-```
+**Before (v1):**
+```http
 GET /tasks
 POST /tasks
-PUT /tasks/{id}
-DELETE /tasks/{id}
+PUT /tasks/42
+DELETE /tasks/42
 ```
 
-**v2:**
-```
+**After (v2):**
+```http
 GET /v2/tasks
 POST /v2/tasks
-PUT /v2/tasks/{id}
-DELETE /v2/tasks/{id}
+PUT /v2/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890
+DELETE /v2/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890
 ```
 
-### 2. Authentication Header Changed
+---
 
-The header name and format both changed. Requests using the old header receive HTTP 401.
+### 2. Authentication Header: `X-Auth-Token` → `Bearer Token`
 
-**v1:**
+The `X-Auth-Token` header is no longer accepted. Switch to the `Authorization` header with a Bearer token.
+
+**Before (v1):**
 ```http
-X-Auth-Token: <your_api_key>
+X-Auth-Token: your_api_key_here
 ```
 
-**v2:**
+**After (v2):**
 ```http
-Authorization: Bearer <your_api_token>
+Authorization: Bearer your_api_token_here
 ```
 
-Update your HTTP client to send `Authorization: Bearer <token>` on every request.
+Requests with `X-Auth-Token` will receive **HTTP 401**.
 
-### 3. Task `id` Is Now a UUID String
+---
 
-Task IDs are no longer integers. They are UUID strings. Code that parses IDs as integers will break.
+### 3. Task ID: Integer → UUID String
 
-**v1 task:**
+Task IDs are now UUIDs instead of integers. Update any code that parses or stores task IDs.
+
+**Before (v1):**
 ```json
-{ "id": 42, ... }
+{ "id": 42, "title": "Write tests", "done": false }
 ```
 
-**v2 task:**
+**After (v2):**
 ```json
-{ "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", ... }
+{ "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "title": "Write tests", "completed": false }
 ```
 
-Update any code that stores, compares, or serializes task IDs to handle UUID strings.
+Update type annotations, database columns, and serialization logic accordingly.
 
-### 4. Field `done` Renamed to `completed`
+---
 
-The `done` boolean field is now called `completed`.
+### 4. Field Rename: `done` → `completed`
 
-**v1 — update task:**
+The `done` boolean is renamed to `completed`.
+
+**Before (v1):**
 ```json
-{ "done": true }
+{ "title": "Ship v1", "done": true }
 ```
 
-**v2 — update task:**
+**After (v2):**
 ```json
-{ "completed": true }
+{ "title": "Ship v2", "completed": true }
 ```
 
-Rename all occurrences of `done` to `completed` in your request bodies and response handling.
+Update all field references in your code, templates, and storage.
 
-### 5. Task Creation Requires `project_id`
+---
 
-Creating a task now requires a `project_id` field. Omitting it returns HTTP 422.
+### 5. New Required Field: `project_id` on Task Creation
 
-**v1 — create task:**
-```json
-{ "title": "New task" }
+Creating a task now requires a `project_id`. Omitting it returns **HTTP 422**.
+
+**Before (v1):**
+```http
+POST /v2/tasks
+{
+  "title": "New task title"
+}
 ```
 
-**v2 — create task:**
-```json
-{ "title": "New task", "project_id": "proj_abc123" }
+**After (v2):**
+```http
+POST /v2/tasks
+{
+  "title": "New task title",
+  "project_id": "proj_abc123"
+}
 ```
 
-Every `POST /v2/tasks` call must include a valid `project_id`. Fetch or create a project first if you do not have one.
+If you don't have projects yet, create one via `POST /v2/projects` first.
 
-### 6. List Endpoints Return a Paginated Envelope
+---
 
-List responses are no longer bare arrays. They are wrapped in an envelope object with `items`, `total`, and `next_cursor`.
+### 6. List Response: Bare Array → Paginated Envelope
 
-**v1 — list tasks response:**
+List endpoints no longer return a bare array. They return a paginated envelope with `items`, `total`, and `next_cursor`.
+
+**Before (v1):**
 ```json
 [
-  { "id": 1, "title": "Buy milk", "done": false, "created_at": "..." },
-  { "id": 2, "title": "Ship v1", "done": true, "created_at": "..." }
+  { "id": 1, "title": "Buy milk", "done": false },
+  { "id": 2, "title": "Ship v1", "done": true }
 ]
 ```
 
-**v2 — list tasks response:**
+**After (v2):**
 ```json
 {
   "items": [
-    { "id": "...", "title": "Buy milk", "completed": false, "project_id": "...", "created_at": "..." }
+    { "id": "a1b2c3d4-...", "title": "Buy milk", "completed": false, "project_id": "proj_abc123" },
+    { "id": "e5f6g7h8-...", "title": "Ship v2", "completed": true, "project_id": "proj_abc123" }
   ],
   "total": 42,
   "next_cursor": "cursor_xyz"
 }
 ```
 
-Update your list-response handling to read `response.items` instead of the root array. Use `response.next_cursor` with `?cursor=` to paginate.
+To paginate, pass `?cursor=<next_cursor>` on the next request.
 
 ---
 
 ## Migration Checklist
 
-- [ ] Update all endpoint paths from `/tasks` to `/v2/tasks`
-- [ ] Replace header `X-Auth-Token` with `Authorization: Bearer <token>`
-- [ ] Change task ID handling from integer to UUID string
-- [ ] Rename field `done` to `completed` in all request bodies and response parsing
-- [ ] Add `project_id` to every task creation request
-- [ ] Update list response parsing to use `response.items` array and handle `response.next_cursor`
-- [ ] Test pagination by checking for `next_cursor` and passing it as `?cursor=` query param
-- [ ] Verify no remaining references to `X-Auth-Token` or bare array list responses
+- [ ] Update all endpoint URLs to include `/v2/` prefix
+- [ ] Replace `X-Auth-Token` header with `Authorization: Bearer <token>`
+- [ ] Change task ID type from `int` to `str` (UUID) in code and storage
+- [ ] Rename all `done` field references to `completed`
+- [ ] Add `project_id` to task creation payloads
+- [ ] Update list response handling to extract `items` from the envelope
+- [ ] Implement cursor-based pagination for list endpoints
+- [ ] Update any type annotations or serialization logic
 
 ---
 
 ## Upgrade Command
 
 ```bash
-npm install -g zrb-cli@2
+npm install @zrb/cli@latest
+```
+
+Or, if using the Go CLI:
+
+```bash
+go install github.com/zrb/cli/cmd@latest
 ```

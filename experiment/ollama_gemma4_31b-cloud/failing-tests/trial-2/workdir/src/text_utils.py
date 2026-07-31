@@ -16,12 +16,17 @@ def slugify(text: str) -> str:
     result_chars: list[str] = []
     for char in text:
         if char.isalnum():
-            result_chars.append(char)
+            result_chars.append(char.lower())
         elif char.isspace() or char == "-":
             result_chars.append("-")
-    import re
-    collapsed = re.sub(r'[- ]+', '-', "".join(result_chars)).strip("-")
-    return collapsed.lower()
+    
+    collapsed = "".join(result_chars)
+    
+    # Repeatedly replace "--" until only single dashes remain
+    while "--" in collapsed:
+        collapsed = collapsed.replace("--", "-")
+        
+    return collapsed.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
@@ -31,4 +36,13 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-    return text[:max_len - len(suffix)] + suffix
+    
+    # We must truncate so that length(result) == max_len
+    # result = truncated_part + suffix
+    # truncated_part_len = max_len - len(suffix)
+    cutoff = max_len - len(suffix)
+    if cutoff < 0:
+        # Edge case: max_len smaller than suffix
+        return suffix[:max_len]
+        
+    return text[:cutoff] + suffix

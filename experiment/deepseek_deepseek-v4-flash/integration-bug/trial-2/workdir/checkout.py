@@ -1,4 +1,3 @@
-import asyncio
 from inventory import Inventory
 from payments import PaymentGateway
 
@@ -10,15 +9,17 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    reserved = await inventory.try_decrement(quantity)
+    # Reserve the stock atomically before charging, so we never sell more
+    # than we hold and never charge for an item we cannot deliver.
+    reserved = await inventory.reserve(quantity)
     if not reserved:
         print(f"Order {order_id}: out of stock")
         return False
 
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        await inventory.increment(quantity)  # Release reservation
         print(f"Order {order_id}: payment failed")
+        await inventory.increment(quantity)
         return False
 
     print(f"Order {order_id}: SUCCESS")

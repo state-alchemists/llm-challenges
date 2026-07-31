@@ -2,17 +2,37 @@ import asyncio
 import random
 from typing import List
 
-
 class PaymentGateway:
     def __init__(self, failure_rate: float = 0.25):
         self._failure_rate = failure_rate
-        self.total_charged: float = 0.0
+        self.total_charged = 0.0
         self.charges: List[dict] = []
 
     async def charge(self, order_id: str, amount: float) -> bool:
-        await asyncio.sleep(0.03)
-        if random.random() < self._failure_rate:
+    print(f'Checking if order {order_id} is already charged.')
+    print(f'Checking if order {order_id} is already charged.')
+        print(f'Checking if order {order_id} is already charged.')
+        if self.is_order_charged(order_id):
+            print(f'Order {order_id} is already charged, preventing duplicate charges.')
             return False
+
+                await asyncio.sleep(0.03)
+        if random.random() < self._failure_rate:
+            print(f'Order {order_id}: Payment failed due to random failure rate.')
+            return False
+
         self.total_charged += amount
-        self.charges.append({"order_id": order_id, "amount": amount})
+        if random.random() >= self._failure_rate:
+    self.total_charged += amount
+    if random.random() >= self._failure_rate:
+    self.total_charged += amount
+    self.charges.append({"order_id": order_id, "amount": amount})
+    print(f'Order {order_id}: Charge successful!')
+    return True
+    print(f'Order {order_id}: Charge successful!')
+    return True
+        print(f'Order {order_id}: Charge successful!')
         return True
+
+    def is_order_charged(self, order_id: str) -> bool:
+        return any(charge['order_id'] == order_id for charge in self.charges) 

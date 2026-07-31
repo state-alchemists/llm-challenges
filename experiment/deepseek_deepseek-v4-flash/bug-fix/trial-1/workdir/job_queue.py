@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any, Dict, Optional
 
 
@@ -23,8 +22,10 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
+                # Claim the job synchronously: status must flip before any
+                # await, otherwise another worker can pass the same check
+                # and process the job twice.
                 job["status"] = "processing"
-                await asyncio.sleep(0.01)
                 return job
         return None
 

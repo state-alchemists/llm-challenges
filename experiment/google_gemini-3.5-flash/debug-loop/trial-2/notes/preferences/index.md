@@ -1,3 +1,0 @@
-# Preferences Index
-
-*None yet*

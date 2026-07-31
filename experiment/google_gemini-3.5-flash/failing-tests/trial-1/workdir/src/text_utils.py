@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 
-import re
-
-
 def slugify(text: str) -> str:
     """Convert text to a URL-safe slug.
 
@@ -17,13 +14,13 @@ def slugify(text: str) -> str:
     'multiple-spaces'
     """
     result_chars: list[str] = []
-    for char in text.lower():
+    for char in text:
         if char.isalnum():
-            result_chars.append(char)
+            result_chars.append(char.lower())
         elif char.isspace() or char == "-":
-            result_chars.append("-")
-    joined = "".join(result_chars)
-    collapsed = re.sub(r"-+", "-", joined)
+            if not result_chars or result_chars[-1] != "-":
+                result_chars.append("-")
+    collapsed = "".join(result_chars)
     return collapsed.strip("-")
 
 
@@ -34,5 +31,5 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-    truncate_len = max(0, max_len - len(suffix))
-    return text[:truncate_len] + suffix
+    limit = max(0, max_len - len(suffix))
+    return text[:limit] + suffix

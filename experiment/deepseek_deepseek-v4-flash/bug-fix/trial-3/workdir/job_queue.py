@@ -23,6 +23,9 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
+                # Claim the job before yielding control: no await may sit
+                # between the status check and the assignment, or another
+                # worker can also see it as pending and process it twice.
                 job["status"] = "processing"
                 await asyncio.sleep(0.01)
                 return job

@@ -1,60 +1,28 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 from typing import List, Optional
-from .models import Task, TaskCreate, TaskUpdate, Project
+from .models import Task, TaskCreate, TaskUpdate, Project, TaskStatus
 from .database import tasks, projects
 from .auth import require_api_key
 
 app = FastAPI(title="Project Management API")
 
-
 @app.get("/projects", response_model=List[Project])
 async def list_projects():
     return projects
 
-
 @app.get("/tasks", response_model=List[Task])
-async def create_task(task: TaskCreate, x_api_key: str = Depends(require_api_key)) -> Task:
-    if not any(project.id == task.project_id for project in projects):
-        raise HTTPException(status_code=404, detail="Project not found")
-    task_id = max(t.id for t in tasks) + 1 if tasks else 1
-    task_data = task.dict(exclude_unset=True)
-    new_task = Task(
-        id=task_id,
-        title=task_data['title'],
-        status=task_data.get('status', TaskStatus.todo),
-        priority=task_data.get('priority', 3),
-        priority=task_data.get('priority', 1),
-        project_id=task.project_id,
-        assigned_to=task_data.get('assigned_to')
-    )
-    tasks.append(new_task)
-    return new_task
-    if not any(project.id == task.project_id for project in projects):
-        raise HTTPException(status_code=404, detail="Project not found")
-    task_id = max(t.id for t in tasks) + 1 if tasks else 1
-    task_data = task.dict(exclude_unset=True)
-    new_task = Task(
-        id=task_id,
-        title=task_data['title'],
-        status=task_data.get('status', TaskStatus.todo),
-        priority=task_data.get('priority', 3),
-        priority=task_data.get('priority', 1),
-        project_id=task.project_id,
-        assigned_to=task_data.get('assigned_to')
-    )
-    tasks.append(new_task)
-    return new_task
-    filtered_tasks = tasks
+async def list_tasks(status: Optional[str] = None, priority: Optional[int] = None, assigned_to: Optional[str] = None, page: int = 1, page_size: int = 20):
+    query_filters = []
     if status:
-        filtered_tasks = [t for t in filtered_tasks if t.status == status]
+        query_filters.append(lambda task: task.status == TaskStatus[status])
     if priority:
-        filtered_tasks = [t for t in filtered_tasks if t.priority == priority]
+        query_filters.append(lambda task: task.priority == priority)
     if assigned_to:
-        filtered_tasks = [t for t in filtered_tasks if t.assigned_to == assigned_to]
-    start = (page - 1) * page_size
-    end = start + page_size
-    return filtered_tasks[start:end]
+        query_filters.append(lambda task: task.assigned_to == assigned_to)
 
+    filtered_tasks = [task for task in tasks if all(f(task) for f in query_filters)]
+    tasks_to_return = filtered_tasks[(page - 1) * page_size: page * page_size]
+    return tasks_to_return
 
 @app.get("/tasks/{task_id}", response_model=Task)
 async def get_task(task_id: int):

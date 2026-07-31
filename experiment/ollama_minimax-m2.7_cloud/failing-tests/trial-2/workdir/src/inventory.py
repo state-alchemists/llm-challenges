@@ -10,8 +10,10 @@ class OutOfStock(Exception):
 class Inventory:
     """Tracks on-hand stock per SKU and outstanding reservations."""
 
-    def __init__(self, initial: dict[str, int] | None = None) -> None:
-        self._stock = dict(initial) if initial else {}
+    def __init__(self, initial: dict[str, int] | None = None) -> None:  # noqa: B006
+        if initial is None:
+            initial = {}
+        self._stock = dict(initial)
         self._reserved: dict[str, int] = {}
 
     def add(self, sku: str, qty: int) -> None:

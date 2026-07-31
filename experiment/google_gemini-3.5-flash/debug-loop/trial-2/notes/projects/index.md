@@ -1,3 +1,0 @@
-# Projects Index
-
-*None yet*

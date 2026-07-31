@@ -1,3 +1,3 @@
-# 2026-07
+# July 2026
 
-- [2026-07-30](2026-07-30.md) — Fix duplicate processing and vanishing failures in job queue
+- [2026-07-31](2026-07-31.md)

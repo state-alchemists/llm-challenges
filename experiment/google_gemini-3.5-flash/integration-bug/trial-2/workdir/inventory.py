@@ -6,10 +6,6 @@ class Inventory:
         self._stock = stock
         self._lock = asyncio.Lock()
 
-    @property
-    def lock(self) -> asyncio.Lock:
-        return self._lock
-
     async def check_stock(self, quantity: int) -> bool:
         await asyncio.sleep(0.02)
         return self._stock >= quantity

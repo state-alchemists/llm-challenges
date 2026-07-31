@@ -1,130 +1,129 @@
 [2m
-  🧠 The[0m[2m user wants me to[0m[2m read `system_context[0m[2m.md` and then[0m[2m write an ADR[0m[2m.[0m[2m Let me start[0m[2m by reading that[0m[2m file and any[0m[2m project[0m[2m documentation.[0m[2m
+  🧠 Let[0m[2m me start[0m[2m by reading the system[0m[2m_context.md file to[0m[2m understand the production[0m[2m system and constraints.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_wuqor3sw | Glob {'pattern': '**/system_context.md'}
+[0m[2m
+  🔠 call_wuqor3sw Executed
+[0m[2m
+  🧠 Let[0m[2m me read the file[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_wg55fb1e | Read {'path': 'system_context.md'}
+[0m[2m
+  🔠 call_wg55fb1e Executed
+[0m[2m
+  🧠 Now[0m[2m I have the[0m[2m full context. Let[0m[2m me analyze[0m[2m the two[0m[2m options against[0m[2m the constraints:[0m[2m
+     
+     **Key[0m[2m constraints to[0m[2m weigh[0m[2m:**
+     1[0m[2m. 6-person[0m[2m team, no dedicated[0m[2m infra engineer
+     2[0m[2m. Already running Redis[0m[2m in production
+     3[0m[2m. No Kafka experience[0m[2m
+     4.[0m[2m 2-week[0m[2m setup/migration deadline[0m[2m
+     5. Mod[0m[2mest budget ([0m[2mcan't afford managed[0m[2m Confluent Cloud[0m[2m)
+     6. Exactly[0m[2m-once semantics for[0m[2m billing notifications[0m[2m
+     7.[0m[2m 10x growth[0m[2m target[0m[2m (500 req/s[0m[2m → ~[0m[2m5000 req/s[0m[2m peak[0m[2m)
+     8. Need[0m[2m WebSocket push within[0m[2m 2 quarters[0m[2m
+     
+     Let[0m[2m me evaluate:[0m[2m
+     
+     **Apache[0m[2m Kafka:**
+     -[0m[2m Throughput: Excellent[0m[2m,[0m[2m can[0m[2m handle millions of messages[0m[2m/sec
+     - Ordering[0m[2m guarantees[0m[2m: Per[0m[2m-partition ordering[0m[2m
+     - Message[0m[2m retention: Config[0m[2murable, days[0m[2m to[0m[2m forever[0m[2m
+     - Consumer groups[0m[2m: Built-in,[0m[2m robust
+     - Exactly[0m[2m-once semantics[0m[2m: Supported[0m[2m via id[0m[2mempotent producer[0m[2m and transaction[0m[2mal APIs[0m[2m ([0m[2msince[0m[2m Kafka 0[0m[2m.11)[0m[2m
+     - Operational complexity:[0m[2m High[0m[2m — requires Zoo[0m[2mKeeper ([0m[2mor KRaft[0m[2m in newer versions),[0m[2m careful[0m[2m partition[0m[2m management, monitoring[0m[2m
+     - Team[0m[2m fit[0m[2m: No experience[0m[2m, steep[0m[2m learning curve
+     -[0m[2m Setup time: Weeks[0m[2m for[0m[2m a[0m[2m proper[0m[2m production Kafka[0m[2m cluster
+     - Cost[0m[2m: Self-host[0m[2med requires[0m[2m significant ops[0m[2m investment[0m[2m; managed Confl[0m[2muent Cloud[0m[2m is expensive[0m[2m
+     
+     **Redis Streams:[0m[2m**
+     - Through[0m[2mput: Very[0m[2m good, can handle[0m[2m 100[0m[2mK+ messages/sec[0m[2m easily ([0m[2ms[0m[2mufficient for 5[0m[2mK req/s peak[0m[2m)
+     - Ordering[0m[2m guarantees: Per-stream[0m[2m ordering
+     - Message[0m[2m retention: Configurable[0m[2m maxlen[0m[2m, but not designed[0m[2m for long-term retention[0m[2m
+     - Consumer groups[0m[2m: Supported[0m[2m ([0m[2mXREAD[0m[2mGROUP, XACK[0m[2m)[0m[2m since[0m[2m Redis 5[0m[2m.[0m[2m0
+     - Exactly[0m[2m-once semantics:[0m[2m At[0m[2m-least-on[0m[2mce with[0m[2m idempotent consumers[0m[2m; no[0m[2m native[0m[2m exactly[0m[2m-once
+     -[0m[2m Operational complexity: Low[0m[2m — already running Redis[0m[2m, team knows[0m[2m it
+     - Team[0m[2m fit: Already[0m[2m using[0m[2m Redis,[0m[2m lower[0m[2m learning curve
+     -[0m[2m Setup time: Days[0m[2m,[0m[2m not weeks
+     -[0m[2m Cost: Already[0m[2m paying[0m[2m for Redis infrastructure[0m[2m
+     
+     The[0m[2m decision hinges[0m[2m on:
+     1[0m[2m. Team[0m[2m size[0m[2m and experience[0m[2m — Redis[0m[2m wins[0m[2m
+     2. Setup[0m[2m time — Redis[0m[2m wins ([0m[2mdays[0m[2m vs weeks)
+     3[0m[2m. Budget — Redis[0m[2m wins (already[0m[2m in[0m[2m place[0m[2m)
+     4. Exactly[0m[2m-once for[0m[2m billing — Neither[0m[2m provides[0m[2m perfect[0m[2m exactly-once;[0m[2m both[0m[2m require[0m[2m idempotent consumer[0m[2m design. Kafka's[0m[2m transaction[0m[2mal API[0m[2m is complex[0m[2m and[0m[2m the team has no[0m[2m experience. Redis[0m[2m Streams with idemp[0m[2motent consumers and[0m[2m PostgreSQL[0m[2m out[0m[2mbox pattern[0m[2m can[0m[2m achieve effectively[0m[2m-on[0m[2mce delivery[0m[2m.
+     5.[0m[2m 10x growth —[0m[2m At[0m[2m 500[0m[2m0[0m[2m req/s peak[0m[2m, Redis Streams handles[0m[2m this comfortably[0m[2m. Kafka would[0m[2m be overkill.[0m[2m
+     6. Operational complexity[0m[2m — Redis[0m[2m wins by[0m[2m far[0m[2m
+     
+     The right[0m[2m call[0m[2m is Redis[0m[2m Streams. It[0m[2m meets[0m[2m all the[0m[2m constraints, especially[0m[2m the 2[0m[2m-week delivery[0m[2m deadline[0m[2m and team[0m[2m capacity[0m[2m. The[0m[2m exactly[0m[2m-once concern[0m[2m for billing is[0m[2m address[0m[2mable with[0m[2m an[0m[2m idempotent consumer[0m[2m pattern[0m[2m + id[0m[2mempot[0m[2mency keys in the[0m[2m notification handler[0m[2m, which[0m[2m you[0m[2m'd need to[0m[2m build[0m[2m regardless[0m[2m of the[0m[2m streaming[0m[2m backend.
+     
+     Let me[0m[2m write the ADR[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_4djv50o0 | Write {'path': 'ADR-001-notification-archi ...', 'content': '# ADR-001: Notification Su ...'}
+[0m[2m
+  🔠 call_4djv50o0 Executed
+[0m[2m
+  🧠 The[0m[2m ADR is[0m[2m written.[0m[2m Let me verify it[0m[2m reads back correctly and[0m[2m covers[0m[2m all the required[0m[2m sections[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_2kz3um86 | Read {'path': 'ADR-001-notification-archi ...'}
+[0m[2m
+  🔠 call_2kz3um86 Executed
+[0m[2m
+  🧠 The[0m[2m ADR is written[0m[2m and verified. It[0m[2m covers all the[0m[2m required sections: Title[0m[2m, Status[0m[2m, Context, Decision[0m[2m, Consequences ([0m[2mpros[0m[2m AND[0m[2m cons), and Altern[0m[2matives Considered.[0m[2m The recommendation is definitive[0m[2m (Redis Streams),[0m[2m justified[0m[2m by specific technical properties[0m[2m ([0m[2mthroughput, ordering[0m[2m guarantees, message[0m[2m retention, consumer groups[0m[2m, exactly-once[0m[2m semantics, operational complexity[0m[2m) mapped against[0m[2m the team[0m[2m size[0m[2m and constraints from[0m[2m system[0m[2m_context.md.
+     
+     Now[0m[2m I need[0m[2m to log this as[0m[2m an activity and[0m[2m record[0m[2m the decision[0m[2m as[0m[2m an insight in[0m[2m my[0m[2m journal.[0m[2m
+  Now[0m[2m let me log this[0m[2m work to the journal[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_f4e8vvos | SearchJournal {'query': 'notification architecture ADR'}
+[0m[2m
+  🔠 call_f4e8vvos Executed
+[0m[2m
+  🧠 No[0m[2m prior[0m[2m journal entries on[0m[2m this topic. Let[0m[2m me log the activity[0m[2m and record[0m[2m the architectural[0m[2m decision as[0m[2m an insight.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_j16rar9q | Shell {'command': 'date +%H:%M'}
+[0m[2m
+  🧰 call_43vn1l2n | LS {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🔠 call_43vn1l2n Executed
+[0m  [2m15:20
+[0m[2m
+  🔠 call_j16rar9q Executed
+[0m[2m
+  🧠 The[0m[2m notes[0m[2m directory is[0m[2m empty. I need[0m[2m to create the journal[0m[2m structure.[0m[2m Let me create the[0m[2m activity log and insight[0m[2m note.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_dgtc10cg | Read {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🧰 call_hv8jfak0 | Read {'path': '/Users/gofrendigunawan/.cl ...'}
-[0m[2m
-  🧰 call_kzoqujsu | Read {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🔠 call_hv8jfak0 Executed
-[0m[2m
-  🔠 call_dgtc10cg Executed
-[0m[2m
-  🔠 call_kzoqujsu Executed
-[0m[2m
-  Now let[0m[2m me activate[0m[2m the core-writing[0m[2m skill since[0m[2m this is a[0m[2m substantial prose deliverable[0m[2m (an ADR[0m[2m).[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_oaw0tb8d | search_tools {'queries': ['ActivateSkill']}
+  🧰 call_w5b3et9d | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# 2026-07-31\n\n- 15:20 — Wr ...'}
 [0m[2m
-  🔠 call_oaw0tb8d Executed
+  🧰 call_6te9rvie | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '---\nslug: notification-arc ...'}
 [0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_ej1hk3qf | ActivateSkill {'skill': 'core-writing'}
+  🧰 call_63as0evh | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Technical Notes\n\n- [noti ...'}
 [0m[2m
-  🧰 call_at1ct1w8 | ActivateSkill {'skill': 'core-design'}
+  🧰 call_ze0ted6p | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# Journal Index\n\n## HUD\n\n- ...'}
 [0m[2m
-  🔠 call_at1ct1w8 Executed
+  🔠 call_w5b3et9d Executed
 [0m[2m
-  🔠 call_ej1hk3qf Executed
+  🔠 call_6te9rvie Executed
 [0m[2m
-  🧠 Now[0m[2m I have the system[0m[2m context and[0m[2m the[0m[2m design[0m[2m skill[0m[2m activated. Let me[0m[2m also[0m[2m read the ADR[0m[2m template from the design[0m[2m skill's[0m[2m companion files[0m[2m, then write the[0m[2m ADR.[0m[2m
-  Let me read the[0m[2m ADR template from[0m[2m the design skill's[0m[2m companion files.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_5akzpj1s | Read {'path': '/Users/gofrendigunawan/.lo ...'}
+  🔠 call_63as0evh Executed
 [0m[2m
-  🔠 call_5akzpj1s Executed
+  🔠 call_ze0ted6p Executed
 [0m[2m
-  🧠 Now[0m[2m I have all[0m[2m the context I need[0m[2m. Let me follow[0m[2m the design skill[0m[2m's[0m[2m workflow:[0m[2m
+  🧠 The[0m[2m ADR has[0m[2m been written,[0m[2m verified, and jour[0m[2mnaled. Let[0m[2m me provide[0m[2m a summary[0m[2m to the user.[0m[2m
+  ADR[0m[2m-001 saved[0m[2m to `ADR-[0m[2m001-notification-architecture[0m[2m.md`.[0m[2m
      
-     1[0m[2m. **Constraints &[0m[2m Requirements** —[0m[2m extracted from system[0m[2m_context.md
-     2[0m[2m. **Architecture[0m[2m Exploration** — Kafka[0m[2m vs Redis Streams[0m[2m
-     3. **Design[0m[2m Decision** — make[0m[2m a definitive recommendation[0m[2m
-     4. **[0m[2mSpecify[0m[2m** — write[0m[2m the ADR[0m[2m
-     5. **Plan[0m[2m** — not[0m[2m needed since[0m[2m this is a document[0m[2m deliverable,[0m[2m not implementation[0m[2m
+     **Recommendation:[0m[2m Redis Streams**[0m[2m — the decisive[0m[2m factors[0m[2m:[0m[2m
      
-     Let me work[0m[2m through the constraints and[0m[2m technical[0m[2m comparison:
+     1. **Setup[0m[2m time**:[0m[2m Redis is already in[0m[2m production; Streams[0m[2m is[0m[2m days[0m[2m of work, not[0m[2m weeks. Kafka would[0m[2m blow[0m[2m the 2-week[0m[2m delivery constraint.
+     2[0m[2m. **Oper[0m[2mational complexity[0m[2m**: 6-person[0m[2m team, no infra[0m[2m engineer.[0m[2m Kafka[0m[2m's broker[0m[2m/controller/[0m[2mreplication/[0m[2mcompaction surface[0m[2m is unjust[0m[2mified[0m[2m for[0m[2m our load.
+     3[0m[2m. **Through[0m[2mput**: Redis Streams[0m[2m handles 100K[0m[2m+ msg/s;[0m[2m we need ~5[0m[2mK msg/s at[0m[2m 10× growth[0m[2m. Kafka's millions[0m[2m-per[0m[2m-second advantage[0m[2m doesn[0m[2m't differentiate[0m[2m here.
+     4.[0m[2m **Exactly-once[0m[2m for billing**: Neither[0m[2m system delivers[0m[2m exactly[0m[2m-once *[0m[2mto external systems*[0m[2m n[0m[2matively. Kafka's[0m[2m transaction[0m[2mal API covers[0m[2m intra-Kafka loops[0m[2m only. The[0m[2m idempotent-con[0m[2msumer pattern (Post[0m[2mgreSQL dedup table[0m[2m) is required[0m[2m regardless[0m[2m —[0m[2m so[0m[2m Kafka[0m[2m's[0m[2m advantage on[0m[2m this axis[0m[2m is illus[0m[2mory.[0m[2m
+     5. **Budget[0m[2m**: Managed[0m[2m Kafka[0m[2m is explicitly[0m[2m out[0m[2m of reach[0m[2m; self-hosted[0m[2m requires 3+[0m[2m broker[0m[2m instances the[0m[2m team can[0m[2m't operate.
      
-     **Constraints[0m[2m from system_context.md[0m[2m:**
-     -[0m[2m 85K MAU[0m[2m, ~2M[0m[2m tasks/month, ~[0m[2m500 req/s peak[0m[2m
-     - Python[0m[2m/Flask mon[0m[2molith, PostgreSQL[0m[2m, Redis already[0m[2m in prod
-     -[0m[2m 6-person team[0m[2m (3[0m[2m senior, 3[0m[2m mid), no dedicated[0m[2m infra engineer
-     -[0m[2m No Kafka experience on[0m[2m team
-     -[0m[2m 2-week setup/m[0m[2migration window before[0m[2m delivering value
-     -[0m[2m Modest budget —[0m[2m can't afford managed[0m[2m Confluent Cloud[0m[2m at scale[0m[2m
-     - Must maintain[0m[2m exactly-once semantics[0m[2m for billing notifications[0m[2m
-     - Need:[0m[2m async dec[0m[2moupling, retry[0m[2m with backoff,[0m[2m at-least-on[0m[2mce delivery[0m[2m, WebSocket[0m[2m push within[0m[2m 2 quarters,[0m[2m 10x growth[0m[2m
-     
-     **Kafka analysis[0m[2m:**
-     - Through[0m[2mput: extremely[0m[2m high (millions[0m[2m of msgs[0m[2m/s[0m[2m)[0m[2m — over[0m[2mkill for[0m[2m 500 req/s peak[0m[2m (~[0m[2m500[0m[2m notifications/s[0m[2m)[0m[2m
-     - Ordering[0m[2m: per[0m[2m-partition ordering[0m[2m, strong[0m[2m guarantees[0m[2m
-     - Message[0m[2m retention: configurable,[0m[2m durable[0m[2m,[0m[2m log-based —[0m[2m good[0m[2m for replay
-     -[0m[2m Consumer groups: native[0m[2m, mature[0m[2m
-     - Exactly-once[0m[2m semantics: supported[0m[2m via idempotent[0m[2m producers +[0m[2m transactions ([0m[2mKafka 0[0m[2m.11+)[0m[2m
-     - Operational complexity:[0m[2m VERY[0m[2m high.[0m[2m Requires[0m[2m ZooKeeper or[0m[2m KRaft,[0m[2m broker[0m[2m management, partition[0m[2m planning[0m[2m, monitoring[0m[2m.[0m[2m Self[0m[2m-hosted is[0m[2m a significant operational burden[0m[2m for[0m[2m a[0m[2m 6-person team with[0m[2m no infra[0m[2m engineer. Managed[0m[2m ([0m[2mConfluent)[0m[2m is expensive and[0m[2m ruled[0m[2m out by budget.[0m[2m
-     - Team[0m[2m experience: none[0m[2m
-     - Setup[0m[2m time: weeks[0m[2m,[0m[2m not days[0m[2m
-     
-     **Redis Streams analysis[0m[2m:**
-     - Through[0m[2mput: 10[0m[2m-100[0m[2mK ops[0m[2m/s per[0m[2m Redis[0m[2m node[0m[2m — more[0m[2m than sufficient[0m[2m for current[0m[2m and[0m[2m 10x load[0m[2m
-     - Ordering[0m[2m: per-stream[0m[2m ordering,[0m[2m guaranteed by Redis[0m[2m
-     - Message[0m[2m retention: configurable ([0m[2mMAXLEN),[0m[2m but[0m[2m not[0m[2m as durable[0m[2m as Kafka[0m[2m's log —[0m[2m data[0m[2m is in-memory[0m[2m with[0m[2m persistence[0m[2m options[0m[2m (R[0m[2mDB/AOF).[0m[2m Accept[0m[2mable for[0m[2m notifications[0m[2m,[0m[2m which[0m[2m can[0m[2m be re-generated[0m[2m from the[0m[2m DB[0m[2m.
-     - Consumer groups[0m[2m: supported[0m[2m ([0m[2mXREADGROUP,[0m[2m XP[0m[2mENDING,[0m[2m XCLAIM[0m[2m) — less[0m[2m mature than[0m[2m Kafka's[0m[2m but functional[0m[2m
-     - Exactly-once[0m[2m semantics: at[0m[2m-least-on[0m[2mce n[0m[2matively; exactly-on[0m[2mce requires application[0m[2m-level idempot[0m[2mency keys[0m[2m (which[0m[2m they[0m[2m'd[0m[2m need anyway —[0m[2m even Kafka's[0m[2m "[0m[2mexactly-once[0m[2m" only[0m[2m works[0m[2m within Kafka[0m[2m itself, not across[0m[2m external systems like[0m[2m email/web[0m[2mhook delivery[0m[2m).[0m[2m For[0m[2m billing notifications, id[0m[2mempot[0m[2mency keys in[0m[2m PostgreSQL +[0m[2m at[0m[2m-least-on[0m[2mce delivery is the[0m[2m correct[0m[2m pattern.
-     - Operational[0m[2m complexity: LOW[0m[2m.[0m[2m They already run[0m[2m Redis in[0m[2m production. Adding Streams[0m[2m is a feature[0m[2m of[0m[2m the[0m[2m existing instance[0m[2m ([0m[2mor a separate[0m[2m dedicated Redis[0m[2m instance).[0m[2m
-     - Team experience:[0m[2m already[0m[2m running[0m[2m Redis
-     - Setup[0m[2m time: days[0m[2m, not weeks[0m[2m
-     
-     **Key[0m[2m insight[0m[2m on exactly[0m[2m-once:[0m[2m**
-     The system[0m[2m_context[0m[2m.md says "Must[0m[2m maintain exactly-once[0m[2m semantics for billing notifications[0m[2m." But[0m[2m here[0m[2m's the[0m[2m crucial[0m[2m technical[0m[2m point: true[0m[2m exactly-once delivery[0m[2m to[0m[2m an external system ([0m[2memail provider,[0m[2m webhook endpoint[0m[2m) is impossible[0m[2m in both[0m[2m Kafka and Redis Streams[0m[2m. The delivery[0m[2m side[0m[2m is inherently[0m[2m at[0m[2m-least-on[0m[2mce. Both[0m[2m systems can[0m[2m guarantee[0m[2m at-least-on[0m[2mce delivery to[0m[2m consumers[0m[2m. Exactly[0m[2m-once *[0m[2mprocessing* requires[0m[2m idempotent[0m[2m consumers —[0m[2m which means[0m[2m application-level ded[0m[2muplication using[0m[2m id[0m[2mempotency keys[0m[2m,[0m[2m typically stored in PostgreSQL[0m[2m. Kafka[0m[2m's exactly[0m[2m-once semantics[0m[2m (id[0m[2mempotent producer[0m[2m, transactions[0m[2m) only guarantee[0m[2m exactly-once within[0m[2m Kafka[0m[2m itself ([0m[2mproduce[0m[2m→[0m[2mconsume within[0m[2m Kafka[0m[2m), not across external[0m[2m systems. For[0m[2m our[0m[2m use case (email[0m[2m/webhook delivery),[0m[2m the pattern[0m[2m is: at-le[0m[2mast-on[0m[2mce delivery +[0m[2m idempotent consumer[0m[2m ([0m[2mdedup via[0m[2m Post[0m[2mgres)[0m[2m = effectively[0m[2m exactly-once.[0m[2m This is achievable[0m[2m with both systems,[0m[2m so[0m[2m this[0m[2m constraint[0m[2m does not favor[0m[2m Kafka.
-     
-     **Decision[0m[2m: Redis Streams**[0m[2m
-     
-     Reason[0m[2ms:
-     1.[0m[2m Team[0m[2m of[0m[2m 6,[0m[2m no infra[0m[2m engineer, no Kafka[0m[2m experience →[0m[2m Redis[0m[2m Streams is oper[0m[2mable by[0m[2m the existing[0m[2m team
-     2.[0m[2m Already running Redis in[0m[2m production → minimal[0m[2m new[0m[2m infrastructure
-     3.[0m[2m 2-week window[0m[2m → Redis Streams can[0m[2m be production[0m[2m-ready in days;[0m[2m Kafka would[0m[2m take weeks just[0m[2m to learn[0m[2m
-     4. Budget[0m[2m constraint[0m[2m → no[0m[2m new infrastructure[0m[2m cost ([0m[2mRedis is[0m[2m already paid for);[0m[2m self[0m[2m-hosted Kafka requires[0m[2m dedicated resources[0m[2m,[0m[2m managed[0m[2m Kafka[0m[2m is explicitly[0m[2m un[0m[2maffordable
-     5[0m[2m. Throughput is[0m[2m sufficient →[0m[2m current[0m[2m 500 req/s peak[0m[2m, even 10[0m[2mx ([0m[2m500[0m[2m0 msg[0m[2m/s) is well[0m[2m within Redis Streams'[0m[2m capability[0m[2m
-     6. Exactly[0m[2m-once for[0m[2m billing → achievable[0m[2m with idempot[0m[2mency keys in Post[0m[2mgres, same pattern[0m[2m regardless[0m[2m of message[0m[2m broker
-     7.[0m[2m WebSocket push in[0m[2m 2 quarters →[0m[2m Redis Pub[0m[2m/Sub +[0m[2m Streams is[0m[2m a natural fit for[0m[2m real-time push[0m[2m via[0m[2m Web[0m[2mSockets
-     
-     The[0m[2m main[0m[2m trade-off:[0m[2m Redis Streams'[0m[2m message[0m[2m retention is weaker[0m[2m than Kafka's.[0m[2m But[0m[2m for notifications[0m[2m, the source[0m[2m of truth is PostgreSQL[0m[2m, not the message[0m[2m queue. Messages[0m[2m can be re[0m[2m-generated or[0m[2m queried[0m[2m from the DB if[0m[2m needed. This[0m[2m makes[0m[2m Kafka[0m[2m's durable[0m[2m log retention less valuable[0m[2m.
-     
-     Let me now[0m[2m write the ADR[0m[2m following the template[0m[2m structure[0m[2m,[0m[2m adapting[0m[2m it[0m[2m to the user[0m[2m's requested format[0m[2m (Title[0m[2m, Status[0m[2m, Context, Decision[0m[2m, Consequences,[0m[2m Alternatives Considered[0m[2m).[0m[2m
-  Now I[0m[2m have the full picture[0m[2m. Let me work[0m[2m through the design workflow[0m[2m and write[0m[2m the ADR.[0m[2m
-     
-     **Constraints extracted[0m[2m**[0m[2m ([0m[2mfrom `system_context[0m[2m.md`):[0m[2m 85K MA[0m[2mU,[0m[2m 500 req/s peak[0m[2m, Python/Fl[0m[2mask monolith,[0m[2m Redis already in prod[0m[2m,[0m[2m 6-person team with[0m[2m no Kafka[0m[2m experience and[0m[2m no dedicated infra engineer[0m[2m, 2-week[0m[2m delivery window, modest[0m[2m budget ([0m[2mno[0m[2m managed Confluent[0m[2m), exactly[0m[2m-once for[0m[2m billing notifications, WebSocket[0m[2m push within 2[0m[2m quarters, 10[0m[2mx growth target.[0m[2m
-     
-     **Critical[0m[2m technical insight[0m[2m**: "[0m[2mExactly-once semantics[0m[2m for[0m[2m billing notifications" means[0m[2m exactly[0m[2m-once *delivery[0m[2m to[0m[2m external[0m[2m systems*[0m[2m (email providers[0m[2m, webhook endpoints).[0m[2m Neither Kafka nor Redis[0m[2m Streams can guarantee that[0m[2m n[0m[2matively — both[0m[2m provide[0m[2m at-least-on[0m[2mce delivery to[0m[2m consumers. Kafka's[0m[2m exactly-once semantics[0m[2m (idempotent[0m[2m producer, transactions[0m[2m) only apply[0m[2m within Kafka itself.[0m[2m True[0m[2m exactly-once *[0m[2meffect[0m[2m* requires application[0m[2m-level idempot[0m[2mency keys[0m[2m (ded[0m[2mup in[0m[2m PostgreSQL),[0m[2m which works[0m[2m identically with either[0m[2m broker. This[0m[2m equal[0m[2mizes the strongest[0m[2m argument[0m[2m for[0m[2m Kafka,[0m[2m leaving[0m[2m operational[0m[2m fit[0m[2m as the deciding[0m[2m factor.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_ltdcmipp | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '# ADR 001 — Notification S ...'}
-[0m[2m
-  🔠 call_ltdcmipp Executed
-[0m[2m
-  The ADR is[0m[2m written and[0m[2m saved. Here[0m[2m's a summary of[0m[2m the key reasoning[0m[2m:
-     
-     **Decision:[0m[2m Redis Streams** —[0m[2m and[0m[2m the critical[0m[2m technical[0m[2m argument[0m[2m that[0m[2m makes it[0m[2m definitive[0m[2m:
-     
-     K[0m[2mafka's headline[0m[2m advantage[0m[2m is[0m[2m exactly[0m[2m-once semantics,[0m[2m but that only applies[0m[2m *[0m[2mwithin the[0m[2m Kafka cluster itself[0m[2m*. Our delivery[0m[2m targets are external ([0m[2mSMTP[0m[2m providers, webhook endpoints[0m[2m) where[0m[2m no broker can guarantee[0m[2m exactly-once delivery[0m[2m. The correct pattern[0m[2m —[0m[2m at[0m[2m-least-on[0m[2mce delivery +[0m[2m PostgreSQL idempot[0m[2mency keys for ded[0m[2mup —[0m[2m works[0m[2m identically with both[0m[2m brokers. This[0m[2m equalizes Kafka's[0m[2m strongest differentiator,[0m[2m leaving operational fit as[0m[2m the deciding factor.[0m[2m
-     
-     With those[0m[2m semantics[0m[2m off[0m[2m the table, the[0m[2m comparison[0m[2m is[0m[2m straightforward:
-     
-     | Factor[0m[2m | Redis Streams |[0m[2m Apache[0m[2m Kafka |
-     |---[0m[2m|---|---[0m[2m|
-     | Team[0m[2m experience | Already[0m[2m running Redis[0m[2m | None[0m[2m |
-     | Setup[0m[2m time | Days[0m[2m | Weeks[0m[2m |
-     | Operational[0m[2m overhead | Existing[0m[2m instance[0m[2m,[0m[2m same[0m[2m tool[0m[2ming | New[0m[2m cluster, Zoo[0m[2mKeeper/K[0m[2mRaft, separate[0m[2m monitoring |
-     | Budget[0m[2m impact[0m[2m | Neutral[0m[2m (already[0m[2m paying[0m[2m)[0m[2m | Self[0m[2m-hosted =[0m[2m team[0m[2m drain[0m[2m;[0m[2m managed = unaff[0m[2mordable |
-     | Through[0m[2mput at 10[0m[2m× (~[0m[2m5K msg/s[0m[2m) | Comfort[0m[2mable head[0m[2mroom | V[0m[2mast over[0m[2mkill ([0m[2mdes[0m[2migned for millions)[0m[2m |
-     | WebSocket[0m[2m path ([0m[2mQ[0m[2m2 need[0m[2m) | Pub/Sub[0m[2m + Streams,[0m[2m same instance[0m[2m | No[0m[2m native fan[0m[2m-out;[0m[2m needs Redis anyway[0m[2m |[0m[2m
-     | Message[0m[2m retention | R[0m[2mDB/AOF ([0m[2macceptable[0m[2m —[0m[2m Post[0m[2mgres is source of[0m[2m truth) | Infinite[0m[2m replay[0m[2m ([0m[2mval[0m[2muable,[0m[2m but we[0m[2m don't need it[0m[2m) |
-     
-     The trade[0m[2m-off to[0m[2m watch[0m[2m: if[0m[2m notification[0m[2m volume grows past[0m[2m ~50[0m[2mK msg/s or[0m[2m the[0m[2m platform[0m[2m needs multi-service event[0m[2m streaming, this[0m[2m decision[0m[2m should be revisited[0m[2m. Redis[0m[2m Streams is the[0m[2m right choice *[0m[2mfor[0m[2m these[0m[2m constraints* —[0m[2m not the[0m[2m objectively[0m[2m superior message[0m[2m broker.[0m[2m
-  💸 (Requests: 6 | Tool Calls: 8 | Total: 102860) Input: 98712 | Audio Input: 0 | Output: 4148 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     The[0m[2m ADR documents[0m[2m six[0m[2m cons with[0m[2m mitigations (ret[0m[2mention,[0m[2m DLQ, fan[0m[2m-out limits[0m[2m)[0m[2m and rejects[0m[2m Kafka,[0m[2m RabbitMQ, SQ[0m[2mS/SNS,[0m[2m and DB[0m[2m-queued jobs with[0m[2m specific reasoning[0m[2m.[0m[2m
+  💸 (Requests: 8 | Tool Calls: 11 | Total: 126339) Input: 122588 | Audio Input: 0 | Output: 3751 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "Read `system_context.md`. It describes a real production system and a specific architectural problem we need to solve.
 
 Write an Architecture Decision Record (ADR) evaluating two options for the notification subsystem:
@@ -144,22 +143,14 @@ Make a definitive recommendation. Use specific technical properties (throughput,
 Save as `ADR-001-notification-architecture.md`.
 " --model ollama:glm-5.1:cloud --session ollama_glm-5.1_cloud-research-trial-2 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_glm-5.1_cloud-research-trial-2[0m[0m
-The ADR is written and saved. Here's a summary of the key reasoning:
+ADR-001 saved to `ADR-001-notification-architecture.md`.
 
-**Decision: Redis Streams** — and the critical technical argument that makes it definitive:
+**Recommendation: Redis Streams** — the decisive factors:
 
-Kafka's headline advantage is exactly-once semantics, but that only applies *within the Kafka cluster itself*. Our delivery targets are external (SMTP providers, webhook endpoints) where no broker can guarantee exactly-once delivery. The correct pattern — at-least-once delivery + PostgreSQL idempotency keys for dedup — works identically with both brokers. This equalizes Kafka's strongest differentiator, leaving operational fit as the deciding factor.
+1. **Setup time**: Redis is already in production; Streams is days of work, not weeks. Kafka would blow the 2-week delivery constraint.
+2. **Operational complexity**: 6-person team, no infra engineer. Kafka's broker/controller/replication/compaction surface is unjustified for our load.
+3. **Throughput**: Redis Streams handles 100K+ msg/s; we need ~5K msg/s at 10× growth. Kafka's millions-per-second advantage doesn't differentiate here.
+4. **Exactly-once for billing**: Neither system delivers exactly-once *to external systems* natively. Kafka's transactional API covers intra-Kafka loops only. The idempotent-consumer pattern (PostgreSQL dedup table) is required regardless — so Kafka's advantage on this axis is illusory.
+5. **Budget**: Managed Kafka is explicitly out of reach; self-hosted requires 3+ broker instances the team can't operate.
 
-With those semantics off the table, the comparison is straightforward:
-
-| Factor | Redis Streams | Apache Kafka |
-|---|---|---|
-| Team experience | Already running Redis | None |
-| Setup time | Days | Weeks |
-| Operational overhead | Existing instance, same tooling | New cluster, ZooKeeper/KRaft, separate monitoring |
-| Budget impact | Neutral (already paying) | Self-hosted = team drain; managed = unaffordable |
-| Throughput at 10× (~5K msg/s) | Comfortable headroom | Vast overkill (designed for millions) |
-| WebSocket path (Q2 need) | Pub/Sub + Streams, same instance | No native fan-out; needs Redis anyway |
-| Message retention | RDB/AOF (acceptable — Postgres is source of truth) | Infinite replay (valuable, but we don't need it) |
-
-The trade-off to watch: if notification volume grows past ~50K msg/s or the platform needs multi-service event streaming, this decision should be revisited. Redis Streams is the right choice *for these constraints* — not the objectively superior message broker.
+The ADR documents six cons with mitigations (retention, DLQ, fan-out limits) and rejects Kafka, RabbitMQ, SQS/SNS, and DB-queued jobs with specific reasoning.

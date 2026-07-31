@@ -16,3 +16,11 @@ class PaymentGateway:
         self.total_charged += amount
         self.charges.append({"order_id": order_id, "amount": amount})
         return True
+
+    async def refund(self, order_id: str) -> None:
+        """Remove a charge record and reverse the amount (rollback on delivery failure)."""
+        for i, charge in enumerate(self.charges):
+            if charge["order_id"] == order_id:
+                self.total_charged -= charge["amount"]
+                del self.charges[i]
+                return

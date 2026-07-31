@@ -1,4 +1,7 @@
-# Journal
+# Journal Index
 
-## Recent Activity
-- [2026-07-30](activity-log/2026/2026-07/2026-07-30.md) — Fix duplicate processing and vanishing failures in job queue
+## HUD
+- [job-queue-bugfix](projects/job-queue-bugfix.md) — dequeue race + missing fail() call fixed in trial-2
+
+## Projects
+- [job-queue-bugfix](projects/job-queue-bugfix.md)

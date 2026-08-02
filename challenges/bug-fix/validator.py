@@ -2,6 +2,12 @@
 
 Runs the job-queue simulation in a fresh subprocess so async loops and
 module state never leak between trials.
+
+The brief reports two bugs — duplicate processing and vanishing failures.
+Final job statuses only evidence the second, so the simulation also
+instruments dispatch (see ``instrument`` in ``SIMULATION_SCRIPT``) and a
+duplicate dispatch fails the run. Without that, fixing only the ``queue.fail``
+path turns every counter green while the race stays fully intact.
 """
 
 from __future__ import annotations
@@ -97,7 +103,7 @@ def _dequeue_has_atomic_check_and_set(source: str) -> bool:
 # Prints a single JSON line prefixed with __RESULT__ that the validator
 # parses. A non-zero exit means a hard import / runtime error.
 SIMULATION_SCRIPT = r"""
-import asyncio, json, sys, traceback
+import asyncio, inspect, json, sys, traceback
 sys.path.insert(0, ".")
 
 try:
@@ -110,8 +116,47 @@ except Exception:
 with open("job_queue.py") as f: queue_src = f.read()
 with open("worker.py") as f: worker_src = f.read()
 
+def instrument(q):
+    '''Wrap the public API to count duplicate dispatches.
+
+    Terminal statuses cannot see the "duplicate processing" bug from the
+    brief: when two workers grab the same job, both run it to completion and
+    it still ends up "done" exactly once in the dict. Worse, a submission can
+    make the status counters green by deleting the "processing" assignment
+    altogether, which erases the evidence instead of fixing the race.
+
+    So watch dispatch directly: a job handed out again before the previous
+    holder called complete()/fail() is a duplicate. Retries are unaffected —
+    fail() releases the job before it goes back to pending.
+    '''
+    inflight = set()
+    dupes = []
+    real_dequeue, real_complete, real_fail = q.dequeue, q.complete, q.fail
+
+    async def dequeue():
+        result = real_dequeue()
+        job = await result if inspect.isawaitable(result) else result
+        if job is not None:
+            jid = job["id"]
+            if jid in inflight:
+                dupes.append(jid)
+            inflight.add(jid)
+        return job
+
+    def complete(job_id, result):
+        inflight.discard(job_id)
+        return real_complete(job_id, result)
+
+    def fail(job_id, error):
+        inflight.discard(job_id)
+        return real_fail(job_id, error)
+
+    q.dequeue, q.complete, q.fail = dequeue, complete, fail
+    return dupes
+
 async def run_simulation():
     q = JobQueue(max_retries=2)
+    dupes = instrument(q)
     for i in range(10):
         q.enqueue({"name": f"task_{i}", "raise_error": False})
     q.enqueue({"name": "bad_1", "raise_error": True})
@@ -122,7 +167,7 @@ async def run_simulation():
     done = sum(1 for j in jobs.values() if j["status"] == "done")
     failed = sum(1 for j in jobs.values() if j["status"] == "failed")
     stuck = sum(1 for j in jobs.values() if j["status"] == "processing")
-    return done, failed, stuck
+    return done, failed, stuck, len(dupes)
 
 runs = []
 for _ in range(__RUNS__):
@@ -205,15 +250,27 @@ class BugFixValidator:
                     )
                 )
                 continue
-            done, failed, stuck = run
-            ok = done == 10 and failed == 2 and stuck == 0
+            done, failed, stuck, dupes = run
+            problems = []
+            if not (done == 10 and failed == 2 and stuck == 0):
+                problems.append(f"done={done}, failed={failed}, stuck={stuck}")
+            if dupes:
+                problems.append(
+                    f"{dupes} duplicate dispatch(es) — a job was handed to another "
+                    "worker before the first completed or failed it"
+                )
+            ok = not problems
             if ok:
                 passes += 1
             details.append(
                 ValidationCheck(
                     name=f"run_{idx}",
                     passed=ok,
-                    message=f"done={done}, failed={failed}, stuck={stuck}",
+                    message=(
+                        ", ".join(problems)
+                        if problems
+                        else f"done={done}, failed={failed}, stuck={stuck}, duplicates=0"
+                    ),
                 )
             )
 

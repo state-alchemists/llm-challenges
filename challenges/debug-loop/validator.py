@@ -27,25 +27,27 @@ EXEC_TOOL_HINTS = ("bash", "run_command", "shell", "execute", "cmd")
 EDIT_TOOL_HINTS = ("write", "edit", "patch", "replace", "str_replace")
 
 # Suspicious bypasses we explicitly reject — instruction forbids them.
-BYPASS_PATTERNS = (
-    r"^\s*exit\s+0\s*$",  # bash 'exit 0' as a line
-    r"try\s*:\s*$",  # try/except wrapping the offending code
-)
+# Both are line-anchored, so every match here needs re.MULTILINE: without it
+# `$` means end-of-string and `TRY_BYPASS` only fires on a file that *ends*
+# in `try:`, i.e. never on the bypass it exists to catch.
+EXIT_ZERO_BYPASS = r"^\s*exit\s+0\s*$"  # bash 'exit 0' as a line
+TRY_BYPASS = r"^\s*try\s*:\s*$"  # try/except wrapping the offending code
 
 
 def _has_bypass(workdir: Path) -> str | None:
     pipeline = workdir / "pipeline.py"
     if not pipeline.is_file():
         return "pipeline.py missing"
-    text = pipeline.read_text(encoding="utf-8")
-    for pat in BYPASS_PATTERNS[1:]:  # exclude bash exit 0 for .py
-        if re.search(pat, text):
-            return f"pipeline.py matches {pat!r}"
+    # Any module the fix could touch, not just pipeline.py — a try/except in
+    # config.py swallows the error just as well.
+    for src in sorted(workdir.glob("*.py")):
+        if re.search(TRY_BYPASS, src.read_text(encoding="utf-8"), re.MULTILINE):
+            return f"{src.name} wraps the failure in try/except"
     run_sh = workdir / "run.sh"
     if not run_sh.is_file():
         return "run.sh missing"
     sh_text = run_sh.read_text(encoding="utf-8")
-    if re.search(r"^\s*exit\s+0\s*$", sh_text, re.MULTILINE):
+    if re.search(EXIT_ZERO_BYPASS, sh_text, re.MULTILINE):
         return "run.sh contains an unconditional 'exit 0'"
     return None
 
@@ -59,12 +61,11 @@ def _count_iterations(trace: TrialTrace | None) -> tuple[int, int]:
     for tc in trace.tool_calls:
         lname = tc.name.lower()
         if any(h in lname for h in EXEC_TOOL_HINTS):
-            # Filter for calls that look like they invoked run.sh / pipeline.py.
+            # Only calls that actually invoked the script count as iterations;
+            # an `ls` is not a debug loop. (The previous branch here counted
+            # every shell call, then claimed in a comment to weight them less.)
             blob = " ".join(str(v) for v in tc.args.values())
             if "run.sh" in blob or "pipeline.py" in blob:
-                exec_runs += 1
-            else:
-                # Generic exec calls also count, just less weighted.
                 exec_runs += 1
         elif any(h in lname for h in EDIT_TOOL_HINTS):
             edits += 1
@@ -128,7 +129,9 @@ class DebugLoopValidator:
             return ValidationResult(status="FAIL", score=0.0, details=details)
 
         ok_exit = proc.returncode == 0
-        ok_marker = "OK" in proc.stdout.splitlines()[-1].strip() if proc.stdout.strip() else False
+        # run.sh ends in `echo OK` and must not be modified, so the last line
+        # is exactly "OK" — a substring test would also accept "NOT OK".
+        ok_marker = proc.stdout.strip().splitlines()[-1].strip() == "OK" if proc.stdout.strip() else False
         details.append(
             ValidationCheck(
                 name="run_sh_exits_clean",

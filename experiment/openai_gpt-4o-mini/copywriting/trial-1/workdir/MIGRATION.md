@@ -1,75 +1,57 @@
 # Zrb CLI Migration Guide from v1 to v2
 
-This guide outlines the breaking changes between version 1 and version 2 of the Zrb Task API. Developers using v1 should review the changes carefully and follow the migration checklist at the end of this document.
+## Overview
+This migration guide helps developers transition from Zrb CLI v1 to v2. It highlights breaking changes, provides code examples, and presents a checklist for migration.
 
 ## Breaking Changes
 
-### 1. API Endpoint Prefix
-**Change:** All endpoints are now prefixed with `/v2/`.
-
+### 1. API Endpoints Prefix
+All endpoints are now prefixed with `/v2/`. 
 **Before:**
-```
+```plaintext
 GET /tasks
 ```
-
 **After:**
-```
+```plaintext
 GET /v2/tasks
-```
-
----
+```  
 
 ### 2. Authentication Header Change
-**Change:** The authentication header has changed from `X-Auth-Token` to `Authorization: Bearer <your_api_token>`.
-
+The authentication header has changed from `X-Auth-Token` to `Authorization` with a Bearer token. 
 **Before:**
-```
+```plaintext
 X-Auth-Token: <your_api_key>
 ```
-
 **After:**
-```
+```plaintext
 Authorization: Bearer <your_api_token>
-```
-
----
+``` 
 
 ### 3. Task ID Type Change
-**Change:** The type of `id` in the Task object has changed from an integer to a UUID string.
-
+The `id` field of the Task object has changed from an integer to a UUID string.
 **Before:**
 ```json
 {
   "id": 42,
-  "title": "Write tests",
-  "done": false,
-  "created_at": "2024-01-15T10:30:00Z"
+  "title": "Write tests"
 }
 ```
-
 **After:**
 ```json
 {
   "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "title": "Write tests",
-  "completed": false,
-  "project_id": "proj_abc123",
-  "created_at": "2024-01-15T10:30:00Z"
+  "title": "Write tests"
 }
 ```
 
----
-
-### 4. Renaming of `done` to `completed`
-**Change:** The field `done` has been renamed to `completed` in the Task object.
-
+### 4. Task Field Renamed
+The field `done` has been renamed to `completed` in the Task object.
 **Before:**
 ```json
 {
   "done": false
 }
 ```
-
 **After:**
 ```json
 {
@@ -77,18 +59,14 @@ Authorization: Bearer <your_api_token>
 }
 ```
 
----
-
-### 5. Required `project_id`
-**Change:** The `project_id` is now a required field when creating a task.
-
+### 5. Required Project ID Field
+Task creation now requires a `project_id` in the request body.
 **Before:**
 ```json
 {
   "title": "New task title"
 }
 ```
-
 **After:**
 ```json
 {
@@ -97,39 +75,39 @@ Authorization: Bearer <your_api_token>
 }
 ```
 
----
-
-### 6. Paginated List Envelope
-**Change:** List endpoints now return a paginated envelope rather than a bare array.
-
+### 6. Paginated List Responses
+List endpoints now return a paginated response envelope instead of a direct array of tasks.
 **Before:**
 ```json
 [
-  {"id": 1, "title": "Buy milk", "done": false, "created_at": "..."},
-  {"id": 2, "title": "Ship v1", "done": true, "created_at": "..."}
+  {"id": 1, "title": "Buy milk"},
+  {"id": 2, "title": "Ship v1"}
 ]
 ```
-
 **After:**
 ```json
 {
-  "items": [...],
+  "items": [
+    {"id": "1", "title": "Buy milk"},
+    {"id": "2", "title": "Ship v1"}
+  ],
   "total": 42,
   "next_cursor": "cursor_xyz"
 }
 ```
 
 ## Migration Checklist
-1. Update all API endpoints to use the `/v2/` prefix.
-2. Change the authentication header to use `Authorization: Bearer <your_api_token>`.
-3. Change all instances of `id` from integer to UUID string in Task objects.
-4. Rename all references of `done` to `completed` in the Task object.
-5. Ensure `project_id` is provided in the task creation request.
-6. Update list requests to handle the new paginated response.
+1. Update all API endpoint URLs to include `/v2/`
+2. Change authentication method to use Bearer tokens.
+3. Update Task ID types from integers to UUID strings.
+4. Rename the `done` field to `completed` in Task objects.
+5. Ensure `project_id` is present in Task creation requests.
+6. Modify client code to handle paginated list responses.
 
 ## Upgrade Command
-
-To upgrade to v2, run the following command:
+To upgrade Zrb CLI to v2, run:
 ```bash
-zrb upgrade
-```
+zrb upgrade --version 2.0.0
+``` 
+
+Ensure you thoroughly test your applications after migration to address any unforeseen issues.

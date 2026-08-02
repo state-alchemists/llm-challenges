@@ -4,6 +4,7 @@ import asyncio
 class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
+        self._lock = asyncio.Lock()
 
     async def check_stock(self, quantity: int) -> bool:
         await asyncio.sleep(0.02)
@@ -19,6 +20,18 @@ class Inventory:
     async def increment(self, quantity: int) -> None:
         await asyncio.sleep(0.01)
         self._stock += quantity
+
+    async def reserve(self, quantity: int) -> bool:
+        """Atomically check stock and decrement under a lock.
+
+        Guarantees no overselling: the check and the mutation happen
+        without an interleaving gap that another coroutine could exploit.
+        """
+        async with self._lock:
+            if self._stock >= quantity:
+                self._stock -= quantity
+                return True
+            return False
 
     @property
     def stock(self) -> int:

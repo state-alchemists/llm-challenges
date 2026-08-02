@@ -19,10 +19,11 @@ def slugify(text: str) -> str:
         if char.isalnum():
             result_chars.append(char)
         else:
-            if result_chars and result_chars[-1] != '-':
-                result_chars.append('-')
-    collapsed = "".join(result_chars).strip('-')
-    return collapsed
+            result_chars.append(" ")
+    collapsed = "".join(result_chars)
+    # Replace multiple spaces with a single hyphen
+    collapsed = "-".join(collapsed.split())
+    return collapsed.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
@@ -32,4 +33,6 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
+    if max_len <= len(suffix):
+        return text[:max_len] # Return truncated text without suffix if max_len is too short
     return text[:max_len - len(suffix)] + suffix

@@ -1,66 +1,60 @@
 # Migrating from Zrb Task API v1 to v2
 
-This guide covers every breaking change between v1 and v2 of the Zrb Task API. If you are currently using v1, follow the sections below in order — each one describes a single breaking change, what it replaces, and how to update your code.
+v2 introduces projects, cursor-based pagination, and stricter authentication. This guide covers every breaking change, with before/after examples and a migration checklist.
 
 ---
 
-## 1. Endpoint paths now require the `/v2/` prefix
+## Breaking Changes
 
-All v1 endpoints lived at the root path (`/tasks`). In v2, every endpoint is prefixed with `/v2/`. Requests to the old paths will return 404.
+### 1. Endpoint paths are now prefixed with `/v2/`
 
-| v1                  | v2                     |
-|---------------------|------------------------|
-| `GET /tasks`        | `GET /v2/tasks`        |
-| `GET /tasks/{id}`   | `GET /v2/tasks/{id}`   |
-| `POST /tasks`       | `POST /v2/tasks`       |
-| `PUT /tasks/{id}`   | `PUT /v2/tasks/{id}`   |
-| `DELETE /tasks/{id}`| `DELETE /v2/tasks/{id}`|
+All endpoints moved under `/v2/`. Requests to the v1 paths will receive `404`.
 
 **Before (v1):**
 
-```python
-import requests
-
-resp = requests.get("https://api.zrb.dev/tasks")
+```
+GET /tasks
+GET /tasks/42
+POST /tasks
+PUT /tasks/42
+DELETE /tasks/42
 ```
 
 **After (v2):**
 
-```python
-import requests
-
-resp = requests.get("https://api.zrb.dev/v2/tasks")
+```
+GET /v2/tasks
+GET /v2/tasks/<uuid>
+POST /v2/tasks
+PUT /v2/tasks/<uuid>
+DELETE /v2/tasks/<uuid>
 ```
 
----
+Update your base URL or request builder to prepend `/v2`.
 
-## 2. Authentication header changed from `X-Auth-Token` to `Authorization: Bearer`
+### 2. Authentication header changed from `X-Auth-Token` to `Authorization: Bearer`
 
-The custom `X-Auth-Token` header is no longer accepted. Sending it will return HTTP 401. Replace it with a standard `Authorization: Bearer <token>` header.
+The `X-Auth-Token` header is no longer accepted. Requests carrying it will receive `401 Unauthorized`.
 
 **Before (v1):**
 
-```python
-import requests
-
-headers = {"X-Auth-Token": "my_api_key"}
-resp = requests.get("https://api.zrb.dev/tasks", headers=headers)
+```http
+GET /tasks HTTP/1.1
+X-Auth-Token: your_api_key
 ```
 
 **After (v2):**
 
-```python
-import requests
-
-headers = {"Authorization": "Bearer my_api_token"}
-resp = requests.get("https://api.zrb.dev/v2/tasks", headers=headers)
+```http
+GET /v2/tasks HTTP/1.1
+Authorization: Bearer your_api_token
 ```
 
----
+If your HTTP client has a built-in bearer-token helper, prefer that over setting the header manually.
 
-## 3. Task `id` changed from integer to UUID string
+### 3. Task `id` changed from integer to UUID string
 
-Task identifiers are now UUIDs instead of auto-incrementing integers. Any code that stores, compares, or serializes `id` as an integer must be updated to handle strings.
+Every task ID is now a UUID. Any code that stores, compares, or URL-interpolates task IDs as integers must be updated.
 
 **Before (v1):**
 
@@ -85,117 +79,137 @@ Task identifiers are now UUIDs instead of auto-incrementing integers. Any code t
 }
 ```
 
-**Before (v1) — fetching a task by ID:**
+**Impact:** database schemas, URL templates, and type definitions that declare `id` as `int` need to change to `str`/`string`. Route patterns matching `/tasks/:id` should accept UUIDs, not just digits.
 
-```python
-task_id = 42
-resp = requests.get(f"https://api.zrb.dev/tasks/{task_id}", headers=headers)
+### 4. Task field `done` renamed to `completed`
+
+The boolean field `done` is now `completed`. The old name is not accepted in request bodies and does not appear in responses.
+
+**Before (v1) — update a task:**
+
+```json
+PUT /tasks/42
+{ "done": true }
 ```
 
-**After (v2) — fetching a task by ID:**
+**After (v2) — update a task:**
 
-```python
-task_id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-resp = requests.get(f"https://api.zrb.dev/v2/tasks/{task_id}", headers=headers)
+```json
+PUT /v2/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890
+{ "completed": true }
 ```
 
----
-
-## 4. Task field `done` renamed to `completed`
-
-The boolean field `done` has been renamed to `completed`. The semantics are unchanged — it still indicates whether the task is finished — but any code that reads, writes, or maps this field must use the new name.
-
-**Before (v1) — creating/updating with `done`:**
+**Before (v1) — read a task and check status (Python):**
 
 ```python
-payload = {"title": "Ship v2", "done": True}
-resp = requests.put("https://api.zrb.dev/tasks/42", json=payload, headers=headers)
+if task["done"]:
+    print("Task finished")
 ```
 
-**After (v2) — creating/updating with `completed`:**
+**After (v2):**
 
 ```python
-payload = {"title": "Ship v2", "completed": True}
-resp = requests.put("https://api.zrb.dev/v2/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890", json=payload, headers=headers)
+if task["completed"]:
+    print("Task finished")
 ```
 
----
+Search your codebase for `done` (including `"done"` in JSON/dict access) and replace each occurrence with `completed` in task-related code.
 
-## 5. Task creation now requires `project_id`
+### 5. Task creation now requires `project_id`
 
-Creating a task in v2 requires a `project_id` field. Omitting it returns HTTP 422. This means you must have a project identifier before you can create any tasks — obtain one from your project setup or admin console.
+`POST /v2/tasks` will return `422 Unprocessable Entity` if `project_id` is missing.
 
-**Before (v1) — creating a task with just a title:**
+**Before (v1):**
 
-```python
-payload = {"title": "New task title"}
-resp = requests.post("https://api.zrb.dev/tasks", json=payload, headers=headers)
+```json
+POST /tasks
+{ "title": "New task title" }
 ```
 
-**After (v2) — creating a task with a `project_id`:**
+**After (v2):**
 
-```python
-payload = {"title": "New task title", "project_id": "proj_abc123"}
-resp = requests.post("https://api.zrb.dev/v2/tasks", json=payload, headers=headers)
+```json
+POST /v2/tasks
+{ "title": "New task title", "project_id": "proj_abc123" }
 ```
 
----
+You will need a known project ID before creating tasks. If your integration doesn't yet have one, create a project first (see the v2 Projects API) or obtain the ID from your dashboard.
 
-## 6. List endpoints return a paginated envelope instead of a bare array
+### 6. List endpoints return a paginated envelope instead of a bare array
 
-`GET /tasks` in v1 returned a bare JSON array. In v2, `GET /v2/tasks` returns an object with `items`, `total`, and `next_cursor`. To iterate through all results, you must follow the cursor.
+`GET /v2/tasks` no longer returns a bare JSON array. It returns an envelope with `items`, `total`, and `next_cursor`.
 
-**Before (v1) — bare array response:**
+**Before (v1):**
+
+```json
+[
+  {"id": 1, "title": "Buy milk", "done": false, "created_at": "..."},
+  {"id": 2, "title": "Ship v1", "done": true, "created_at": "..."}
+]
+```
+
+**After (v2):**
+
+```json
+{
+  "items": [
+    {"id": "a1b2c3d4-...", "title": "Buy milk", "completed": false, "project_id": "proj_abc123", "created_at": "..."},
+    {"id": "e5f6-7890-...", "title": "Ship v1", "completed": true, "project_id": "proj_abc123", "created_at": "..."}
+  ],
+  "total": 42,
+  "next_cursor": "cursor_xyz"
+}
+```
+
+Any code that iterates over the top-level response as an array must now iterate over `response["items"]`. For example:
+
+**Before (v1) — Python:**
 
 ```python
-import requests
-
-headers = {"X-Auth-Token": "my_api_key"}
-resp = requests.get("https://api.zrb.dev/tasks", headers=headers)
-tasks = resp.json()  # list[dict]
+tasks = requests.get("/tasks", headers=headers).json()
 for task in tasks:
-    print(task["id"], task["title"], task["done"])
+    print(task["title"])
 ```
 
-**After (v2) — paginated envelope response:**
+**After (v2):**
 
 ```python
-import requests
+data = requests.get("/v2/tasks", headers=headers).json()
+for task in data["items"]:
+    print(task["title"])
+```
 
-headers = {"Authorization": "Bearer my_api_token"}
-base_url = "https://api.zrb.dev/v2/tasks"
+To fetch all pages, use cursor-based pagination:
+
+```python
 cursor = None
-
+all_tasks = []
 while True:
-    params = {}
-    if cursor:
-        params["cursor"] = cursor
-    resp = requests.get(base_url, headers=headers, params=params)
-    data = resp.json()  # {"items": [...], "total": N, "next_cursor": "..." or None}
-    for task in data["items"]:
-        print(task["id"], task["title"], task["completed"])
+    params = {"cursor": cursor} if cursor else {}
+    data = requests.get("/v2/tasks", headers=headers, params=params).json()
+    all_tasks.extend(data["items"])
     cursor = data.get("next_cursor")
     if not cursor:
         break
 ```
 
-The envelope also provides `total` (total number of matching tasks) and supports a `limit` query parameter (default 20) to control page size.
-
 ---
 
 ## Migration Checklist
 
-Work through each item in order. After completing all steps, your integration should be fully compatible with v2.
+1. **Update base URL** — prepend `/v2/` to all endpoint paths in your client code or configuration.
+2. **Switch auth header** — replace `X-Auth-Token` with `Authorization: Bearer`. Remove any `X-Auth-Token` references.
+3. **Update ID handling** — change task ID types from integer to UUID string in models, databases, URL patterns, and validators.
+4. **Rename `done` → `completed`** — update all reads, writes, conditionals, and serialization that reference the `done` field.
+5. **Add `project_id` to task creation** — ensure every `POST /v2/tasks` request body includes a `project_id`.
+6. **Unwrap paginated lists** — change code that treats the list response as a bare array to iterate over the `items` key instead. Implement cursor-based pagination if you need to fetch more than one page.
+7. **Run integration tests** against the v2 API and verify all endpoints return the expected shapes.
+8. **Update error handling** — v2 returns `401` for the old auth header and `422` for missing `project_id`. Adjust your error handling accordingly.
 
-- [ ] **Update all endpoint URLs** — add the `/v2/` prefix to every request path (`/tasks` → `/v2/tasks`, `/tasks/{id}` → `/v2/tasks/{id}`).
-- [ ] **Replace the auth header** — change `X-Auth-Token: <key>` to `Authorization: Bearer <token>` in every request. Remove any `X-Auth-Token` references.
-- [ ] **Update `id` handling** — change all code that treats task IDs as integers to treat them as UUID strings (parsing, storage, URL construction, equality checks).
-- [ ] **Rename `done` to `completed`** — update all references: request bodies, response mappers, model classes, and any UI or logging that reads or writes the `done` field.
-- [ ] **Add `project_id` to task creation** — ensure every `POST /v2/tasks` request includes a `project_id` field. Provision project IDs if you don't have them yet.
-- [ ] **Parse the paginated list envelope** — update all `GET /v2/tasks` consumers to read from `.items` instead of treating the response as a bare array. Implement cursor-based pagination where you need more than the first page of results.
-- [ ] **Test the full request cycle** — send requests against the v2 API and verify that authentication, creation, listing, updating, and deletion all work with the new format.
-- [ ] **Upgrade your client library** — run:
+---
+
+Upgrade now:
 
 ```bash
-pip install --upgrade zrb
+zrb upgrade --to v2
 ```

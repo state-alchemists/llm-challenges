@@ -11,7 +11,8 @@ class Inventory:
             await asyncio.sleep(0.02)
             return self._stock >= quantity
 
-    async def decrement(self, quantity: int) -> bool:
+    async def reserve(self, quantity: int) -> bool:
+        """Atomically reserve inventory. Returns True if reserved, False if insufficient stock."""
         async with self._lock:
             await asyncio.sleep(0.02)
             if self._stock >= quantity:
@@ -19,8 +20,14 @@ class Inventory:
                 return True
             return False
 
-    async def reserve(self, quantity: int) -> bool:
-        """Atomically check that sufficient stock exists and reserve it."""
+    async def release(self, quantity: int) -> None:
+        """Release previously reserved inventory (e.g., if payment failed)."""
+        async with self._lock:
+            await asyncio.sleep(0.01)
+            self._stock += quantity
+
+    async def decrement(self, quantity: int) -> bool:
+        """Legacy method — prefer reserve() for atomic checkout."""
         async with self._lock:
             await asyncio.sleep(0.02)
             if self._stock >= quantity:
@@ -29,6 +36,7 @@ class Inventory:
             return False
 
     async def increment(self, quantity: int) -> None:
+        """Legacy method — prefer release() for atomic checkout."""
         async with self._lock:
             await asyncio.sleep(0.01)
             self._stock += quantity

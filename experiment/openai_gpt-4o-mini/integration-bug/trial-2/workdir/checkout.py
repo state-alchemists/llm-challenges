@@ -10,27 +10,25 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Check for stock availability
-    available = await inventory.check_stock(quantity)
-    if not available:
-        print(f"Order {order_id}: out of stock")
-        return False
+    # New async lock
+    async with inventory.lock:
+        available = await inventory.check_stock(quantity)
+        if not available:
+            print(f"Order {order_id}: out of stock")
+            return False
+        
+        # Deduct stock first before charging
+        decrement_successful = await inventory.decrement(quantity)
+        if not decrement_successful:  # This check should be redundant now
+            print(f"Order {order_id}: inventory error - unable to decrement stock")
+            return False
 
-    # Try to decrement inventory
-    decremented = await inventory.decrement(quantity)
-    print(f"Order {order_id}: inventory decrement result: {decremented}")
-    print(f"Order {order_id}: stock after decrement: {inventory.stock}")
-
-    if not decremented:
-        print(f"Order {order_id}: inventory error — item not delivered")
-        return False
-
-    # Charge the payment
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        print(f"Order {order_id}: payment failed after successful inventory decrement")
-        await inventory.increment(quantity)  # Restore stock if charge fails
-        return False  
+        # Rollback the inventory if charge fails
+        await inventory.increment(quantity)
+        print(f"Order {order_id}: payment failed, inventory rolled back")
+        return False
 
     print(f"Order {order_id}: SUCCESS")
     return True

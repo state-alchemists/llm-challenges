@@ -13,15 +13,6 @@ tasks: List[Task] = [
     Task(id=4, title="Deploy to staging", status=TaskStatus.todo, priority=2, project_id=2, assigned_to="alice"),
 ]
 
-_next_task_id = 5
-
-
-def get_next_task_id() -> int:
-    global _next_task_id
-    task_id = _next_task_id
-    _next_task_id += 1
-    return task_id
-
 VALID_API_KEYS: Dict[str, str] = {
     "dev-key-alice": "alice",
     "dev-key-bob": "bob",

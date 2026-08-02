@@ -22,7 +22,6 @@ def slugify(text: str) -> str:
         elif char.isspace() or char == "-":
             result_chars.append("-")
     collapsed = "".join(result_chars)
-    # Collapse repeated hyphens using regex
     collapsed = re.sub(r"-+", "-", collapsed)
     return collapsed.strip("-")
 

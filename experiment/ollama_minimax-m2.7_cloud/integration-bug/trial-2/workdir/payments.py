@@ -16,10 +16,3 @@ class PaymentGateway:
         self.total_charged += amount
         self.charges.append({"order_id": order_id, "amount": amount})
         return True
-
-    async def refund(self, order_id: str, amount: float) -> bool:
-        """Reverse a charge identified by order_id."""
-        await asyncio.sleep(0.03)
-        self.total_charged -= amount
-        self.charges.append({"order_id": order_id, "amount": -amount, "refund": True})
-        return True

@@ -7,6 +7,9 @@ async def process_job(queue, worker_id: int) -> None:
         if job is None:
             return
 
+        job["status"] = "processing"
+        print(f"[Worker {worker_id}] picked up job {job['id']}")
+
         print(f"[Worker {worker_id}] picked up job {job['id']}")
         try:
             await asyncio.sleep(0.05)
@@ -18,5 +21,4 @@ async def process_job(queue, worker_id: int) -> None:
             print(f"[Worker {worker_id}] finished job {job['id']}")
         except Exception as e:
             print(f"[Worker {worker_id}] job {job['id']} failed: {e}")
-            queue.fail(job["id"], str(e))  # Update job status to failed
-            print(f"[Worker {worker_id}] job {job['id']} failed: {e}")
+            queue.fail(job["id"], str(e))  # Mark as failed

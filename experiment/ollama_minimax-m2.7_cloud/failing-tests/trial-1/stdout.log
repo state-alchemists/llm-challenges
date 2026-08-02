@@ -1,15 +1,17 @@
 [2m
-  🧠 Let me[0m[2m start by understanding the project structure and then run the tests to see what's failing.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m[0m[2m
-  🧰 call_function_03qpmj751v2a_2 | LSRead {"path":"."}{"path":"/Users/gofrendigunawan/llm-challenges/README.md"}
+  🧠 Let me[0m[2m start by understanding the project structure and then run the tests to see what's failing.
 [0m[2m
-  🔠 call_function_03qpmj751v2a_2 Executed
+  🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m[0m[2m
+  🧰 call_function_o3ln5xwjf4t9_2 | ReadLS {"path":"/home/gofrendi/llm-challenges/README.md"}{"path":"/home/gofrendi/llm-challenges/experiment/ollama_minimax-m2.7_cloud/failing-tests/trial-1/workdir"}
+[0m[2m
+  🔠 call_function_o3ln5xwjf4t9_2 Executed
 [0m
 [SYSTEM] Invalid tool call detected, asking model to retry...
 [2m
-  🧠 Let[0m[2m me start by running the test suite to see what failures we're dealing with.[0m[2m
+  🧠 Let[0m[2m me start by running pytest to see what failures we[0m[2m have.
+[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_dlw5911of5hf_1 | Shell {'command': 'pytest -q'}
+  🧰 call_dd7d82eaf1de448e82467494 | Shell {'command': 'cd /home/gofrendi/llm-chal ...', 'timeout': 60}
 [0m  [2mF.FF.FFF.FFF.F.                                                          [100%]
 [0m  [2m=================================== FAILURES ===================================
 [0m  [2m___________________ test_has_permission_is_case_insensitive ____________________
@@ -46,7 +48,7 @@
 [0m  [2mE       AssertionError: Inventories must not share storage
 [0m  [2mE       assert 5 == 0
 [0m  [2mE        +  where 5 = available('apple')
-[0m  [2mE        +    where available = <inventory.Inventory object at 0x10d54f610>.available
+[0m  [2mE        +    where available = <inventory.Inventory object at 0x7fd3cdb0ca50>.available
 [0m  [2m
 [0m  [2mtests/test_inventory.py:13: AssertionError
 [0m  [2m_____________________________ test_add_accumulates _____________________________
@@ -58,7 +60,7 @@
 [0m  [2m>       assert inv.available("apple") == 7
 [0m  [2mE       AssertionError: assert 4 == 7
 [0m  [2mE        +  where 4 = available('apple')
-[0m  [2mE        +    where available = <inventory.Inventory object at 0x10d54fd90>.available
+[0m  [2mE        +    where available = <inventory.Inventory object at 0x7fd3cdb0d310>.available
 [0m  [2m
 [0m  [2mtests/test_inventory.py:20: AssertionError
 [0m  [2m_________________________ test_reserve_up_to_available _________________________
@@ -70,7 +72,7 @@
 [0m  [2mtests/test_inventory.py:25: 
 [0m  [2m_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 [0m  [2m
-[0m  [2mself = <inventory.Inventory object at 0x10d6955b0>, sku = 'apple', qty = 5
+[0m  [2mself = <inventory.Inventory object at 0x7fd3cda4f100>, sku = 'apple', qty = 5
 [0m  [2m
 [0m  [2m    def reserve(self, sku: str, qty: int) -> None:
 [0m  [2m        if qty <= 0:
@@ -133,154 +135,135 @@
 [0m  [2mFAILED tests/test_text_utils.py::test_slugify_lowercases - AssertionError: as...
 [0m  [2mFAILED tests/test_text_utils.py::test_slugify_collapses_repeated_separators
 [0m  [2mFAILED tests/test_text_utils.py::test_truncate_respects_max_len_including_suffix
-[0m  [2m10 failed, 5 passed in 0.07s
+[0m  [2m10 failed, 5 passed in 0.06s
 [0m[2m
-  🔠 call_function_dlw5911of5hf_1 Executed
+  🔠 call_dd7d82eaf1de448e82467494 Executed
 [0m[2m
-  🧠 Let me[0m[2m analyze the test failures. There are 10 failing tests across 3 modules:
+  🧠 Let[0m[2m me read the source files to understand the bugs and fix them. I need to read:
+     1. src/auth.py - for the permission/auth issues
+     2. src/inventory.py - for the inventory[0m[2m issues
+     3. src/text_utils.py - for the text utils issues
      
-     1. **tests/test_auth.py** (3 failures):
-        - `test_has_permission_is_case[0m[2m_insensitive`: `has_permission(["Admin"], "admin")` returns `False` but should return `True`
-        - `test_owner_alone_grants_access`: `is_admin_or_owner(["user[0m[2m"], owner_id="u1", user_id="u1")` returns `False` but should return `True`
-        - `test_admin_alone_grants_access`: `is_admin_or_owner(["admin"], owner_id="u1", user_id="u9")` returns[0m[2m `False` but should return `True`
-     
-     2. **tests/test_inventory.py** (4 failures):
-        - `test_two_inventories_do_not_share_state`: Two Inventory instances share state (class[0m[2m-level storage)
-        - `test_add_accumulates`: Adding to inventory doesn't accumulate (over[0m[2mwrites instead)
-        - `test_reserve_up_to_available`: `reserve("apple", 5)` raises `OutOfStock` when it shouldn't (logic[0m[2m error: `>=` instead of `>`)
-        - `test_release_cannot_go_negative`: `release` doesn't raise `ValueError` when releasing more than reserved
-     
-     3. **tests/test[0m[2m_text_utils.py** (3 failures):
-        - `test_slugify_lowercases`: `slugify("Hello")` returns `"Hello"` instead of `"hello"`
-        - `test_slugify_collapses_repeated_separators`: `slugify[0m[2m("hello   world!!!")` returns `"hello--world"` instead of `"hello-world"`
-        - `test_truncate_respects_max_len_including_suffix`: `truncate("The quick brown fox", max_len=10)` returns [0m[2m11 chars instead of ≤10
-        
-     Now I need to examine the source files to identify where these functions are implemented and[0m[2m understand the specific bugs causing each failure.[0m[2m
-  Let me read the source files to understand the bugs.
+     Let me start by reading these files.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_olby4wsk5ha5_1 | Read {'path': 'src/auth.py'}
+  🧰 call_65c490b9eb3d457fa1112310 | Read {'path': '/home/gofrendi/llm-challen ...'}
 [0m[2m
-  🔠 call_function_olby4wsk5ha5_1 Executed
+  🔠 call_65c490b9eb3d457fa1112310 Executed
 [0m[2m
-  🧠 Now I[0m[2m can see the bugs:
+  🧠 I[0m[2m see the bugs in auth.py:
+     1. `[0m[2mhas_permission` - should do case-insensitive comparison, but it's doing `required in user_roles` which is case-sensitive.
+     2. `is_admin[0m[2m_or_owner` - uses `and` instead of `or`. Should be `has_permission(user_roles[0m[2m, "admin") or user_id == owner_id[0m[2m`.
      
-     1. `has_permission` - compares `required` directly against `user_roles` without case normalization. It should lowercase[0m[2m both for comparison.
-     
-     2. `is_admin_or_owner` - uses `and` instead of `or`. It should be `or`[0m[2m since it's "admin OR owner".
-     
-     Let me read the inventory and text_utils files too.[0m[2m
+     Let me read the inventory.py and text_utils[0m[2m.py files too.
+[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_93cw3rhz34x3_1 | Read {'path': 'src/inventory.py'}
+  🧰 call_619c09fa9c5842abb44fd807 | Read {'path': '/home/gofrendi/llm-challen ...'}
 [0m[2m
-  🔠 call_function_93cw3rhz34x3_1 Executed
+  🔠 call_619c09fa9c5842abb44fd807 Executed
 [0m[2m
-  🧠 Now[0m[2m let me read the text_utils.py file to understand the text processing bugs.[0m[2m
+  🧠 Now[0m[2m let me read the text_utils.py file.
+[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_rdcau4zm02q9_1 | Read {'path': 'src/text_utils.py'}
+  🧰 call_5f62b12f997b4e06a42a6648 | Read {'path': '/home/gofrendi/llm-challen ...'}
 [0m[2m
-  🔠 call_function_rdcau4zm02q9_1 Executed
+  🔠 call_5f62b12f997b4e06a42a6648 Executed
 [0m[2m
   🧠 Now[0m[2m I understand all the bugs:
      
-     **auth.py:**
-     1. `has_permission` - case-sensitive comparison, should be case-insensitive
-     2. `is_admin_or_owner` - uses `and[0m[2m` instead of `or`, so it requires BOTH admin AND owner
+     **auth.py bugs[0m[2m:**
+     1. `has_permission` - case sensitive[0m[2m comparison. Should compare case-insensitively.
+     2. `is_admin_or_owner` - uses `[0m[2mand` instead of `or`. Should be `or`.
      
-     **inventory.py:**
-     1. Uses mutable default argument[0m[2m `{}` which causes shared state between instances
-     2. `add` replaces stock instead of accumulating
-     3. `reserve` uses `>=` instead of `>` for[0m[2m the available check (should allow reserving exactly the available amount)
-     4. `release` doesn't check for negative values
+     **inventory.py bugs:**
+     1. Default[0m[2m mutable argument `{}` is shared between instances -[0m[2m need to use `None` and create dict inside[0m[2m.
+     2. `add` overwrites instead of accumulating - should use `self._stock[sku] = self._stock.get(sku, 0) + qty`
+     3. `reserve[0m[2m` uses `>=` instead of `>` - should be `if qty > self.available(s[0m[2mku)`
+     4. `release` doesn't prevent going[0m[2m negative - should raise ValueError if `current - qty < 0`
      
-     **text_utils.py:**
-     1. `slugify` doesn't[0m[2m lowercase
-     2. `slugify` only does a single `replace("--", "-")` instead of collapsing[0m[2m all consecutive dashes
-     3. `truncate` adds the suffix even when truncating, which exceeds max_len
+     **text_utils.py[0m[2m bugs:**
+     1. `slugify` doesn't lowercase[0m[2m - should call `.lower()` on result
+     2[0m[2m. `slugify` only replaces double dashes once[0m[2m, not all - should use a loop or regex[0m[2m
+     3. `truncate` slices at `max_len` but doesn't account for suffix length - should be `text[:max_len - len(s[0m[2muffix)] + suffix`
      
-     Let me fix all[0m[2m of them.[0m[2m
-  I can see all the bugs now. Let me fix them:
+     Let me fix all of[0m[2m these.
+[0m[2m
+  I see the bugs clearly. Let me fix all three files:
      
-     **auth.py:**[0m[2m `has_permission` is case-sensitive; `is_admin_or_owner` uses `and` instead of `or`
-     **inventory.py:** mutable default arg causes shared state; `add` replaces instead of accumulates; `reserve[0m[2m` uses `>=` instead of `>`; `release` doesn't guard negative
-     **text_utils.py:** `slugify` missing lowercase and[0m[2m full dash collapsing; `truncate` adds suffix even when it exceeds max_len
+     **auth.py[0m[2m:** `has_permission` needs case-insensitive comparison; `is_admin_or_owner` uses `and[0m[2m` instead of `or`.
+     
+     **inventory.py:** Mutable default dict shared across instances; `add` overwrites instead of accumulates; `reserve` uses `>=` instead of `>`; `release[0m[2m` doesn't guard negative.
+     
+     **text_utils.py:** `slugify` doesn't lowercase; double-dash collapse only runs once; `truncate` doesn't[0m[2m account for suffix length.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_uf5whvp7sqdv_1 | Edit {'path': 'src/auth.py', 'old_text': '    return required in use ...', 'new_text': '    return required.lower( ...'}
-[0m  ✓ LSP server 'pyright' started for /Users/gofrendigunawan/llm-challenges
+  🧰 call_a45dc52b296b48c3949a8cd6 | Edit {'path': '/home/gofrendi/llm-challen ...', 'old_text': 'def has_permission(user_ro ...', 'new_text': 'def has_permission(user_ro ...'}
+[0m  ✓ LSP server 'pyright' started for /home/gofrendi/llm-challenges
 [2m
-  🔠 call_function_uf5whvp7sqdv_1 Executed
+  🔠 call_a45dc52b296b48c3949a8cd6 Executed
 [0m[2m
-  🧠 Now[0m[2m fix the second bug in auth.py - the `and` should be `or`.[0m[2m
+  🧠 Now[0m[2m fix inventory.py:
+     1. Change mutable default `[0m[2m{}` to `None` and create new dict
+     2. In `add`, use `+=[0m[2m` instead of `=`
+     3. In `[0m[2mreserve`, change `>=` to `>`
+     4. In `release`, add a guard that raises ValueError if it would go negative
+[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_vfp8ci5s4bfs_1 | Edit {'new_text': '    return has_permission( ...', 'old_text': '    return has_permission( ...', 'path': 'src/auth.py'}
+  🧰 call_89e8ca09bbd94301b60c3162 | Edit {'path': '/home/gofrendi/llm-challen ...', 'old_text': '    def __init__(self, ini ...', 'new_text': '    def __init__(self, ini ...'}
 [0m[2m
-  🔠 call_function_vfp8ci5s4bfs_1 Executed
+  🔠 call_89e8ca09bbd94301b60c3162 Executed
 [0m[2m
-  🧠 Now[0m[2m fix inventory.py - 4 bugs:
+  🧠 Now[0m[2m fix the `reserve` method (>= should be >) and the `release` method (should[0m[2m guard against negative).
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_07d760d4aef04f8d9947fd24 | Edit {'path': '/home/gofrendi/llm-challen ...', 'old_text': '    def reserve(self, sku: ...', 'new_text': '    def reserve(self, sku: ...'}
+[0m[2m
+  🔠 call_07d760d4aef04f8d9947fd24 Executed
+[0m[2m
+  🧠 Now[0m[2m let me fix text_utils.py:
+     1. `[0m[2mslugify` needs to lowercase the result
+     2[0m[2m. Double-dash collapse needs to loop until stable[0m[2m
+     3. `truncate` needs to account[0m[2m for suffix length
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_4cf81e8768ef439f9b854bb6 | Edit {'path': '/home/gofrendi/llm-challen ...', 'old_text': 'def slugify(text: str) ->  ...', 'new_text': 'def slugify(text: str) ->  ...'}
+[0m[2m
+  🔠 call_4cf81e8768ef439f9b854bb6 Executed
+[0m[2m
+  🧠 Now[0m[2m fix the truncate function to account for suffix length.
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_71a8f2d6255e4152bf8f7bf2 | Edit {'path': '/home/gofrendi/llm-challen ...', 'old_text': 'def truncate(text: str, ma ...', 'new_text': 'def truncate(text: str, ma ...'}
+[0m[2m
+  🔠 call_71a8f2d6255e4152bf8f7bf2 Executed
+[0m[2m
+  🧠 Now[0m[2m let me run pytest -q to confirm all tests pass.
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_168f587977004f3d989341b1 | Shell {'command': 'cd /home/gofrendi/llm-chal ...', 'timeout': 60}
+[0m  [2m...............                                                                                                     [100%]
+[0m  [2m15 passed in 0.01s
+[0m[2m
+  🔠 call_168f587977004f3d989341b1 Executed
+[0m[2m
+  🧠 All [0m[2m15 tests pass. Let me summarize the fixes.
+[0m[2m
+  All 15 tests pass. Fixes applied across three modules:
      
-     1. Mutable default arg `initial={}`
-     2. `add` replaces instead of accumulates
-     3. `reserve` uses `>=` instead[0m[2m of `>`
-     4. `release` doesn't guard negative[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_oaxoxhkfbu1b_1 | Edit {'new_text': '    def __init__(self, ini ...', 'old_text': '    def __init__(self, ini ...', 'path': 'src/inventory.py'}
-[0m[2m
-  🔠 call_function_oaxoxhkfbu1b_1 Executed
-[0m[2m
-  🧠 Now[0m[2m fix the `add` method to accumulate instead of replace.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_5m5i09qs0f0u_1 | Edit {'new_text': '        self._stock[sku] = ...', 'old_text': '        self._stock[sku] = qty', 'path': 'src/inventory.py'}
-[0m[2m
-  🔠 call_function_5m5i09qs0f0u_1 Executed
-[0m[2m
-  🧠 Now[0m[2m fix the `reserve` comparison from `>=` to `>`.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_1ph7p052vb6l_1 | Edit {'new_text': '        if qty > self.avai ...', 'old_text': '        if qty >= self.ava ...', 'path': 'src/inventory.py'}
-[0m[2m
-  🔠 call_function_1ph7p052vb6l_1 Executed
-[0m[2m
-  🧠 Now[0m[2m fix `release` to raise ValueError when going negative.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_ochjrkd1h8iw_1 | Edit {'new_text': '        if qty > current:\n ...', 'old_text': '        self._reserved[sku ...', 'path': 'src/inventory.py'}
-[0m[2m
-  🔠 call_function_ochjrkd1h8iw_1 Executed
-[0m[2m
-  🧠 Now[0m[2m the text_utils.py fixes.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_pvfvbs4qsgek_1 | Edit {'new_text': '    result_chars: list[str ...', 'old_text': '    result_chars: list[str ...', 'path': 'src/text_utils.py'}
-[0m[2m
-  🔠 call_function_pvfvbs4qsgek_1 Executed
-[0m[2m
-  🧠 Now[0m[2m let me fix the truncate function. The issue is that when text is longer than max_len, we need to account for the suffix length. The output "The quick …[0m[2m" has 11 chars but max_len is 10, so we need to truncate to max_len - len(suffix) before[0m[2m adding suffix.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_sgtz5ibrtadf_1 | Edit {'new_text': '    if len(text) <= max_le ...', 'old_text': '    if len(text) <= max_le ...', 'path': 'src/text_utils.py'}
-[0m[2m
-  🔠 call_function_sgtz5ibrtadf_1 Executed
-[0m[2m
-  🧠 Now[0m[2m let me run pytest -q to verify all tests pass.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_h3ui6x1gqdgh_1 | Shell {'command': 'pytest -q'}
-[0m  [2m...............                                                          [100%]
-[0m  [2m15 passed in 0.02s
-[0m[2m
-  🔠 call_function_h3ui6x1gqdgh_1 Executed
-[0m[2m
-  🧠 All[0m[2m 15 tests pass now. Let me summarize the fixes.[0m[2m
-  15 passed. All bugs fixed:
+     **src/auth.py**
+     - `has_permission`:[0m[2m compared roles case-sensitively → now lowercases both sides
+     - `is_admin_or_owner`: used `and` (needs[0m[2m admin AND owner) → now uses `or` (admin OR owner)
      
-     | File | Bug[0m[2m | Fix |
-     |------|-----|-----|
-     | `auth.py:12` | `has_permission` case-sensitive | Compare lowercase versions |
-[0m[2m| `auth.py:16` | `is_admin_or_owner` used `and` | Changed to `or` |
-     | `inventory.py:14` | mutable `[0m[2m{}` default shared state | Copy `initial` dict, default `None` |
-     | `inventory.py:21` | `add` replaced[0m[2m stock | Accumulate with `get(sku, 0) + qty` |
-     | `inventory.py:29` | `reserve` used `>=`[0m[2m | Changed to `>` (exact available is ok) |
-     | `inventory.py:35` | `release` allowed negative | Added guard `if[0m[2m qty > current` |
-     | `text_utils.py:14` | `slugify` didn't lowercase | Added `.lower()` on input |
-     | `text_utils.py:19[0m[2m` | single `.replace("--", "-")` | Changed to loop to catch all repeated dashes |
-     | `text_utils.py[0m[2m:28` | `truncate` added suffix beyond limit | Subtract `len(suffix)` from slice |[0m[2m
-  💸 (Requests: 14 | Tool Calls: 13 | Total: 213686) Input: 211445 | Audio Input: 0 | Output: 2241 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     **src/inventory.py**
+     - `__init__`: mutable `{}` default shared[0m[2m across all instances → now copies `initial` dict
+     - `add`: overw[0m[2mrote stock → now accumulates (`self._stock.get(sku, 0) + qty`)
+     - `reserve`: used `>=` (blocks[0m[2m exactly-available) → now uses `>` (allows reserving up to available)
+     - `release`: allowed negative[0m[2m reserved count → now raises `ValueError` when `current - qty < 0`
+     
+     **src/text_utils.py**
+     - `slug[0m[2mify`: didn't lowercase output → now calls `.lower()`; only collapsed `--` once → now[0m[2m uses `while` loop
+     - `truncate`: didn't account for suffix length when slicing → now uses `text[:max[0m[2m_len - len(suffix)]`[0m[2m
+  💸 (Requests: 11 | Tool Calls: 10 | Total: 150132) Input: 147336 | Audio Input: 0 | Output: 2796 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "This project has a test suite in `tests/` that is currently failing.
 
 Run `pytest -q` from this directory to see the failures. Fix the code in
@@ -300,16 +283,18 @@ at the expected behavior.
 When you are done, run `pytest -q` one more time to confirm a clean run.
 " --model ollama:minimax-m2.7:cloud --session ollama_minimax-m2.7_cloud-failing-tests-trial-1 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_minimax-m2.7_cloud-failing-tests-trial-1[0m[0m
-15 passed. All bugs fixed:
+All 15 tests pass. Fixes applied across three modules:
 
-| File | Bug | Fix |
-|------|-----|-----|
-| `auth.py:12` | `has_permission` case-sensitive | Compare lowercase versions |
-| `auth.py:16` | `is_admin_or_owner` used `and` | Changed to `or` |
-| `inventory.py:14` | mutable `{}` default shared state | Copy `initial` dict, default `None` |
-| `inventory.py:21` | `add` replaced stock | Accumulate with `get(sku, 0) + qty` |
-| `inventory.py:29` | `reserve` used `>=` | Changed to `>` (exact available is ok) |
-| `inventory.py:35` | `release` allowed negative | Added guard `if qty > current` |
-| `text_utils.py:14` | `slugify` didn't lowercase | Added `.lower()` on input |
-| `text_utils.py:19` | single `.replace("--", "-")` | Changed to loop to catch all repeated dashes |
-| `text_utils.py:28` | `truncate` added suffix beyond limit | Subtract `len(suffix)` from slice |
+**src/auth.py**
+- `has_permission`: compared roles case-sensitively → now lowercases both sides
+- `is_admin_or_owner`: used `and` (needs admin AND owner) → now uses `or` (admin OR owner)
+
+**src/inventory.py**
+- `__init__`: mutable `{}` default shared across all instances → now copies `initial` dict
+- `add`: overwrote stock → now accumulates (`self._stock.get(sku, 0) + qty`)
+- `reserve`: used `>=` (blocks exactly-available) → now uses `>` (allows reserving up to available)
+- `release`: allowed negative reserved count → now raises `ValueError` when `current - qty < 0`
+
+**src/text_utils.py**
+- `slugify`: didn't lowercase output → now calls `.lower()`; only collapsed `--` once → now uses `while` loop
+- `truncate`: didn't account for suffix length when slicing → now uses `text[:max_len - len(suffix)]`

@@ -1,74 +1,68 @@
-# Zrb CLI Migration Guide: v1 to v2
+# Zrb Task API Migration Guide: v1 to v2
 
 ## Overview
-This guide provides steps for migrating from v1 to v2 of the Zrb CLI. The new version comes with significant changes that require adjustments in your implementation. Below, we outline each breaking change and provide code examples to aid in your transition.
+This guide details the migration process from Zrb API v1 to v2, highlighting breaking changes and providing code examples for clarity. 
 
 ## Breaking Changes
 
 ### 1. Endpoint Prefix Change
-**Before:** v1 endpoints are as follows:
-```plaintext
+All API calls now include a version prefix. 
+
+**Before:**
+```http
 GET /tasks
-POST /tasks
-PUT /tasks/{id}
-DELETE /tasks/{id}
 ```
-**After:** v2 endpoints now include a `/v2/` prefix:
-```plaintext
+**After:**
+```http
 GET /v2/tasks
-POST /v2/tasks
-PUT /v2/tasks/{id}
-DELETE /v2/tasks/{id}
 ```
 
 ### 2. Authentication Header Change
-**Before:** Use the following header in v1 requests:
-```plaintext
+The authentication method has changed from a custom header to a Bearer token. 
+
+**Before:**
+```http
 X-Auth-Token: <your_api_key>
 ```
-**After:** In v2, use Bearer token:
-```plaintext
+**After:**
+```http
 Authorization: Bearer <your_api_token>
 ```
 
-### 3. Change in Task ID Type
-**Before:** The task `id` was an integer:
+### 3. Task ID Type Change
+Task IDs have changed from integers to UUID strings. 
+
+**Before:**
 ```json
-{
-  "id": 42,
-  "title": "Write tests"
-}
+"id": 42
 ```
-**After:** In v2, the `id` is a UUID string:
+**After:**
 ```json
-{
-  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "title": "Write tests"
-}
+"id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 ```
 
-### 4. Field Renaming: `done` to `completed`
-**Before:** The field was named `done`:
+### 4. Task Field Renaming
+The `done` field in task objects has been renamed to `completed`. 
+
+**Before:**
 ```json
-{
-  "done": false
-}
+"done": false
 ```
-**After:** It has been renamed to `completed`:
+**After:**
 ```json
-{
-  "completed": false
-}
+"completed": false
 ```
 
-### 5. New Requirement: `project_id` for Task Creation
-**Before:** Task creation did not require a `project_id`:
+### 5. Project ID Requirement
+When creating a task, the `project_id` is now a required field. 
+
+**Before:**
 ```json
 {
   "title": "New task title"
 }
 ```
-**After:** Now `project_id` is required:
+**After:**
 ```json
 {
   "title": "New task title",
@@ -76,15 +70,17 @@ Authorization: Bearer <your_api_token>
 }
 ```
 
-### 6. Paginated Response for List Tasks
-**Before:** List tasks returned a bare array:
+### 6. Paginated List Response
+Responses from list endpoints now return a paginated envelope rather than a bare array.
+
+**Before:**
 ```json
 [
-  {"id": 1, "title": "Buy milk"},
-  {"id": 2, "title": "Ship v1"}
+  {"id": 1, "title": "Buy milk", "done": false, "created_at": "..."},
+  {"id": 2, "title": "Ship v1", "done": true, "created_at": "..."}
 ]
 ```
-**After:** v2 responds with a paginated envelope:
+**After:**
 ```json
 {
   "items": [...],
@@ -94,15 +90,15 @@ Authorization: Bearer <your_api_token>
 ```
 
 ## Migration Checklist
-1. Update API endpoint prefixes from `/tasks` to `/v2/tasks`.
-2. Change authentication header from `X-Auth-Token` to `Authorization: Bearer <your_api_token>`.
-3. Update task `id` from integer to UUID string in your code.
-4. Rename task field `done` to `completed` throughout your code.
-5. Ensure that task creation includes the required `project_id`.
-6. Update any code handling responses from list tasks to accommodate the new paginated structure.
+1. Update endpoint URLs to include `/v2/` prefix.
+2. Change the authentication header to use Bearer token format.
+3. Update data models to reflect UUID type for `id`.
+4. Rename the `done` field to `completed` in task objects.
+5. Ensure all task creation requests include `project_id`.
+6. Modify list handling to account for paginated responses.
 
 ## Upgrade Command
-To upgrade to v2, run the following command:
+To upgrade Zrb CLI to v2, use the following command:
 ```bash
-zrb upgrade --version 2
+zrb upgrade
 ```  

@@ -16,3 +16,7 @@ class PaymentGateway:
         self.total_charged += amount
         self.charges.append({"order_id": order_id, "amount": amount})
         return True
+
+    def refund(self, order_id: str, amount: float) -> None:
+        self.total_charged -= amount
+        print(f"Refund processed for order {order_id}: ${amount}")

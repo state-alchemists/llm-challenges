@@ -1,6 +1,6 @@
-"""Configuration constants for the pipeline."""
+settings = {}  # Placeholder for settings object
 
-settings = {
+CONFIG = {
     "source": "events.csv",
     "batch_size": 1,
 }

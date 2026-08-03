@@ -1,188 +1,182 @@
-# Zrb CLI Migration Guide: v1 → v2
+# Zrb CLI v1 → v2 Migration Guide
 
-This guide covers every breaking change when upgrading from Zrb CLI v1 to v2. Each section shows the v1 approach, the v2 replacement, and what you need to change.
-
-## Breaking Changes at a Glance
-
-| # | Change | Impact |
-|---|--------|--------|
-| 1 | Endpoint prefix `/v2/` | All URLs change |
-| 2 | Auth header: `Bearer` token | Client code needs header rewrite |
-| 3 | Task `id`: integer → UUID string | ID handling throughout |
-| 4 | Field `done` → `completed` | All task payloads |
-| 5 | `project_id` required on create | Creation calls |
-| 6 | List returns envelope with pagination | Response parsing |
+v2 introduces projects, cursor-based pagination, and stricter authentication. Several v1 conventions have changed. This guide covers every breaking change with before/after examples.
 
 ---
 
-## 1. Endpoint Prefix
+## Breaking Changes
 
-All endpoints now live under `/v2/`.
+### 1. Endpoint Prefix Changed
 
-**v1**
-```http
-GET /tasks
-POST /tasks
+All endpoints are now under `/v2/`.
+
+| v1 | v2 |
+|---|---|
+| `GET /tasks` | `GET /v2/tasks` |
+| `GET /tasks/{id}` | `GET /v2/tasks/{id}` |
+| `POST /tasks` | `POST /v2/tasks` |
+| `PUT /tasks/{id}` | `PUT /v2/tasks/{id}` |
+| `DELETE /tasks/{id}` | `DELETE /v2/tasks/{id}` |
+
+**Before (v1):**
+```bash
+curl https://api.zrb.dev/tasks
+```
+
+**After (v2):**
+```bash
+curl https://api.zrb.dev/v2/tasks
+```
+
+---
+
+### 2. Authentication Header Changed
+
+The auth header changed from a custom token header to a standard Bearer scheme.
+
+| v1 | v2 |
+|---|---|
+| `X-Auth-Token: <your_api_key>` | `Authorization: Bearer <your_api_token>` |
+
+Requests using `X-Auth-Token` will receive **HTTP 401**.
+
+**Before (v1):**
+```bash
+curl -H "X-Auth-Token: your_api_key" https://api.zrb.dev/tasks
+```
+
+**After (v2):**
+```bash
+curl -H "Authorization: Bearer your_api_token" https://api.zrb.dev/v2/tasks
+```
+
+---
+
+### 3. Task `id` is Now a UUID String
+
+Task IDs changed from auto-incrementing integers to UUID strings.
+
+| v1 | v2 |
+|---|---|
+| `"id": 42` | `"id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"` |
+
+Update any code that parses or stores task IDs to handle string values. URL path parameters for `GET /v2/tasks/{id}`, `PUT /v2/tasks/{id}`, and `DELETE /v2/tasks/{id}` now take UUID strings.
+
+**Before (v1) — response:**
+```json
+{"id": 42, "title": "Write tests", "done": false, "created_at": "2024-01-15T10:30:00Z"}
+```
+
+**After (v2) — response:**
+```json
+{"id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "title": "Write tests", "completed": false, "project_id": "proj_abc123", "created_at": "2024-01-15T10:30:00Z"}
+```
+
+---
+
+### 4. Task Field `done` Renamed to `completed`
+
+The boolean completion flag was renamed.
+
+| v1 | v2 |
+|---|---|
+| `"done": true` | `"completed": true` |
+
+Update all request bodies and response parsing.
+
+**Before (v1) — update request:**
+```json
 PUT /tasks/42
-DELETE /tasks/42
+{"title": "Updated title", "done": true}
 ```
 
-**v2**
-```http
-GET /v2/tasks
-POST /v2/tasks
+**After (v2) — update request:**
+```json
 PUT /v2/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890
-DELETE /v2/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890
-```
-
-Update every URL in your client configuration and any hardcoded endpoint strings.
-
----
-
-## 2. Authentication Header
-
-The header key and format have both changed.
-
-**v1**
-```http
-X-Auth-Token: <your_api_key>
-```
-
-**v2**
-```http
-Authorization: Bearer <your_api_token>
-```
-
-Requests that still send `X-Auth-Token` will receive `401 Unauthorized`. Migrate your auth header construction:
-
-```javascript
-// v1
-headers: { 'X-Auth-Token': apiKey }
-
-// v2
-headers: { 'Authorization': `Bearer ${apiToken}` }
+{"title": "Updated title", "completed": true}
 ```
 
 ---
 
-## 3. Task `id` Type: Integer → UUID
+### 5. Task Creation Requires `project_id`
 
-Task IDs are no longer integers. They are now UUID strings.
+Creating a task now requires a `project_id`. Omitting it returns **HTTP 422**.
 
-**v1 response**
-```json
-{ "id": 42, "title": "Write tests", "done": false }
+**Before (v1) — create task:**
+```bash
+curl -X POST https://api.zrb.dev/tasks \
+  -H "X-Auth-Token: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "New task"}'
 ```
 
-**v2 response**
-```json
-{ "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "title": "Write tests", "completed": false }
+**After (v2) — create task:**
+```bash
+curl -X POST https://api.zrb.dev/v2/tasks \
+  -H "Authorization: Bearer your_api_token" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "New task", "project_id": "proj_abc123"}'
 ```
 
-Any code that treats `id` as a number—storing it as an integer, using string interpolation without quotes, or constructing URLs by concatenation—must be updated to handle UUID strings.
+If you do not yet have a `project_id`, create a project first via `POST /v2/projects`.
 
 ---
 
-## 4. Field Renamed: `done` → `completed`
+### 6. List Response is Now Paginated
 
-The task completion flag has been renamed.
+List endpoints return a pagination envelope instead of a bare array.
 
-**v1 task object**
-```json
-{ "id": 1, "title": "Ship v1", "done": true }
-```
+| v1 | v2 |
+|---|---|
+| `[{"id": 1, ...}, {"id": 2, ...}]` | `{"items": [...], "total": 42, "next_cursor": "cursor_xyz"}` |
 
-**v2 task object**
-```json
-{ "id": "a1b2c3d4-...", "title": "Ship v2", "completed": true }
-```
+Access the array via `response.items`. To paginate, pass `?cursor=<next_cursor>` on the next request.
 
-Update every reference to `task.done` (or `task['done']`) to use `task.completed`.
-
----
-
-## 5. Task Creation Requires `project_id`
-
-Creating a task now requires a `project_id`. Sending a body without it returns `422 Unprocessable Entity`.
-
-**v1**
-```http
-POST /tasks
-{ "title": "New task" }
-```
-
-**v2**
-```http
-POST /v2/tasks
-{ "title": "New task", "project_id": "proj_abc123" }
-```
-
-If you are pre-creating tasks without tracking which project they belong to, you will need to introduce project assignment into your workflow. Obtain a `project_id` from your project list endpoint (see v2 spec for new project endpoints).
-
----
-
-## 6. List Response: Array → Paginated Envelope
-
-List endpoints no longer return a bare array. They return a wrapper envelope.
-
-**v1**
+**Before (v1) — list response:**
 ```json
 [
-  { "id": 1, "title": "Buy milk", "done": false },
-  { "id": 2, "title": "Ship v1", "done": true }
+  {"id": 1, "title": "Buy milk", "done": false, "created_at": "..."},
+  {"id": 2, "title": "Ship v1", "done": true, "created_at": "..."}
 ]
 ```
 
-**v2**
+**After (v2) — list response:**
 ```json
 {
   "items": [
-    { "id": "...", "title": "Buy milk", "completed": false },
-    { "id": "...", "title": "Ship v2", "completed": true }
+    {"id": "a1b2c3d4-...", "title": "Buy milk", "completed": false, "project_id": "proj_abc123", "created_at": "..."},
+    {"id": "e5f6a7b8-...", "title": "Ship v1", "completed": true, "project_id": "proj_abc123", "created_at": "..."}
   ],
-  "total": 42,
-  "next_cursor": "cursor_xyz"
+  "total": 2,
+  "next_cursor": null
 }
 ```
 
-Update response handling to read `.items` for the array, and use `next_cursor` for pagination:
-
-```javascript
-// v1
-const tasks = response.json();
-
-// v2
-const { items: tasks, total, next_cursor } = response.json();
-if (next_cursor) fetchPage(next_cursor);
+To fetch the next page:
+```bash
+curl "https://api.zrb.dev/v2/tasks?cursor=cursor_xyz"
 ```
+
+You can also set `?limit=<n>` to control page size (default 20).
 
 ---
 
 ## Migration Checklist
 
-Run through each item and mark it done. All items must be addressed.
-
-- [ ] **Update all endpoint URLs** — add `/v2` prefix to every path
-- [ ] **Replace auth header** — switch `X-Auth-Token` to `Authorization: Bearer <token>`
-- [ ] **Update ID handling** — change any `parseInt(id)` calls; treat IDs as strings
-- [ ] **Rename `done` field** — replace all `task.done` / `task['done']` with `task.completed`
-- [ ] **Add `project_id` to create calls** — every `POST /v2/tasks` body needs it
-- [ ] **Update list response parsing** — read `.items`, handle `.next_cursor` for pagination
-- [ ] **Update any `id` in URLs** — UUID strings go directly into path segments
-- [ ] **Check error handling** — `401` now means bad/missing Bearer token; `422` means missing `project_id`
+- [ ] Update all endpoint URLs: prepend `/v2/` to every task path
+- [ ] Change auth header from `X-Auth-Token` to `Authorization: Bearer <token>`
+- [ ] Update task ID handling: integers → UUID strings
+- [ ] Replace all occurrences of field `done` with `completed` in request bodies and response parsing
+- [ ] Add `project_id` to every task creation request (required field)
+- [ ] Update list response parsing: access tasks via `response.items` instead of the root array
+- [ ] Add pagination logic if your application iterates over list results
+- [ ] Update any URL construction that interpolates task IDs to produce UUID strings
+- [ ] Update persisted task IDs: integer IDs are no longer valid
 
 ---
 
 ## Upgrade Command
 
 ```bash
-npm install zrb-cli@2
+gem install zrb --version ">= 2.0.0"
 ```
-
-Or, if you prefer yarn:
-
-```bash
-yarn upgrade zrb-cli@2
-```
-
-After upgrading, test your integration against the v2 endpoints before deploying to production.

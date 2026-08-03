@@ -7,14 +7,15 @@ ITEM_PRICE = 100.0
 INITIAL_STOCK = 5
 NUM_ORDERS = 12
 
-
 async def main() -> None:
     inventory = Inventory(INITIAL_STOCK)
     gateway = PaymentGateway(failure_rate=0.25)
+    processed_orders = set()  # Track processed orders identity
 
     print(f"Starting simulation: {NUM_ORDERS} concurrent orders, stock={INITIAL_STOCK}")
+    # Pass processed_orders to every checkout call
     orders = [
-        checkout(f"order_{i}", 1, ITEM_PRICE, inventory, gateway)
+        checkout(f"order_{i}", 1, ITEM_PRICE, inventory, gateway, processed_orders)
         for i in range(NUM_ORDERS)
     ]
     results = await asyncio.gather(*orders)
@@ -38,7 +39,6 @@ async def main() -> None:
         print("ERROR: Charge amount does not match successful orders!")
     if duplicates > 0:
         print("ERROR: Duplicate charges detected!")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

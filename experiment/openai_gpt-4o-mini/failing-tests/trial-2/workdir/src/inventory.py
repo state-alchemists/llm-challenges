@@ -1,24 +1,36 @@
+"""Inventory tracking with reservation support."""
+
+from __future__ import annotations
+
+
 class OutOfStock(Exception):
-    pass
+    """Raised when a reservation would push stock negative."""
+
 
 class Inventory:
-    def __init__(self, items=None):
-        self.items = items if items is not None else {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = {}) -> None:  # noqa: B006
+        self._stock = initial
+        self._reserved: dict[str, int] = {}
 
     def add(self, sku: str, qty: int) -> None:
-        self.items[sku] = self.items.get(sku, 0) + qty
+        if qty <= 0:
+            raise ValueError("qty must be positive")
+        self._stock[sku] = qty
 
     def available(self, sku: str) -> int:
-        return self.items.get(sku, 0)
+        return self._stock.get(sku, 0) - self._reserved.get(sku, 0)
 
     def reserve(self, sku: str, qty: int) -> None:
         if qty <= 0:
             raise ValueError("qty must be positive")
-        if qty > self.items.get(sku, 0):
+        if qty >= self.available(sku):
             raise OutOfStock(sku)
-        self.items[sku] -= qty
+        self._reserved[sku] = self._reserved.get(sku, 0) + qty
 
     def release(self, sku: str, qty: int) -> None:
-        if qty > self.available(sku):
-            raise ValueError("Cannot release more than available")
-        self.items[sku] -= qty
+        if qty <= 0:
+            raise ValueError("qty must be positive")
+        current = self._reserved.get(sku, 0)
+        self._reserved[sku] = current - qty

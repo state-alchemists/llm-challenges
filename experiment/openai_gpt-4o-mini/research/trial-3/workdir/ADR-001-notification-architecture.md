@@ -4,23 +4,36 @@
 Proposed
 
 ## Context
-The notifications system for our SaaS project management platform has been facing several challenges due to its synchronous implementation within the HTTP request cycle. As the user base has grown, the existing setup leads to request timeouts (average latency of 800ms, spikes to 8s), silent failures when email providers or webhook endpoints fail, cascading failures due to connection pool exhaustion, and a lack of guarantees for critical billing notifications. The goal is to decouple the notifications subsystem to handle 10x traffic growth while ensuring delivery guarantees for notifications, especially billing-related ones. The team consists of six engineers without prior experience in Kafka but currently uses Redis in production for other functionalities.
+Our SaaS project management platform currently handles notifications synchronously within the HTTP request cycle, leading to request timeouts, silent failures, and cascading issues due to slow webhook endpoints. The notification subsystem processes notifications related to tasks created, updated, or completed. We seek to decouple this process from the request cycle while ensuring reliability and scalability. The key requirements include:
+- Decoupling notifications from the HTTP request cycle for asynchronous processing.
+- Supporting retries with exponential backoff.
+- Guaranteeing at-least-once delivery for billing notifications.
+- Delivering exactly-once semantics where feasible.
+- Handling future traffic increases, targeting a growth of up to 10x.
 
 ## Decision
-I recommend **Apache Kafka** for the notification subsystem due to its superior capabilities in handling high-throughput and real-time message processing, as well as providing an extensive set of features to ensure message delivery and durability, crucial for billing notifications.
+We recommend implementing **Redis Streams** as the notification subsystem solution. Redis Streams directly aligns with our existing infrastructure and provides adequate support for the requirements outlined while minimizing operational complexities. 
+
+## Justification
+1. **Integration with Existing Infrastructure**: Our team is already familiar with Redis, which lowers the learning curve and expedites implementation. Leveraging Redis Streams requires less than two weeks of setup time, which fits within our constraints.
+2. **Performance**: Redis Streams has high throughput capabilities, which can handle the anticipated growth in requests (10x). It supports consumer groups, allowing multiple consumers for handling notifications independently.
+3. **Delivery Guarantees**: Redis Streams can be configured to ensure at-least-once delivery by acknowledging messages explicitly after successful processing. This feature allows for retry mechanisms and exponential backoff for failed deliveries.
+4. **Operational Complexity**: Redis is already part of our infrastructure for caching, reducing the operational overhead of adding and maintaining a new system like Apache Kafka. This allows our engineering team to mitigate operational complexities while adapting to the new notification system.
 
 ## Consequences
-### Pros
-- **High Throughput:** Kafka can handle hundreds of thousands of messages per second, making it suitable for scaling beyond our current user base.
-- **Consumer Groups:** Kafka supports consumer groups, allowing multiple instances to process messages concurrently, enhancing throughput.
-- **Delivery Guarantees:** Kafka can be configured for exactly-once delivery semantics, which is critical for billing notifications.
-- **Durability and Retention:** Messages can be retained for a configurable period, allowing retry mechanisms to be implemented effectively.
-- **Rich Ecosystem:** Integrates well with various libraries and tools, which can facilitate future enhancements such as real-time WebSocket push notifications.
+**Pros**:
+- Faster implementation due to existing Redis knowledge.
+- Painless integration into our current architecture, avoiding additional overhead.
+- High throughput and reliability for notification delivery ensure critical messages are sent efficiently.
 
-### Cons
-- **Operational Complexity:** Kafka requires a more complex operational setup than Redis, which can be a challenge for our mid-sized team.
-- **Learning Curve:** Team will need time to adapt to Kafka’s model, leading to potential initial delays.
-- **Resource Intensive:** Kafka can be resource-intensive, necessitating close monitoring and management, especially as it is not managed.
+**Cons**:
+- Redis Streams does not natively provide exactly-once semantics; however, appropriate handling can achieve sufficient reliability.
+- Potential for data loss if not configured correctly, particularly under failure conditions, requiring careful design around acknowledgment and retry logic.
 
 ## Alternatives Considered
-**Redis Streams** was considered as an alternative given the team's existing familiarity with Redis. However, it lacks the guarantees for message retention, exactly-once semantics, and scalability in throughput compared to Kafka. While it can support many use cases (such as task queues), it does not adequately solve the problem of delivery assurance, particularly for billing notifications, which is critical for the business. Given these factors, Redis Streams was ultimately rejected.
+**Apache Kafka** was considered but ultimately rejected due to the following reasons:
+- **Operational Complexity**: Kafka requires a steeper learning curve and substantial operational oversight, which our team currently lacks.
+- **Setup Time**: Implementing Kafka would exceed our 2-week timeframe due to the necessity of establishing a proper Kafka ecosystem (brokers, zookeepers, etc.).
+- **Cost Considerations**: Maintaining Kafka infrastructure can introduce further costs, especially if using managed services, which is outside our modest budget.
+
+Thus, given the context and evaluation of the options, Redis Streams emerges as the more suitable choice for our notification subsystem, aligning effectively with our current constraints and future scaling needs.

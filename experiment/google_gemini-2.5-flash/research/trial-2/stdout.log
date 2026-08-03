@@ -1,16 +1,92 @@
 [2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 pyd_ai_8f015627f7704f32a52e88c90c25afd4 | Read {'path': 'system_context.md'}
+  🧰 pyd_ai_a4f80aed3dad452abab344a85be1597a | Read {'path': 'system_context.md'}
 [0m[2m
-  🔠 pyd_ai_8f015627f7704f32a52e88c90c25afd4 Executed
+  🔠 pyd_ai_a4f80aed3dad452abab344a85be1597a Executed
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 pyd_ai_4fea5013a2a948d4a6b8e18b76cb0254 | Write {'path': 'ADR-001-notification-archi ...', 'content': '# ADR-001: Notification Su ...'}
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 pyd_ai_637a8614126446aaaea5208379210e41 | ActivateSkill {'skill': 'core-design'}
 [0m[2m
-  🔠 pyd_ai_4fea5013a2a948d4a6b8e18b76cb0254 Executed
+  🧰 pyd_ai_edd209bec18d4d94995892774dd1ad16 | ActivateSkill {'skill': 'core-writing'}
 [0m[2m
-  I have written the Architecture Decision Record (ADR) and saved it as `ADR-001-notification-architecture.md`.[0m[2m
-  💸 (Requests: 4 | Tool Calls: 2 | Total: 47618) Input: 45848 | Audio Input: 0 | Output: 1770 | Audio Output: 0 | Cache Read: 19762 | Cache Write: 0 | Details: {'text_prompt_tokens': 45848, 'cached_content_tokens': 19762, 'thoughts_tokens': 462, 'text_cache_tokens': 19762}
+  🔠 pyd_ai_edd209bec18d4d94995892774dd1ad16 Executed
+[0m[2m
+  🔠 pyd_ai_637a8614126446aaaea5208379210e41 Executed
+[0m[2m
+  **Title**: ADR-001: Notification Subsystem Architecture - Redis Streams vs. Apache Kafka
+     
+     **Status**: Proposed
+     
+     **Context**
+     The current SaaS project management platform (85,0[0m[2m00 MAU, ~2M tasks/month, peak ~500 req/s) handles notifications synchronously within the HTTP request cycle. This architecture leads to significant issues:
+     1.  **Request timeouts**: Latency spikes to[0m[2m 8s during peak, blocking user requests.
+     2.  **Silent failures**: Notifications (emails, webhooks) are dropped on external service failures, with no retry mechanism or dead-letter queue.
+     3.  **Cascading[0m[2m failures**: External service slowness has caused connection pool exhaustion and outages.
+     4.  **No delivery guarantees**: Billing-critical notifications lack at-least-once or exactly-once delivery.
+     
+     The new notification subsystem must:
+     *   [0m[2mDecouple notifications from the HTTP request cycle for asynchronous processing.
+     *   Implement retry with exponential backoff.
+     *   Guarantee at-least-once delivery for all notifications, with exactly-once where feasible for billing events.
+     *   [0m[2mSupport future real-time WebSocket push notifications within two quarters.
+     *   Scale to handle 10x traffic growth.
+     
+     **Constraints**:
+     *   **Team**: 6 engineers (3 senior, 3 mid), no dedicated infrastructure engineer[0m[2m.
+     *   **Existing Infrastructure**: Redis is already used in production for session management and rate limiting.
+     *   **Team Experience**: No Kafka experience.
+     *   **Time to Value**: Must deliver value within 2 weeks of setup/[0m[2mmigration.
+     *   **Budget**: Modest; cannot afford full-scale managed Kafka (e.g., Confluent Cloud).
+     
+     **Decision**: Choose **Redis Streams** for the notification subsystem.
+     
+     This decision prioritizes operational simplicity[0m[2m, speed of implementation, and cost-effectiveness, aligning directly with the core team constraints while adequately meeting all scaling and delivery requirements. Leveraging existing Redis infrastructure and team familiarity significantly de-risks the project. While Apache Kafka offers a more robust[0m[2m ecosystem for extreme data streaming, its operational complexity and the team's lack of experience make it an unsuitable choice given the immediate project constraints. Exactly-once semantics for billing notifications can be achieved through idempotent consumer design with Redis Streams.
+     
+     **Consequences**:[0m[2m
+     
+     **Pros of Redis Streams:**
+     *   **Low Operational Overhead**: Since Redis is already deployed and understood by the team, integrating Redis Streams adds minimal operational burden. This is critical for a small team without dedicated infrastructure engineers.
+     *   **[0m[2mRapid Development & Deployment**: Leveraging existing Redis instances allows for quick setup and integration, making it feasible to meet the 2-week "value delivery" constraint.
+     *   **Cost-Effective**: No new infrastructure costs beyond scaling existing Redis,[0m[2m which is already budgeted and managed. Avoids the high cost of managed Kafka services or the significant time investment of self-hosting.
+     *   **Sufficient Scalability**: Redis Streams offer excellent throughput and horizontal scalability for the projected 10x[0m[2m traffic growth (5000 req/s equivalent), especially for a notification workload that primarily involves small, frequent messages.
+     *   **Ordering Guarantees**: Messages are strictly ordered within a stream, which is crucial for maintaining event[0m[2m chronology.
+     *   **Robust Consumer Groups**: Redis Streams' consumer groups provide resilient, fault-tolerant processing, allowing multiple consumers to share the workload and easily recover from failures, ensuring at-least-once delivery.
+     *   **[0m[2mReal-time Capabilities**: Redis Streams integrate well with Redis Pub/Sub, providing a solid foundation for adding real-time WebSocket push notifications later.
+     *   **Exactly-Once Feasibility**: While not providing native distributed transactions like Kafka, exactly[0m[2m-once processing for critical billing notifications can be reliably achieved by designing idempotent consumers.
+     
+     **Cons of Redis Streams:**
+     *   **Idempotent Consumer Design Required for Exactly-Once**: Achieving true end-to-end exactly-once semantics[0m[2m, especially for external systems, requires careful application-level idempotence in consumers. This adds a layer of design complexity at the application level that Kafka's transactional API might simplify.
+     *   **Ecosystem Maturity**: The tooling, connectors[0m[2m, and client libraries for Redis Streams are still less mature and extensive compared to the vast Kafka ecosystem. This may require more custom development for integrations.
+     *   **Scalability at Extreme Edge Cases**: For truly massive, petabyte-scale,[0m[2m multi-datacenter streaming scenarios, Kafka may offer superior raw throughput and cluster management features. However, for the specified 10x growth, Redis Streams are expected to perform adequately.
+     
+     **Alternatives Considered**:
+     
+     **Apache Kafka**
+     Kafka[0m[2m was rejected despite its industry-leading capabilities for high-throughput, fault-tolerant data streaming due to the overwhelming operational and team-skill constraints.
+     
+     *   **Operational Complexity**: Kafka's architecture (brokers, ZooKeeper/KRaft, topics[0m[2m, partitions, replication) introduces significant operational overhead for setup, maintenance, monitoring, and scaling. This complexity would severely strain a small engineering team with no dedicated infrastructure specialist.
+     *   **Lack of Team Experience**: The team has no Kafka[0m[2m experience. The steep learning curve for deployment, management, and application development would violate the 2-week "value delivery" constraint and likely extend the project timeline considerably.
+     *   **Cost**: Managed Kafka services (e.g., Con[0m[2mfluent Cloud) would exceed the "modest budget" constraint at scale. Self-hosting Kafka would require substantial investment in VMs and team time, also impacting budget and time.
+     *   **Time to Value**: Setting up a production-ready,[0m[2m resilient Kafka cluster and integrating it would almost certainly take longer than the mandated 2 weeks, delaying the decoupling of notifications.
+     
+     While Kafka provides strong native support for exactly-once semantics via transactional APIs and offers a more mature ecosystem, these benefits are outweighed by[0m[2m the practical limitations of the engineering team's size, skill set, budget, and time-to-value requirements. The risk of project delays, increased operational burden, and budget overruns with Kafka is unacceptably high given the current[0m[2m context.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 pyd_ai_a8ab0bafb1ff444dae3371a616a1c5fd | Write {'path': 'ADR-001-notification-archi ...', 'content': '# Title: ADR-001: Notifica ...'}
+[0m[2m
+  🔠 pyd_ai_a8ab0bafb1ff444dae3371a616a1c5fd Executed
+[0m[2m
+  I[0m[2m have written the Architecture Decision Record (ADR) evaluating Redis Streams and Apache Kafka for the notification[0m[2m subsystem, following the specified structure and saved it as `ADR-001-notification-architecture.md`.
+     The ADR recommends Redis Streams based on the team's constraints, existing infrastructure, and time-to-value requirements, while acknowledging[0m[2m the technical strengths of Kafka but deeming it unsuitable for the current context.
+     
+     The ADR contains:
+     - **Title**: ADR-001: Notification Subsystem Architecture - Redis Streams vs. Apache Kafka
+     - **Status**: Proposed[0m[2m
+     - **Context**: Problem statement, scaling targets, and constraints from `system_context.md`.
+     - **Decision**: Recommendation for Redis Streams with justification.
+     - **Consequences**: Pros and cons of using Redis Streams.
+     - **Alternatives[0m[2m Considered**: Reasons for rejecting Apache Kafka.[0m[2m
+  💸 (Requests: 4 | Tool Calls: 4 | Total: 59637) Input: 55149 | Audio Input: 0 | Output: 4488 | Audio Output: 0 | Cache Read: 23879 | Cache Write: 0 | Details: {'thoughts_tokens': 1656, 'text_prompt_tokens': 55149, 'cached_content_tokens': 23879, 'text_cache_tokens': 23879}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "Read `system_context.md`. It describes a real production system and a specific architectural problem we need to solve.
 
 Write an Architecture Decision Record (ADR) evaluating two options for the notification subsystem:
@@ -30,4 +106,13 @@ Make a definitive recommendation. Use specific technical properties (throughput,
 Save as `ADR-001-notification-architecture.md`.
 " --model google:gemini-2.5-flash --session google_gemini-2.5-flash-research-trial-2 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mgoogle_gemini-2.5-flash-research-trial-2[0m[0m
-I have written the Architecture Decision Record (ADR) and saved it as `ADR-001-notification-architecture.md`.
+I have written the Architecture Decision Record (ADR) evaluating Redis Streams and Apache Kafka for the notification subsystem, following the specified structure and saved it as `ADR-001-notification-architecture.md`.
+The ADR recommends Redis Streams based on the team's constraints, existing infrastructure, and time-to-value requirements, while acknowledging the technical strengths of Kafka but deeming it unsuitable for the current context.
+
+The ADR contains:
+- **Title**: ADR-001: Notification Subsystem Architecture - Redis Streams vs. Apache Kafka
+- **Status**: Proposed
+- **Context**: Problem statement, scaling targets, and constraints from `system_context.md`.
+- **Decision**: Recommendation for Redis Streams with justification.
+- **Consequences**: Pros and cons of using Redis Streams.
+- **Alternatives Considered**: Reasons for rejecting Apache Kafka.

@@ -1,9 +1,9 @@
 import asyncio
 
+
 class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
-        self.lock = asyncio.Lock()  # Add a lock for thread-safe operations
 
     async def check_stock(self, quantity: int) -> bool:
         await asyncio.sleep(0.02)

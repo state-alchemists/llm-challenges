@@ -1,12 +1,13 @@
-# Zrb CLI Migration Guide from v1 to v2
+# Zrb Task API Migration Guide from v1 to v2
 
-## Overview
-This migration guide helps developers transition from Zrb CLI v1 to v2. It highlights breaking changes, provides code examples, and presents a checklist for migration.
+## Introduction
+This guide details the breaking changes between Zrb Task API v1 and v2, providing a step-by-step migration process and code examples to assist developers in transitioning smoothly.
 
 ## Breaking Changes
 
-### 1. API Endpoints Prefix
-All endpoints are now prefixed with `/v2/`. 
+### 1. Endpoint URL Changes
+All endpoints have been prefixed with `/v2/`.
+
 **Before:**
 ```plaintext
 GET /tasks
@@ -14,10 +15,11 @@ GET /tasks
 **After:**
 ```plaintext
 GET /v2/tasks
-```  
+```
 
-### 2. Authentication Header Change
-The authentication header has changed from `X-Auth-Token` to `Authorization` with a Bearer token. 
+### 2. Authentication Header Changes
+The authentication method has changed from using `X-Auth-Token` to a Bearer token.
+
 **Before:**
 ```plaintext
 X-Auth-Token: <your_api_key>
@@ -25,10 +27,13 @@ X-Auth-Token: <your_api_key>
 **After:**
 ```plaintext
 Authorization: Bearer <your_api_token>
-``` 
+```
 
-### 3. Task ID Type Change
-The `id` field of the Task object has changed from an integer to a UUID string.
+Requests using the old method will receive HTTP 401 errors.
+
+### 3. Task ID Type Changed
+The `id` field in the Task object has changed from an integer to a UUID string.
+
 **Before:**
 ```json
 {
@@ -44,8 +49,9 @@ The `id` field of the Task object has changed from an integer to a UUID string.
 }
 ```
 
-### 4. Task Field Renamed
-The field `done` has been renamed to `completed` in the Task object.
+### 4. Task Field Renaming
+The `done` field has been renamed to `completed`.
+
 **Before:**
 ```json
 {
@@ -59,8 +65,9 @@ The field `done` has been renamed to `completed` in the Task object.
 }
 ```
 
-### 5. Required Project ID Field
-Task creation now requires a `project_id` in the request body.
+### 5. New Project Requirement in Task Creation
+The `project_id` field is now required when creating a new task.
+
 **Before:**
 ```json
 {
@@ -74,40 +81,42 @@ Task creation now requires a `project_id` in the request body.
   "project_id": "proj_abc123"
 }
 ```
+Omitting `project_id` will return HTTP 422.
 
-### 6. Paginated List Responses
-List endpoints now return a paginated response envelope instead of a direct array of tasks.
+### 6. Paginated Response Format
+The response from list endpoints now comes in a paginated envelope instead of a bare array.
+
 **Before:**
 ```json
 [
-  {"id": 1, "title": "Buy milk"},
-  {"id": 2, "title": "Ship v1"}
+  {"id": 1, "title": "Buy milk", "done": false},
+  {"id": 2, "title": "Ship v1", "done": true}
 ]
 ```
 **After:**
 ```json
 {
   "items": [
-    {"id": "1", "title": "Buy milk"},
-    {"id": "2", "title": "Ship v1"}
+    {"id": "1", "title": "Buy milk", "completed": false},
+    {"id": "2", "title": "Ship v1", "completed": true}
   ],
   "total": 42,
   "next_cursor": "cursor_xyz"
 }
 ```
 
-## Migration Checklist
-1. Update all API endpoint URLs to include `/v2/`
-2. Change authentication method to use Bearer tokens.
-3. Update Task ID types from integers to UUID strings.
-4. Rename the `done` field to `completed` in Task objects.
-5. Ensure `project_id` is present in Task creation requests.
-6. Modify client code to handle paginated list responses.
+## Step-by-Step Migration Checklist
+1. Update all API endpoint URLs to include `/v2/`.
+2. Change the authentication header from `X-Auth-Token` to `Authorization: Bearer <your_api_token>`.
+3. Update your code to handle task `id` as a UUID string.
+4. Rename any usage of the `done` field to `completed`.
+5. Ensure all task creation requests include the `project_id`.
+6. Modify your code to handle paginated responses from list endpoints.
 
 ## Upgrade Command
-To upgrade Zrb CLI to v2, run:
-```bash
-zrb upgrade --version 2.0.0
+To upgrade to v2, run:
+```plaintext
+npm install zrb@latest
 ``` 
 
-Ensure you thoroughly test your applications after migration to address any unforeseen issues.
+Start your migration to take advantage of the new features and improvements in the Zrb API v2!

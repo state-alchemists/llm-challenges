@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from typing import List, Optional
 from .models import Task, TaskCreate, TaskUpdate, Project, TaskStatus
 from .database import tasks, projects
@@ -27,20 +27,10 @@ async def list_tasks(
         filtered = [t for t in filtered if t.priority == priority]
     if assigned_to is not None:
         filtered = [t for t in filtered if t.assigned_to == assigned_to]
+
     start = (page - 1) * page_size
     end = start + page_size
     return filtered[start:end]
-
-
-@app.post("/tasks", response_model=Task, status_code=201)
-async def create_task(task_create: TaskCreate, _user: str = Depends(require_api_key)):
-    project = next((p for p in projects if p.id == task_create.project_id), None)
-    if project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
-    next_id = max((t.id for t in tasks), default=0) + 1
-    task = Task(id=next_id, **task_create.model_dump())
-    tasks.append(task)
-    return task
 
 
 @app.get("/tasks/{task_id}", response_model=Task)
@@ -51,21 +41,37 @@ async def get_task(task_id: int):
     raise HTTPException(status_code=404, detail="Task not found")
 
 
+@app.post("/tasks", response_model=Task, status_code=201)
+async def create_task(payload: TaskCreate, user: str = Depends(require_api_key)):
+    project = next((p for p in projects if p.id == payload.project_id), None)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    new_id = max((t.id for t in tasks), default=0) + 1
+    task = Task(id=new_id, **payload.dict())
+    tasks.append(task)
+    return task
+
+
 @app.put("/tasks/{task_id}", response_model=Task)
-async def update_task(task_id: int, task_update: TaskUpdate, _user: str = Depends(require_api_key)):
+async def update_task(
+    task_id: int,
+    payload: TaskUpdate,
+    user: str = Depends(require_api_key),
+):
     for task in tasks:
         if task.id == task_id:
-            updates = task_update.model_dump(exclude_unset=True)
-            for key, value in updates.items():
-                setattr(task, key, value)
+            update_data = payload.dict(exclude_unset=True)
+            for field, value in update_data.items():
+                setattr(task, field, value)
             return task
     raise HTTPException(status_code=404, detail="Task not found")
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
-async def delete_task(task_id: int, _user: str = Depends(require_api_key)):
-    for i, task in enumerate(tasks):
+async def delete_task(task_id: int, user: str = Depends(require_api_key)):
+    for idx, task in enumerate(tasks):
         if task.id == task_id:
-            tasks.pop(i)
+            tasks.pop(idx)
             return
     raise HTTPException(status_code=404, detail="Task not found")

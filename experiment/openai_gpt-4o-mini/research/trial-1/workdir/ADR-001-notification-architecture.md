@@ -1,37 +1,39 @@
-# Title  
-ADR-001: Notification Architecture Decision  
+# ADR-001: Notification Architecture Decision
 
-# Status  
-Proposed  
+## Status
+Proposed
 
-# Context  
-This architecture decision record evaluates options for implementing the notification subsystem in a SaaS-based project management platform. The current implementation causes significant bottlenecks due to synchronous processing of notifications, resulting in request timeouts and a lack of delivery guarantees. Key constraints include:  
-- An average rate of 500 requests per second during peak hours.  
-- Engineering team of 6, with limited Kafka experience.  
-- Existing Redis infrastructure in production.  
-- Requirement for exactly-once delivery for billing-critical notifications.  
-- Setup/migration must not exceed 2 weeks.  
+## Context
+The notifications system for our SaaS project management platform currently operates synchronously within the HTTP request cycle, leading to significant latency and reliability issues. Major challenges include request timeouts, silent failures of notifications, cascading failures affecting other features, and inadequate delivery guarantees for critical messages. With anticipated traffic growth and the need to support real-time WebSocket notifications, a new architecture for the notification subsystem is essential. The system also imposes constraints such as a limited engineering team size and existing infrastructure utilizing Redis.
 
-# Decision  
-After careful consideration of our requirements and constraints, I recommend using **Redis Streams** for the notification subsystem.  
+## Decision
+After evaluating the two options — **Apache Kafka** and **Redis Streams** — I recommend implementing **Redis Streams** as the notification subsystem. The decision is based on the following critical factors:
 
-## Justification:  
-1. **Familiarity and Existing Infrastructure**: The team is experienced with Redis, which will reduce the learning curve and make initial implementation faster within the specified 2-week timeframe.  
-2. **Simplicity and Lower Operational Overhead**: Redis can be operated as an in-memory data structure store, while Kafka requires more complex infrastructure management and tuning, which is unsuitable given our engineering team's size and skillset.  
-3. **Performance**: Redis Streams are known for high throughput, enabling efficient pub/sub mechanisms, which significantly mitigates the risk of blocking, unlike our current synchronous implementation.  
-4. **Support for At-Least-Once Delivery**: Redis Streams provides a mechanism to handle retries with an automatic acknowledgment mechanism, making it feasible to implement exactly-once semantics for billing notifications using Lua scripting for operations on a stream.  
-5. **Future Compatibility**: Redis allows for relatively seamless integration of real-time WebSocket notifications without requiring significant changes to the architecture.  
+1. **Familiarity and Time-to-Value**: The engineering team is already experienced with Redis, which minimizes the learning curve and deployment time. Setting up Redis Streams can comfortably fit within the two-week limit, while Kafka would require significant ramp-up time, especially since the team has no existing experience.
+2. **Operational Complexity**: Redis Streams offers a simpler operational model compared to Kafka, allowing for easier management without requiring dedicated infrastructure knowledge on the team.
+3. **Latency and Throughput**: Given our current architecture, Redis can handle the expected throughput and latency requirements due to its in-memory capabilities, which aligns better with the expected 10x traffic growth.
+4. **Message Retention**: Redis Streams supports configurable message retention and can maintain messages for completing the notification requirements and implementing retries.
+5. **Consumer Groups**: Redis Streams enable the creation of consumer groups, allowing multiple consumers to process messages efficiently while also supporting delivery guarantees for billing-critical notifications. 
+6. **Exactly-once Semantics**: While ensuring exactly-once delivery with Redis Streams may require careful design, it is achievable with proper mechanisms in place, particularly due to the current use of Redis in our infrastructure.
 
-# Consequences  
-## Pros:  
-- **Asynchronous Processing**: Decoupling from the HTTP request cycle will improve response times and reduce timeouts.  
-- **Delivery Guarantees**: Ability to implement retries and guarantees for billing notifications, improving overall reliability.  
-- **Lower Setup Time**: Utilizing existing Redis setup and knowledge minimizes initial setup time and costs.  
+## Consequences
+### Pros  
+- Reduced operational complexity through existing knowledge of Redis.  
+- Quicker implementation timeline, enabling fast delivery of value.  
+- Suitable for our scaling targets with in-memory speed.  
+- Supports message retention and consumer groups for improved processing.  
+- Enables keeping notifications decoupled from the main application flow, improving application performance overall.  
 
-## Cons:  
-- **Initially Limited Scalability**: While Redis Streams handle growth well, concerns may arise as overall request volume and stream size scale dramatically (may require further considerations in the future).  
-- **Only At-Least-Once Delivery**: Redis Streams require efforts to achieve exactly-once guarantees, primarily around managing acknowledgments in the delivery pipeline, making implementation more complex than for normal notifications.
+### Cons  
+- Redis Streams does not provide guaranteed exactly-once delivery like Kafka, which may require additional effort to implement in critical scenarios.
+- Potential limitations in scale compared to Kafka under exceptionally high loads, though initial projections indicate that Redis should suffice for our immediate needs.
+- Might miss out on some advanced stream processing features provided by Kafka.
 
-# Alternatives Considered  
-1. **Apache Kafka**:  
-   - **Justification for Rejection**: While offering robust features such as high throughput and fault tolerance, the complexity of setting up Kafka, and the need for more operational overhead and team expertise, makes it less viable. Additionally, Kafka's focus on distributed systems and its setup requirements exceed both our team's current capabilities and the two-week migration constraint.
+## Alternatives Considered  
+### Apache Kafka  
+- **Rejection Reasons**: 
+  1. Complexity: Initial setup and maintenance of Kafka presents a steeper learning curve for the team and would require significant time investment.
+  2. Infrastructure Requirements: Running Kafka efficiently typically requires dedicated infrastructure management expertise, which our team currently lacks.  
+  3. Long-term Costs: While Kafka can handle high throughput demands well, the added operational overhead and potential costs associated with running and maintaining it exceed the immediate needs and constraints of our project.
+
+In conclusion, Redis Streams emerges as the optimal fit for our notification architecture due to its operational simplicity, integration speed, and alignment with the team's capabilities and project goals. It offers an effective balance against the backdrop of our operational constraints and growth expectations.

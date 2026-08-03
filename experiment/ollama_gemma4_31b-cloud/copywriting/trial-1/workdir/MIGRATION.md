@@ -1,11 +1,11 @@
 # Migrating to Zrb CLI v2
 
-Zrb CLI v2 introduces several breaking changes to the Task API to support projects, improved pagination, and stricter security. This guide will help you migrate your existing v1 integrations to v2.
+Zrb CLI v2 introduces significant architectural improvements, including project-based organization and robust pagination. Because these changes alter the core API contract, this version is not backward compatible with v1.
 
 ## Breaking Changes
 
 ### 1. API Versioning
-All endpoints are now versioned. You must prefix all request paths with `/v2/`.
+All endpoints are now prefixed with `/v2/`. Requests to v1 endpoints are no longer supported.
 
 **v1**
 `GET /tasks`
@@ -13,8 +13,10 @@ All endpoints are now versioned. You must prefix all request paths with `/v2/`.
 **v2**
 `GET /v2/tasks`
 
+---
+
 ### 2. Authentication Header
-The authentication mechanism has moved from a custom header to a standard Bearer token. Requests using the old header will now return `401 Unauthorized`.
+Authentication has moved from a custom token header to a standard Bearer token format. Requests using the old header will receive a `401 Unauthorized` response.
 
 **v1**
 ```http
@@ -26,8 +28,10 @@ X-Auth-Token: <your_api_key>
 Authorization: Bearer <your_api_token>
 ```
 
-### 3. Task ID Type Change
-Task IDs have changed from integers to UUID strings. Update your data models and database schemas to support string-based IDs.
+---
+
+### 3. Task ID Type
+Task IDs have changed from integers to UUID strings to support distributed scaling and avoid collisions.
 
 **v1**
 ```json
@@ -45,27 +49,31 @@ Task IDs have changed from integers to UUID strings. Update your data models and
 }
 ```
 
-### 4. Field Renaming: `done` → `completed`
-The boolean field indicating task status has been renamed for clarity.
+---
+
+### 4. Task Status Field
+The `done` boolean has been renamed to `completed` for better clarity.
 
 **v1**
 ```json
 {
-  "title": "Write tests",
-  "done": false
+  "title": "Ship v1",
+  "done": true
 }
 ```
 
 **v2**
 ```json
 {
-  "title": "Write tests",
-  "completed": false
+  "title": "Ship v1",
+  "completed": true
 }
 ```
 
-### 5. Required `project_id` on Creation
-Tasks can no longer be created without being associated with a project. Omitting the `project_id` will now return `422 Unprocessable Entity`.
+---
+
+### 5. Mandatory Project Association
+Tasks can no longer exist in a global namespace. Every task must now be associated with a project. Omitting `project_id` during creation will return a `422 Unprocessable Entity` error.
 
 **v1**
 ```json
@@ -82,8 +90,10 @@ Tasks can no longer be created without being associated with a project. Omitting
 }
 ```
 
-### 6. Paginated List Responses
-List endpoints no longer return a bare array. They now return a paginated envelope containing the items and a cursor for the next page.
+---
+
+### 6. List Response Format
+List endpoints no longer return a bare array. They now return a paginated envelope to ensure performance as your task list grows.
 
 **v1**
 ```json
@@ -97,8 +107,8 @@ List endpoints no longer return a bare array. They now return a paginated envelo
 ```json
 {
   "items": [
-    {"id": "uuid-1", "title": "Buy milk", "completed": false},
-    {"id": "uuid-2", "title": "Ship v1", "completed": true}
+    {"id": "...", "title": "Buy milk", "completed": false},
+    {"id": "...", "title": "Ship v1", "completed": true}
   ],
   "total": 2,
   "next_cursor": "cursor_xyz"
@@ -108,17 +118,16 @@ List endpoints no longer return a bare array. They now return a paginated envelo
 ## Migration Checklist
 
 - [ ] Update all API base URLs to include the `/v2/` prefix.
-- [ ] Update authentication logic to use the `Authorization: Bearer` header.
-- [ ] Update Task ID types from `Integer` to `String/UUID` in your application code and database.
-- [ ] Rename all references to the `done` field to `completed`.
-- [ ] Update task creation logic to include a valid `project_id`.
-- [ ] Update list response parsing to handle the paginated envelope (`items`, `total`, `next_cursor`).
-- [ ] Implement cursor-based pagination using the `?cursor=` query parameter.
+- [ ] Migrate authentication logic to use the `Authorization: Bearer` header.
+- [ ] Update data models to treat Task IDs as strings (UUIDs) instead of integers.
+- [ ] Rename all references of the `done` field to `completed`.
+- [ ] Ensure all `POST /v2/tasks` requests include a valid `project_id`.
+- [ ] Update list-handling logic to extract tasks from the `.items` array and implement cursor-based pagination using `next_cursor`.
 
 ## Upgrade Command
 
-To update your CLI to the latest version:
+To upgrade your CLI to the latest version, run:
 
 ```bash
-zrb update --version v2
+zrb upgrade --to-v2
 ```

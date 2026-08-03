@@ -25,16 +25,23 @@ class Inventory:
             self._stock += quantity
 
     async def reserve(self, quantity: int) -> bool:
-        """Atomically reserve stock. Returns True if reserved, False if insufficient."""
+        """Atomically check and hold stock for an order.
+
+        Returns True if the stock was successfully reserved (decremented),
+        False if insufficient stock.  The caller must call release() if
+        the reservation needs to be rolled back (e.g. payment failure).
+        """
         async with self._lock:
+            await asyncio.sleep(0.02)
             if self._stock >= quantity:
                 self._stock -= quantity
                 return True
             return False
 
-    async def restore(self, quantity: int) -> None:
-        """Return reserved stock back to inventory."""
+    async def release(self, quantity: int) -> None:
+        """Return previously reserved stock back to inventory."""
         async with self._lock:
+            await asyncio.sleep(0.01)
             self._stock += quantity
 
     @property

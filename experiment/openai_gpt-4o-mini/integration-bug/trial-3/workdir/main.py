@@ -10,7 +10,7 @@ NUM_ORDERS = 12
 
 async def main() -> None:
     inventory = Inventory(INITIAL_STOCK)
-    gateway = PaymentGateway(failure_rate=0.05)
+    gateway = PaymentGateway(failure_rate=0.25)
 
     print(f"Starting simulation: {NUM_ORDERS} concurrent orders, stock={INITIAL_STOCK}")
     orders = [

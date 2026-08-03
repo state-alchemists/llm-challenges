@@ -1,6 +1,6 @@
 import asyncio
 import random
-from typing import List, Set
+from typing import List
 
 
 class PaymentGateway:
@@ -8,27 +8,26 @@ class PaymentGateway:
         self._failure_rate = failure_rate
         self.total_charged: float = 0.0
         self.charges: List[dict] = []
-        self._processed_charges: Set[str] = set()
+        self._lock = asyncio.Lock()
 
     async def charge(self, order_id: str, amount: float) -> bool:
-        await asyncio.sleep(0.03)
-        if order_id in self._processed_charges:
-            print(f"Order {order_id}: already processed, preventing duplicate charge")
-            return False
-        if random.random() < self._failure_rate:
-            return False
-        self.total_charged += amount
-        self.charges.append({"order_id": order_id, "amount": amount})
-        self._processed_charges.add(order_id)
-        return True
+        async with self._lock:
+            await asyncio.sleep(0.03)
+            if random.random() < self._failure_rate:
+                return False
+            self.total_charged += amount
+            self.charges.append({"order_id": order_id, "amount": amount})
+            return True
 
     async def refund(self, order_id: str, amount: float) -> None:
-        await asyncio.sleep(0.01)
-        if order_id in self._processed_charges:
-            self.total_charged -= amount
-            # In a real system, we'd find and remove the specific charge.
-            # For this simulation, we'll just remove from processed and adjust total.
-            self._processed_charges.remove(order_id)
-            print(f"Order {order_id}: refunded ${amount:.2f}")
-        else:
-            print(f"Order {order_id}: no charge found to refund")
+        async with self._lock:
+            await asyncio.sleep(0.01)
+            # Find and remove the charge. Assuming one charge per order_id for simplicity.
+            # In a real system, charges might have unique transaction IDs.
+            for i, charge in enumerate(self.charges):
+                if charge["order_id"] == order_id and charge["amount"] == amount:
+                    self.total_charged -= amount
+                    self.charges.pop(i)
+                    print(f"Refunded order {order_id} for ${amount:.2f}")
+                    return
+            print(f"Warning: Could not find charge for order {order_id} to refund.")

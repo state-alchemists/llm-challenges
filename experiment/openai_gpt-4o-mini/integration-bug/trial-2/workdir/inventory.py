@@ -1,25 +1,26 @@
 import asyncio
 
-
 class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
-        self.lock = asyncio.Lock()  # Add lock for concurrency control
+        self.lock = asyncio.Lock()  # Lock for atomic operations
 
     async def check_stock(self, quantity: int) -> bool:
         await asyncio.sleep(0.02)
         return self._stock >= quantity
 
-    async def decrement(self, quantity: int) -> bool:
+    async def update_stock(self, quantity: int) -> bool:
         await asyncio.sleep(0.02)
-        if self._stock >= quantity:
-            self._stock -= quantity
-            return True
-        return False
+        async with self.lock:  # Ensure atomic stock updates
+            if self._stock >= quantity:
+                self._stock -= quantity
+                return True
+            return False
 
     async def increment(self, quantity: int) -> None:
         await asyncio.sleep(0.01)
-        self._stock += quantity
+        async with self.lock:
+            self._stock += quantity
 
     @property
     def stock(self) -> int:

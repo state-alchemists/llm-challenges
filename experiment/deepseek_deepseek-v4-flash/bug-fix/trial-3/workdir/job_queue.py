@@ -23,11 +23,7 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
-                # Claim the job before any await: the check and the status
-                # transition must be atomic, otherwise concurrent workers
-                # all observe "pending" and claim the same job twice.
                 job["status"] = "processing"
-                await asyncio.sleep(0.01)
                 return job
         return None
 

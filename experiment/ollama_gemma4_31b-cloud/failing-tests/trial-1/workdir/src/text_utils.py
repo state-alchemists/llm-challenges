@@ -19,7 +19,6 @@ def slugify(text: str) -> str:
             result_chars.append(char.lower())
         elif char.isspace() or char == "-":
             result_chars.append("-")
-    
     collapsed = "".join(result_chars)
     import re
     return re.sub(r"-+", "-", collapsed).strip("-")

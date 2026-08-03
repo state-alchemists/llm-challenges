@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from typing import List, Optional
 from .models import Task, TaskCreate, TaskUpdate, Project, TaskStatus
 from .database import tasks, projects
@@ -32,16 +32,8 @@ async def list_tasks(
     return filtered[start:end]
 
 
-@app.get("/tasks/{task_id}", response_model=Task)
-async def get_task(task_id: int):
-    for task in tasks:
-        if task.id == task_id:
-            return task
-    raise HTTPException(status_code=404, detail="Task not found")
-
-
 @app.post("/tasks", response_model=Task, status_code=201)
-async def create_task(task_create: TaskCreate, user: str = Depends(require_api_key)):
+async def create_task(task_create: TaskCreate, username: str = Depends(require_api_key)):
     project = next((p for p in projects if p.id == task_create.project_id), None)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -51,8 +43,16 @@ async def create_task(task_create: TaskCreate, user: str = Depends(require_api_k
     return new_task
 
 
+@app.get("/tasks/{task_id}", response_model=Task)
+async def get_task(task_id: int):
+    for task in tasks:
+        if task.id == task_id:
+            return task
+    raise HTTPException(status_code=404, detail="Task not found")
+
+
 @app.put("/tasks/{task_id}", response_model=Task)
-async def update_task(task_id: int, task_update: TaskUpdate, user: str = Depends(require_api_key)):
+async def update_task(task_id: int, task_update: TaskUpdate, username: str = Depends(require_api_key)):
     for task in tasks:
         if task.id == task_id:
             update_data = task_update.dict(exclude_unset=True)
@@ -63,9 +63,9 @@ async def update_task(task_id: int, task_update: TaskUpdate, user: str = Depends
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
-async def delete_task(task_id: int, user: str = Depends(require_api_key)):
+async def delete_task(task_id: int, username: str = Depends(require_api_key)):
     for i, task in enumerate(tasks):
         if task.id == task_id:
             del tasks[i]
-            return None
+            return
     raise HTTPException(status_code=404, detail="Task not found")

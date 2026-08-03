@@ -14,12 +14,12 @@ def slugify(text: str) -> str:
     'multiple-spaces'
     """
     result_chars: list[str] = []
-    for char in text.lower():
+    for char in text:
         if char.isalnum():
             result_chars.append(char)
         elif char.isspace() or char == "-":
             result_chars.append("-")
-    collapsed = "".join(result_chars)
+    collapsed = "".join(result_chars).lower()
     while "--" in collapsed:
         collapsed = collapsed.replace("--", "-")
     return collapsed.strip("-")

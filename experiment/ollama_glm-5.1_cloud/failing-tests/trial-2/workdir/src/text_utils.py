@@ -18,11 +18,13 @@ def slugify(text: str) -> str:
     result_chars: list[str] = []
     for char in text:
         if char.isalnum():
-            result_chars.append(char)
+            result_chars.append(char.lower())
         elif char.isspace() or char == "-":
             result_chars.append("-")
-    collapsed = "".join(result_chars).lower()
-    return re.sub(r"-+", "-", collapsed).strip("-")
+    collapsed = "".join(result_chars)
+    # Collapse all repeated dashes
+    collapsed = re.sub(r"-+", "-", collapsed)
+    return collapsed.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:

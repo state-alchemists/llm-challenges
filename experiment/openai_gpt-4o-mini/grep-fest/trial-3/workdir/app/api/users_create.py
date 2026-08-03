@@ -1,4 +1,4 @@
-"""Auto-generated module — DO NOT TREAT AS HUMAN-WRITTEN."
+"""Auto-generated module — DO NOT TREAT AS HUMAN-WRITTEN."""
 from __future__ import annotations
 
 from app.auth import new_auth

@@ -10,17 +10,18 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Reserve stock atomically BEFORE charging. If stock runs out here the
-    # order is rejected before any money moves, so a charge always has a
-    # delivered item behind it.
-    reserved = await inventory.reserve(quantity)
+    # Reserve (and deliver) inventory atomically BEFORE charging. This is the
+    # commit point: reservation is check+decrement under one lock, so we can
+    # never oversell, and a charge only ever follows a successful reservation
+    # — no item, no charge.
+    reserved = await inventory.try_reserve(quantity)
     if not reserved:
         print(f"Order {order_id}: out of stock")
         return False
 
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        # Payment failed — give the reserved stock back so it can be sold.
+        # Payment failed: give the reserved stock back.
         await inventory.increment(quantity)
         print(f"Order {order_id}: payment failed")
         return False

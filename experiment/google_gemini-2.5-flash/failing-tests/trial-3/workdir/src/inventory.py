@@ -33,6 +33,7 @@ class Inventory:
         if qty <= 0:
             raise ValueError("qty must be positive")
         current = self._reserved.get(sku, 0)
-        if qty > current:
-            raise ValueError("cannot release more than reserved")
-        self._reserved[sku] = current - qty
+        new_reserved = current - qty
+        if new_reserved < 0:
+            raise ValueError("Release quantity would make reserved stock negative")
+        self._reserved[sku] = new_reserved

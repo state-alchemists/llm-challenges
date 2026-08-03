@@ -10,31 +10,32 @@ class Inventory:
         await asyncio.sleep(0.02)
         return self._stock >= quantity
 
-    async def reserve(self, quantity: int) -> bool:
-        """Atomically check and reserve stock.
-
-        Returns True and removes ``quantity`` from stock if available, so a
-        concurrent caller cannot oversell against the same units.
-        """
-        async with self._lock:
-            await asyncio.sleep(0.02)
-            if self._stock >= quantity:
-                self._stock -= quantity
-                return True
-            return False
-
     async def decrement(self, quantity: int) -> bool:
+        await asyncio.sleep(0.02)
         async with self._lock:
-            await asyncio.sleep(0.02)
             if self._stock >= quantity:
                 self._stock -= quantity
                 return True
             return False
 
     async def increment(self, quantity: int) -> None:
+        await asyncio.sleep(0.01)
         async with self._lock:
-            await asyncio.sleep(0.01)
             self._stock += quantity
+
+    async def try_reserve(self, quantity: int) -> bool:
+        """Atomically check and reserve stock, or return False without changing it.
+
+        The check and the decrement happen under one lock so concurrent
+        checkouts can never oversell: at most ``stock`` units are ever
+        reserved, and a reservation is the only thing that lets a caller
+        proceed to payment.
+        """
+        async with self._lock:
+            if self._stock >= quantity:
+                self._stock -= quantity
+                return True
+            return False
 
     @property
     def stock(self) -> int:

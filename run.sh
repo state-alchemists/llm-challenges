@@ -36,6 +36,8 @@ export ZRB_LLM_SANDBOX_FALLBACK=deny       # fail closed if no OS sandbox is ava
 # `~` is intentional — zrb expanduser()s each entry.
 export ZRB_LLM_SANDBOX_DENY_READ_PATHS="~/.ssh:~/.aws:~/.azure:~/.config/gcloud:~/.kube:~/.gnupg:~/.netrc:~/.npmrc:~/.pypirc:~/.git-credentials:~/.docker/config.json:~/.config/gh:~/Library/Keychains:~/AppData/Roaming/gcloud:${REPO_DIR}/challenges"
 
+export ZRB_LLM_JOURNAL_ENABLED=false
+
 # ---------------------------------------------------------------------------
 # Fixture integrity: snapshot before
 # ---------------------------------------------------------------------------
@@ -97,7 +99,7 @@ fi
 # ---------------------------------------------------------------------------
 # Analysis
 # ---------------------------------------------------------------------------
-zrb chat "Analyze @experiment/ result, provide executive summary and failure/timeout analysis, including what probably can be improved in the system prompt, insert your analysis at the top section of  @experiment/report.md"
+zrb chat "Analyze @experiment/ result, provide executive summary and failure/timeout analysis (in case of timeout check the stdout), and what makes some experiment barely pass (not excellent), including what probably can be improved in the system prompt/harness, insert your analysis at the top section of  @experiment/report.md"
 
 if [ "$FIXTURES_DIRTY" -ne 0 ]; then
   echo "run.sh: FIXTURE CORRUPTION DETECTED — see the warning above." >&2

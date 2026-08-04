@@ -10,29 +10,20 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Use the atomic decrement for inventory to prevent overselling
-    # The stock check is now part of the atomic decrement operation.
-
-    # First, attempt to charge the customer.
-    amount_to_charge = quantity * price
-    charged = await gateway.charge(order_id, amount_to_charge)
-
-    if not charged:
-        print(f"Order {order_id}: payment failed")
-        return False
-
-    # If payment is successful, try to decrement inventory atomically.
-    decremented = await inventory._atomic_decrement(quantity)
-
+    # 1. Atomically try to decrement stock
+    decremented = await inventory.try_decrement(quantity)
     if not decremented:
-        # If inventory decrement fails, refund the charge to prevent ghost charges.
-        print(f"Order {order_id}: inventory error after payment — item not delivered. Initiating refund.")
-        refunded = await gateway.refund(order_id, amount_to_charge)
-        if refunded:
-            print(f"Order {order_id}: refund successful.")
-        else:
-            print(f"Order {order_id}: CRITICAL ERROR - refund failed! Manual intervention needed.")
+        print(f"Order {order_id}: out of stock or inventory error")
         return False
 
+    # 2. Attempt payment
+    charged = await gateway.charge(order_id, quantity * price)
+    if not charged:
+        print(f"Order {order_id}: payment failed. Releasing reserved stock.")
+        # Compensation: if payment fails, increment the inventory back
+        await inventory.increment(quantity)
+        return False
+
+    # 3. If both stock decrement and payment successful, order is complete
     print(f"Order {order_id}: SUCCESS")
     return True

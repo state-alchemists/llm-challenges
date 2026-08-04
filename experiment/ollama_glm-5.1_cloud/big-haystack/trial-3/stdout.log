@@ -1,26 +1,30 @@
 [2m
-  🧠 Let[0m[2m me find the line[0m[2m in server.log that[0m[2m contains a[0m[2m successful order with[0m[2m ORDER_ID and[0m[2m a customer email.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_413w3uu0 | Grep {'pattern': 'ORDER_ID=', 'path': '/Users/gofrendigunawan/llm ...', 'file_pattern': 'server.log'}
-[0m[2m
-  🔠 call_413w3uu0 Executed
-[0m[2m
-  Found[0m[2m it[0m[2m.[0m[2m The line[0m[2m at[0m[2m `server.log:[0m[2m1559` contains[0m[2m `ORDER_ID=[0m[2m42-X9Q[0m[2m` and `customer[0m[2m="[0m[2malice@example.com"[0m[2m`.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_zdrmn9b8 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': 'order_id=42-X9Q\ncustomer=a ...'}
-[0m[2m
-  🔠 call_zdrmn9b8 Executed
-[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_3fxi0t0d | Read {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🔠 call_3fxi0t0d Executed
-[0m[2m
-  `[0m[2manswer.txt` written[0m[2m with the exact[0m[2m values from the matching[0m[2m line:[0m[2m
+  🧠 I[0m[2m need to find the[0m[2m line in `[0m[2mserver.log` that[0m[2m contains a successful order[0m[2m with an `ORDER[0m[2m_ID=...`[0m[2m token and a customer[0m[2m email,[0m[2m then write the answer[0m[2m to `answer.txt[0m[2m`.
      
-     - **[0m[2morder_id**[0m[2m=`[0m[2m42-X9Q[0m[2m`
-     - **customer[0m[2m**=`alice@example[0m[2m.com`[0m[2m
-  💸 (Requests: 4 | Tool Calls: 3 | Total: 43890) Input: 43631 | Audio Input: 0 | Output: 259 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     Let me search[0m[2m for the pattern[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_x9rn6cel | Grep {'pattern': 'ORDER_ID=', 'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🔠 call_x9rn6cel Executed
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_lth1gyg5 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': 'order_id=42-X9Q\ncustomer=a ...'}
+[0m[2m
+  🔠 call_lth1gyg5 Executed
+[0m[2m
+  Found the single[0m[2m matching line at `[0m[2mserver.log:155[0m[2m9`:
+     
+     ``[0m[2m`
+     2026-[0m[2m04-15T[0m[2m11:23:[0m[2m07Z INFO order[0m[2m placed  ORDER_ID[0m[2m=42-X9[0m[2mQ  customer="[0m[2malice@example.com"[0m[2m  amount=$1[0m[2m,283.[0m[2m45
+     ```[0m[2m
+     
+     Wrote `answer[0m[2m.txt` with:[0m[2m
+     
+     ```
+     order_id[0m[2m=42-X9[0m[2mQ
+     customer=[0m[2malice@example.com[0m[2m
+     ```[0m[2m
+  💸 (Requests: 3 | Tool Calls: 2 | Total: 30795) Input: 30545 | Audio Input: 0 | Output: 250 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "The file `server.log` contains thousands of lines of server activity.
 
 Exactly one line in that file records a successful order being placed.
@@ -39,7 +43,15 @@ Use any tool you like — grep, Python, reading the file directly — but
 the answer must be exact. There is only one matching line.
 " --model ollama:glm-5.1:cloud --session ollama_glm-5.1_cloud-big-haystack-trial-3 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_glm-5.1_cloud-big-haystack-trial-3[0m[0m
-`answer.txt` written with the exact values from the matching line:
+Found the single matching line at `server.log:1559`:
 
-- **order_id**=`42-X9Q`
-- **customer**=`alice@example.com`
+```
+2026-04-15T11:23:07Z INFO order placed  ORDER_ID=42-X9Q  customer="alice@example.com"  amount=$1,283.45
+```
+
+Wrote `answer.txt` with:
+
+```
+order_id=42-X9Q
+customer=alice@example.com
+```

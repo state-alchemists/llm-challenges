@@ -1,6 +1,9 @@
 import asyncio
 
 
+import asyncio
+
+
 class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
@@ -11,10 +14,24 @@ class Inventory:
             await asyncio.sleep(0.02)
             return self._stock >= quantity
 
-    async def decrement(self, quantity: int) -> bool:
+    async def try_reserve_stock(self, order_id: str, quantity: int) -> bool:
         async with self._lock:
             await asyncio.sleep(0.02)
             if self._stock >= quantity:
+                self._stock -= quantity
+                return True
+            return False
+
+    async def release_reserved_stock(self, quantity: int) -> None:
+        async with self._lock:
+            await asyncio.sleep(0.01)
+            self._stock += quantity
+
+    async def decrement(self, quantity: int) -> bool:
+        # This method is not used directly by checkout anymore but kept for interface contract
+        async with self._lock:
+            await asyncio.sleep(0.02)
+            if self._stock >= quantity: # This check is redundant with try_reserve_stock.
                 self._stock -= quantity
                 return True
             return False
@@ -23,15 +40,6 @@ class Inventory:
         async with self._lock:
             await asyncio.sleep(0.01)
             self._stock += quantity
-
-    async def try_decrement(self, quantity: int) -> bool:
-        async with self._lock:
-            # Introduce a small sleep here to simulate async work
-            await asyncio.sleep(0.02)
-            if self._stock >= quantity:
-                self._stock -= quantity
-                return True
-            return False
 
     @property
     def stock(self) -> int:

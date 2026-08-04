@@ -23,10 +23,8 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
-                # Claim the job atomically: no await may sit between the
-                # pending check and the status assignment, or another worker
-                # can claim the same job while this one is suspended.
                 job["status"] = "processing"
+                await asyncio.sleep(0.01)
                 return job
         return None
 

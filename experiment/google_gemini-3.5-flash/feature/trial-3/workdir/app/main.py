@@ -27,7 +27,7 @@ async def list_tasks(
         filtered_tasks = [t for t in filtered_tasks if t.priority == priority]
     if assigned_to is not None:
         filtered_tasks = [t for t in filtered_tasks if t.assigned_to == assigned_to]
-    
+
     start = (page - 1) * page_size
     end = start + page_size
     return filtered_tasks[start:end]
@@ -41,12 +41,11 @@ async def get_task(task_id: int):
     raise HTTPException(status_code=404, detail="Task not found")
 
 
-@app.post("/tasks", response_model=Task)
+@app.post("/tasks", response_model=Task, status_code=201)
 async def create_task(
     task_data: TaskCreate,
-    current_user: str = Depends(require_api_key),
+    username: str = Depends(require_api_key),
 ):
-    # Validate project_id exists
     project_exists = any(p.id == task_data.project_id for p in projects)
     if not project_exists:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -68,13 +67,13 @@ async def create_task(
 async def update_task(
     task_id: int,
     task_data: TaskUpdate,
-    current_user: str = Depends(require_api_key),
+    username: str = Depends(require_api_key),
 ):
     for task in tasks:
         if task.id == task_id:
-            update_dict = task_data.model_dump(exclude_unset=True)
-            for field, value in update_dict.items():
-                setattr(task, field, value)
+            update_data = task_data.dict(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(task, key, value)
             return task
     raise HTTPException(status_code=404, detail="Task not found")
 
@@ -82,10 +81,10 @@ async def update_task(
 @app.delete("/tasks/{task_id}")
 async def delete_task(
     task_id: int,
-    current_user: str = Depends(require_api_key),
+    username: str = Depends(require_api_key),
 ):
-    for i, task in enumerate(tasks):
+    for idx, task in enumerate(tasks):
         if task.id == task_id:
-            tasks.pop(i)
-            return {"message": "Task deleted"}
+            tasks.pop(idx)
+            return {"detail": "Task deleted"}
     raise HTTPException(status_code=404, detail="Task not found")

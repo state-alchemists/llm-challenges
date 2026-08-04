@@ -6,24 +6,9 @@ class Inventory:
         self._stock = stock
         self._lock = asyncio.Lock()
 
-    async def check_stock(self, quantity: int) -> bool:
+    async def try_decrement(self, quantity: int) -> bool:
         async with self._lock:
-            await asyncio.sleep(0.02)
-            return self._stock >= quantity
-
-    async def decrement(self, quantity: int) -> bool:
-        async with self._lock:
-            await asyncio.sleep(0.02)
-            if self._stock >= quantity:
-                self._stock -= quantity
-                return True
-            return False
-
-    async def _atomic_decrement(self, quantity: int) -> bool:
-        # This combines check_stock and decrement into an atomic operation
-        # for use by the checkout flow to prevent race conditions.
-        async with self._lock:
-            await asyncio.sleep(0.02)  # Simulate work
+            await asyncio.sleep(0.02)  # Simulate I/O delay
             if self._stock >= quantity:
                 self._stock -= quantity
                 return True
@@ -31,7 +16,7 @@ class Inventory:
 
     async def increment(self, quantity: int) -> None:
         async with self._lock:
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)  # Simulate I/O delay
             self._stock += quantity
 
     @property

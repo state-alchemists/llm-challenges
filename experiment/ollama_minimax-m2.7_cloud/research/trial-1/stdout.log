@@ -1,33 +1,107 @@
 [2m
-  🧠 The user[0m[2m wants me to read `system_context.md` first, then write an ADR evaluating Kafka vs Redis Streams for a notification subsystem. Let me start by reading the file.
-[0m[2m
+  🧠 The user[0m[2m wants me to read a file called `system_context.md` and then write an ADR based on its contents. Let me start by reading that file.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_luxn865nykst_1 | Read {'path': 'system_context.md'}
+  🧰 call_function_bzwc5k44ldiz_1 | Read {'path': 'system_context.md'}
 [0m[2m
-  🔠 call_function_luxn865nykst_1 Executed
+  🔠 call_function_bzwc5k44ldiz_1 Executed
 [0m[2m
-  🧠 Now[0m[2m I have the full context. Let me write a comprehensive ADR evaluating Kafka vs Redis Streams for the notification subsystem. I need to be specific with technical properties and make[0m[2m a definitive recommendation given the team constraints.
+  🧠 The[0m[2m user wants me to write an ADR evaluating Kafka vs Redis Streams for the notification subsystem. Let me analyze the requirements:
      
-     Key constraints to consider:
-     - 6 person team, no dedicated infra[0m[2m engineer
+     **System Context:**
+     - 85,000 MAU,[0m[2m ~2M tasks/month, ~500 req/s peak
+     - Python/Flask monolith
+     - PostgreSQL + Redis (already in production)
+     - [0m[2m6-person team, no Kafka experience, no dedicated infra engineer
+     - 2-week max migration time
+     - Budget-conscious ([0m[2mcan't afford managed Confluent)
+     - Must maintain exactly-once for billing notifications
+     
+     **Requirements:**
+     - Async processing (decouple from[0m[2m HTTP)
+     - Retry with exponential backoff
+     - At-least-once delivery minimum, exactly-once for billing
+     - WebSocket push within 2 quarters
+     - [0m[2m10x traffic growth without re-architecting
+     
+     Let me evaluate both options:
+     
+     **Apache Kafka:**
+     - Throughput: Very high (millions of events/sec)
+     - Ordering:[0m[2m Per partition, guaranteed
+     - Retention: Configurable, persistent
+     - Consumer groups: Yes, native[0m[2m
+     - Exactly-once: Yes, with transactions (idempotent producers + consumer[0m[2m offset management)
+     - Operational complexity: HIGH - requires cluster management, partitioning strategy, monitoring, etc[0m[2m.
+     - Team experience: No Kafka experience
+     - Setup time: Longer (days to weeks)
+[0m[2m
+     **Redis Streams:**
+     - Throughput: High (100k+ events/sec for typical use)
+     - Ordering: Per consumer group, guaranteed
+     - Retention[0m[2m: Configurable (max memory + TTL)
+     - Consumer groups: Yes (XREADGROUP)
+     - Exactly-once: Ach[0m[2mievable with consumer-side deduplication (Redis alone is at-least-once)
+     - Operational complexity: LOW - already using[0m[2m Redis, simpler model
+     - Team experience: Redis already in production
+     
+     
+     - Setup time: Shorter (can leverage existing Redis infrastructure)
+     
+     Given[0m[2m the constraints—2-person team with no Kafka background, tight timeline, and existing Redis investment[0m[2m—Redis Streams offers a faster path to value. I can implement it within the 2-week window and handle the 10x growth[0m[2m target, though I'll need to add application-level deduplication logic for exactly-once guarantees rather than relying on Redis alone[0m[2m.
+     
+     The operational overhead stays manageable since Kafka's complexity would demand infrastructure expertise the team lacks. Redis Streams provides[0m[2m at-least-once delivery with consumer-side idempotency for billing notifications, and I can[0m[2m layer in a dead-letter queue later if needed. The main trade-off is eventual consistency[0m[2m for webhook fanout and a pending entries list limitation I'll need[0m[2m to work around. This approach balances speed-to-market with reliability requirements.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_function_atkqofa14o3h_1 | Write {'path': 'ADR-001-notification-archi ...', 'content': '# ADR-001: Notification Su ...'}
+[0m[2m
+  🔠 call_function_atkqofa14o3h_1 Executed
+[0m[2m
+  🧠 The ADR[0m[2m has been written. Let me verify the file was created correctly.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_function_mawbkmzsauav_1 | Read {'path': 'ADR-001-notification-archi ...'}
+[0m[2m
+  🔠 call_function_mawbkmzsauav_1 Executed
+[0m[2m
+  🧠 The file[0m[2m looks correct and complete. Let me verify it matches all the requirements:
+     
+     1. **Title** ✓ - "[0m[2mADR-001: Notification Subsystem Message Broker Selection"
+     2. **Status** ✓ - "Proposed"
+     3. **Context** ✓ - Problem statement, system scale, constraints, scaling targets
+     4. **Decision** ✓ - Redis Streams chosen with[0m[2m clear justification
+     5. **Consequences** ✓ - Benefits (table), drawbacks and mitigations (table), comparison summary ([0m[2mtable)
+     6. **Alternatives Considered** ✓ - Kafka rejected with reasons and when reconsidered
+     
+     Technical properties covered:
+     - Throughput: [0m[2m100,000+ events/sec vs Kafka's millions
+     - Ordering guarantees: Per consumer group
+     - Message retention: MAXLEN/MINID,[0m[2m memory-bounded
+     - Consumer groups: XREADGROUP
+     - Exactly-once semantics: Via application dedup for billing
+     - Operational complexity: Low for Redis,[0m[2m High for Kafka
+     
+     Constraints addressed:
+     - Team size (6 people, no dedicated infra engineer)
      - No Kafka experience
-     - Already have Redis in production
-     - 2 week max setup/migration
-     - Must handle 10x growth
-     - Exactly[0m[2m-once for billing notifications
-     - Modest budget (can't afford Confluent Cloud)
+     - [0m[2m2-week delivery requirement
+     - Budget constraints
+     - Existing Redis investment
      
-     Let me write a thorough ADR.
-[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_xqiaoejmrooj_1 | Write {'path': 'ADR-001-notification-archi ...', 'content': '# ADR-001: Notification Su ...'}
-[0m[2m
-  🔠 call_function_xqiaoejmrooj_1 Executed
-[0m[2m
-  🧠 The file[0m[2m has been written. Let me verify it was written correctly by reading it back.
-[0m[2m
-  Saved to `ADR-001-notification-architecture.md`. The recommendation is **Redis Streams**[0m[2m — it reuses existing infrastructure, has no new operational surface area, and the team can deliver within[0m[2m the 2-week window. Kafka is the right tool at higher scale or with a platform team;[0m[2m at 5k req/s peak with no dedicated infra engineer, it would be an operational liability.[0m[2m
-  💸 (Requests: 3 | Tool Calls: 2 | Total: 36958) Input: 34960 | Audio Input: 0 | Output: 1998 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     The recommendation is definitive: Redis Streams.
+     
+     The document is saved correctly.[0m[2m
+  Saved as `ADR-001-notification[0m[2m-architecture.md`.
+     
+     **Definitive recommendation: Redis Streams.**
+     
+     Key technical justification:
+     
+     - **Throughput**: Redis Streams handles 100,000+ events/sec[0m[2m. At 500 req/s peak (targeting 5,000 req/s after 10x growth), you're using <5[0m[2m% of capacity. Kafka's million-event ceiling is overkill.
+     - **Exactly-once for billing**: Achievable via consumer-side deduplication[0m[2m — write `notification_id` to PostgreSQL before processing, skip on duplicate. Meets the stated constraint without Kafka[0m[2m's native transactions.
+     - **Two-week constraint**: Redis Streams integrates in 1–2 days. Kafka requires cluster provisioning, partitioning[0m[2m strategy, consumer group configuration, and offset management — 4–8 weeks before first value.
+     - **Operational constraints**: No dedicated infra engineer;[0m[2m team already runs Redis for sessions and rate-limiting. No new managed service, no new operational burden.
+[0m[2m- **At-least-once delivery**: Native via `XREADGROUP` + acknowledgment after processing. Failed messages after max retries route[0m[2m to a `notifications.dlq` stream.
+     
+     Kafka would be the right answer at 50,000+ events/sec sustained, or if you needed[0m[2m stream processing, event sourcing, or had a dedicated infrastructure engineer to own it. At current scale, it would be over-engineering that[0m[2m delays delivery by a month or more.[0m[2m
+  💸 (Requests: 4 | Tool Calls: 3 | Total: 51806) Input: 48676 | Audio Input: 0 | Output: 3130 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "Read `system_context.md`. It describes a real production system and a specific architectural problem we need to solve.
 
 Write an Architecture Decision Record (ADR) evaluating two options for the notification subsystem:
@@ -47,4 +121,16 @@ Make a definitive recommendation. Use specific technical properties (throughput,
 Save as `ADR-001-notification-architecture.md`.
 " --model ollama:minimax-m2.7:cloud --session ollama_minimax-m2.7_cloud-research-trial-1 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_minimax-m2.7_cloud-research-trial-1[0m[0m
-Saved to `ADR-001-notification-architecture.md`. The recommendation is **Redis Streams** — it reuses existing infrastructure, has no new operational surface area, and the team can deliver within the 2-week window. Kafka is the right tool at higher scale or with a platform team; at 5k req/s peak with no dedicated infra engineer, it would be an operational liability.
+Saved as `ADR-001-notification-architecture.md`.
+
+**Definitive recommendation: Redis Streams.**
+
+Key technical justification:
+
+- **Throughput**: Redis Streams handles 100,000+ events/sec. At 500 req/s peak (targeting 5,000 req/s after 10x growth), you're using <5% of capacity. Kafka's million-event ceiling is overkill.
+- **Exactly-once for billing**: Achievable via consumer-side deduplication — write `notification_id` to PostgreSQL before processing, skip on duplicate. Meets the stated constraint without Kafka's native transactions.
+- **Two-week constraint**: Redis Streams integrates in 1–2 days. Kafka requires cluster provisioning, partitioning strategy, consumer group configuration, and offset management — 4–8 weeks before first value.
+- **Operational constraints**: No dedicated infra engineer; team already runs Redis for sessions and rate-limiting. No new managed service, no new operational burden.
+- **At-least-once delivery**: Native via `XREADGROUP` + acknowledgment after processing. Failed messages after max retries route to a `notifications.dlq` stream.
+
+Kafka would be the right answer at 50,000+ events/sec sustained, or if you needed stream processing, event sourcing, or had a dedicated infrastructure engineer to own it. At current scale, it would be over-engineering that delays delivery by a month or more.

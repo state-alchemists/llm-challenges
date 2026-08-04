@@ -1,215 +1,126 @@
-"""Log processing pipeline: Extract server logs, transform metrics, and load to DB + HTML report."""
-
 import datetime
 import os
 import re
 import sqlite3
-from collections import defaultdict
 from pathlib import Path
-
-# ---------------------------------------------------------------------------
-# Configuration (loaded from environment variables)
-# ---------------------------------------------------------------------------
-
-DB_PATH: str = os.getenv("DB_PATH", "metrics.db")
-LOG_FILE: str = os.getenv("LOG_FILE", "server.log")
-DB_HOST: str = os.getenv("DB_HOST", "localhost")
-DB_PORT: int = int(os.getenv("DB_PORT", "5432"))
-DB_USER: str = os.getenv("DB_USER", "admin")
-DB_PASS: str = os.getenv("DB_PASS", "password123")
-
-# ---------------------------------------------------------------------------
-# Regex patterns for log parsing
-# ---------------------------------------------------------------------------
-
-LOG_LINE_RE = re.compile(
-    r"^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) "
-    r"(?P<level>\w+) "
-    r"(?P<message>.*)$"
-)
-
-USER_ACTION_RE = re.compile(r"User (?P<uid>\S+) (?P<action>.+)")
-API_CALL_RE = re.compile(r"API (?P<endpoint>\S+) took (?P<duration_ms>\d+)ms")
-
-# ---------------------------------------------------------------------------
-# Data structures
-# ---------------------------------------------------------------------------
-
-type LogEntry = dict[str, str]
+from typing import Any, Dict, List
 
 
-def get_config() -> dict[str, str | int]:
-    """Return runtime configuration as a dictionary.
-
-    All values are read from environment variables with sensible defaults.
-    """
+def get_config() -> Dict[str, str]:
+    """Load application configuration from environment variables."""
     return {
-        "db_path": DB_PATH,
-        "log_file": LOG_FILE,
-        "db_host": DB_HOST,
-        "db_port": DB_PORT,
-        "db_user": DB_USER,
-        "db_pass": DB_PASS,
+        "db_path": os.getenv("DB_PATH", "metrics.db"),
+        "log_file": os.getenv("LOG_FILE", "server.log"),
+        "db_host": os.getenv("DB_HOST", "localhost"),
+        "db_port": os.getenv("DB_PORT", "5432"),
+        "db_user": os.getenv("DB_USER", "admin"),
+        "db_pass": os.getenv("DB_PASS", "password123"),
     }
 
 
-# ---------------------------------------------------------------------------
-# Extract
-# ---------------------------------------------------------------------------
+def extract_logs(log_file: str) -> Dict[str, Any]:
+    """Extract raw events from the server log file.
 
-def extract_logs(log_file: str) -> list[LogEntry]:
-    """Parse *log_file* and return a list of structured log entries.
-
-    Each entry contains at minimum ``timestamp``, ``level``, and ``message``.
-    Additional fields are added depending on the log type (e.g. ``uid``,
-    ``endpoint``, ``duration_ms``).
+    Returns:
+        A dictionary with keys:
+        - events: list of parsed log events
+        - sessions: dict of active user IDs to login timestamps
+        - api_calls: list of API call latency records
     """
-    entries: list[LogEntry] = []
-    path = Path(log_file)
-    if not path.exists():
-        return entries
+    events: List[Dict[str, Any]] = []
+    sessions: Dict[str, str] = {}
+    api_calls: List[Dict[str, Any]] = []
 
-    with path.open("r", encoding="utf-8") as fh:
-        for line in fh:
+    log_path = Path(log_file)
+    if not log_path.exists():
+        return {"events": events, "sessions": sessions, "api_calls": api_calls}
+
+    base_pattern = re.compile(r"^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) (\w+) (.*)$")
+    user_pattern = re.compile(r"^User (\d+) (.+)$")
+    api_pattern = re.compile(r"^API (\S+) took (\d+)ms$")
+
+    with log_path.open("r", encoding="utf-8") as f:
+        for line in f:
             line = line.strip()
-            match = LOG_LINE_RE.match(line)
+            if not line:
+                continue
+
+            match = base_pattern.match(line)
             if not match:
                 continue
 
-            timestamp = match.group("timestamp")
-            level = match.group("level")
-            message = match.group("message")
-
-            entry: LogEntry = {
-                "timestamp": timestamp,
-                "level": level,
-                "message": message,
-            }
+            dt = f"{match.group(1)} {match.group(2)}"
+            level = match.group(3)
+            rest = match.group(4)
 
             if level == "ERROR":
-                entry["type"] = "ERR"
-            elif level == "WARN":
-                entry["type"] = "WARN"
-            elif level == "INFO" and "User" in message:
-                user_match = USER_ACTION_RE.search(message)
+                events.append({"dt": dt, "type": "ERR", "message": rest})
+                continue
+
+            if level == "WARN":
+                events.append({"dt": dt, "type": "WARN", "message": rest})
+                continue
+
+            if level == "INFO":
+                user_match = user_pattern.match(rest)
                 if user_match:
-                    entry["type"] = "USR"
-                    entry["uid"] = user_match.group("uid")
-                    entry["action"] = user_match.group("action")
-            elif level == "INFO" and "API" in message:
-                api_match = API_CALL_RE.search(message)
+                    uid = user_match.group(1)
+                    action = user_match.group(2)
+                    if "logged in" in action:
+                        sessions[uid] = dt
+                    elif "logged out" in action and uid in sessions:
+                        del sessions[uid]
+                    events.append({"dt": dt, "type": "USR", "uid": uid, "action": action})
+                    continue
+
+                api_match = api_pattern.match(rest)
                 if api_match:
-                    entry["type"] = "API"
-                    entry["endpoint"] = api_match.group("endpoint")
-                    entry["duration_ms"] = api_match.group("duration_ms")
+                    endpoint = api_match.group(1)
+                    duration = int(api_match.group(2))
+                    api_calls.append({"dt": dt, "endpoint": endpoint, "ms": duration})
+                    events.append({"dt": dt, "type": "API", "endpoint": endpoint, "ms": duration})
 
-            entries.append(entry)
-
-    return entries
+    return {"events": events, "sessions": sessions, "api_calls": api_calls}
 
 
-# ---------------------------------------------------------------------------
-# Transform
-# ---------------------------------------------------------------------------
+def transform_data(raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Transform extracted log events into aggregated metrics.
 
-def transform_log_entries(entries: list[LogEntry]) -> dict:
-    """Aggregate extracted log entries into report-ready structures.
-
-    Returns a dict with:
-    - ``error_counts``: mapping of error message -> occurrence count
-    - ``api_latencies``: mapping of endpoint -> list of durations (ms)
-    - ``active_sessions``: mapping of user id -> login timestamp
+    Computes error frequency and per-endpoint API latency averages.
     """
-    error_counts: dict[str, int] = defaultdict(int)
-    api_latencies: dict[str, list[int]] = defaultdict(list)
-    active_sessions: dict[str, str] = {}
+    events: List[Dict[str, Any]] = raw_data.get("events", [])
+    sessions: Dict[str, str] = raw_data.get("sessions", {})
+    api_calls: List[Dict[str, Any]] = raw_data.get("api_calls", [])
 
-    for entry in entries:
-        log_type = entry.get("type")
+    error_counts: Dict[str, int] = {}
+    for event in events:
+        if event.get("type") == "ERR":
+            msg = event.get("message", "")
+            error_counts[msg] = error_counts.get(msg, 0) + 1
 
-        if log_type == "ERR":
-            error_counts[entry["message"]] += 1
+    endpoint_stats: Dict[str, List[int]] = {}
+    for call in api_calls:
+        ep = call.get("endpoint", "")
+        endpoint_stats.setdefault(ep, []).append(call.get("ms", 0))
 
-        elif log_type == "WARN":
-            # WARN messages are parsed but not included in the report/error counts,
-            # matching the original pipeline behaviour.
-            pass
-
-        elif log_type == "USR":
-            uid = entry["uid"]
-            action = entry["action"]
-            if "logged in" in action:
-                active_sessions[uid] = entry["timestamp"]
-            elif "logged out" in action and uid in active_sessions:
-                active_sessions.pop(uid)
-
-        elif log_type == "API":
-            api_latencies[entry["endpoint"]].append(int(entry["duration_ms"]))
+    endpoint_averages: Dict[str, float] = {}
+    for ep, times in endpoint_stats.items():
+        endpoint_averages[ep] = sum(times) / len(times)
 
     return {
-        "error_counts": dict(error_counts),
-        "api_latencies": dict(api_latencies),
-        "active_sessions": active_sessions,
+        "error_counts": error_counts,
+        "endpoint_averages": endpoint_averages,
+        "active_sessions": len(sessions),
     }
 
 
-# ---------------------------------------------------------------------------
-# Load
-# ---------------------------------------------------------------------------
+def generate_report_html(data: Dict[str, Any]) -> str:
+    """Generate the HTML report string from transformed metrics."""
+    error_counts: Dict[str, int] = data.get("error_counts", {})
+    endpoint_averages: Dict[str, float] = data.get("endpoint_averages", {})
+    active_sessions: int = data.get("active_sessions", 0)
 
-def load_to_database(data: dict, db_path: str) -> None:
-    """Persist aggregated metrics to SQLite using parameterized queries.
-
-    Creates the ``errors`` and ``api_metrics`` tables if they do not exist.
-    """
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS errors (
-            dt TEXT,
-            message TEXT,
-            count INTEGER
-        )
-        """
-    )
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS api_metrics (
-            dt TEXT,
-            endpoint TEXT,
-            avg_ms REAL
-        )
-        """
-    )
-
-    now = datetime.datetime.now().isoformat(sep=" ", timespec="seconds")
-
-    for msg, count in data["error_counts"].items():
-        cursor.execute(
-            "INSERT INTO errors (dt, message, count) VALUES (?, ?, ?)",
-            (now, msg, count),
-        )
-
-    for endpoint, times in data["api_latencies"].items():
-        avg_ms = sum(times) / len(times)
-        cursor.execute(
-            "INSERT INTO api_metrics (dt, endpoint, avg_ms) VALUES (?, ?, ?)",
-            (now, endpoint, avg_ms),
-        )
-
-    conn.commit()
-    conn.close()
-
-
-def generate_report(data: dict, output_path: str) -> None:
-    """Render an HTML report summarising errors, API latency, and active sessions."""
-    error_counts = data["error_counts"]
-    api_latencies = data["api_latencies"]
-    active_sessions = data["active_sessions"]
-
-    lines = [
+    lines: List[str] = [
         "<html>",
         "<head><title>System Report</title></head>",
         "<body>",
@@ -218,8 +129,7 @@ def generate_report(data: dict, output_path: str) -> None:
     ]
 
     for err_msg, count in error_counts.items():
-        escaped_msg = err_msg.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        lines.append(f"<li><b>{escaped_msg}</b>: {count} occurrences</li>")
+        lines.append(f"<li><b>{err_msg}</b>: {count} occurrences</li>")
 
     lines.extend([
         "</ul>",
@@ -228,59 +138,85 @@ def generate_report(data: dict, output_path: str) -> None:
         "<tr><th>Endpoint</th><th>Avg (ms)</th></tr>",
     ])
 
-    for ep, times in api_latencies.items():
-        avg = sum(times) / len(times)
+    for ep, avg in endpoint_averages.items():
         lines.append(f"<tr><td>{ep}</td><td>{round(avg, 1)}</td></tr>")
 
     lines.extend([
         "</table>",
         "<h2>Active Sessions</h2>",
-        f"<p>{len(active_sessions)} user(s) currently active</p>",
+        f"<p>{active_sessions} user(s) currently active</p>",
         "</body>",
         "</html>",
     ])
 
-    with open(output_path, "w", encoding="utf-8") as fh:
-        fh.write("\n".join(lines))
-        fh.write("\n")
+    return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# Orchestration
-# ---------------------------------------------------------------------------
+def load_data(data: Dict[str, Any], db_path: str) -> None:
+    """Load metrics into the SQLite database and write the HTML report.
 
-def run_pipeline() -> None:
-    """End-to-end pipeline: extract, transform, load, and report."""
+    Args:
+        data: Transformed metrics dictionary.
+        db_path: Path to the SQLite database file.
+    """
+    error_counts: Dict[str, int] = data.get("error_counts", {})
+    endpoint_averages: Dict[str, float] = data.get("endpoint_averages", {})
+
+    conn = sqlite3.connect(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS errors (dt TEXT, message TEXT, count INTEGER)"
+        )
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS api_metrics (dt TEXT, endpoint TEXT, avg_ms REAL)"
+        )
+
+        now = str(datetime.datetime.now())
+        for msg, count in error_counts.items():
+            cursor.execute(
+                "INSERT INTO errors (dt, message, count) VALUES (?, ?, ?)",
+                (now, msg, count),
+            )
+
+        for ep, avg in endpoint_averages.items():
+            cursor.execute(
+                "INSERT INTO api_metrics (dt, endpoint, avg_ms) VALUES (?, ?, ?)",
+                (now, ep, avg),
+            )
+
+        conn.commit()
+    finally:
+        conn.close()
+
+    html = generate_report_html(data)
+    with open("report.html", "w", encoding="utf-8") as f:
+        f.write(html)
+
+
+def main() -> None:
+    """Orchestrate the Extract-Transform-Load pipeline."""
     config = get_config()
-    log_file = str(config["log_file"])
-    db_path = str(config["db_path"])
+    print(
+        f"Connecting to {config['db_host']}:{config['db_port']} "
+        f"as {config['db_user']}..."
+    )
 
-    print(f"Connecting to {config['db_host']}:{config['db_port']} as {config['db_user']}...")
-
-    entries = extract_logs(log_file)
-    data = transform_log_entries(entries)
-    load_to_database(data, db_path)
-    generate_report(data, "report.html")
+    raw = extract_logs(config["log_file"])
+    transformed = transform_data(raw)
+    load_data(transformed, config["db_path"])
 
     print(f"Job finished at {datetime.datetime.now()}")
 
 
-def _seed_demo_log(log_file: str) -> None:
-    """Create a demo log file if none exists."""
-    path = Path(log_file)
-    if path.exists():
-        return
-    path.write_text(
-        "2024-01-01 12:00:00 INFO User 42 logged in\n"
-        "2024-01-01 12:05:00 ERROR Database timeout\n"
-        "2024-01-01 12:05:05 ERROR Database timeout\n"
-        "2024-01-01 12:08:00 INFO API /users/profile took 250ms\n"
-        "2024-01-01 12:09:00 WARN Memory usage at 87%\n"
-        "2024-01-01 12:10:00 INFO User 42 logged out\n",
-        encoding="utf-8",
-    )
-
-
 if __name__ == "__main__":
-    _seed_demo_log(LOG_FILE)
-    run_pipeline()
+    log_path = os.getenv("LOG_FILE", "server.log")
+    if not os.path.exists(log_path):
+        with open(log_path, "w", encoding="utf-8") as f:
+            f.write("2024-01-01 12:00:00 INFO User 42 logged in\n")
+            f.write("2024-01-01 12:05:00 ERROR Database timeout\n")
+            f.write("2024-01-01 12:05:05 ERROR Database timeout\n")
+            f.write("2024-01-01 12:08:00 INFO API /users/profile took 250ms\n")
+            f.write("2024-01-01 12:09:00 WARN Memory usage at 87%\n")
+            f.write("2024-01-01 12:10:00 INFO User 42 logged out\n")
+    main()

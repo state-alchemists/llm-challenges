@@ -1,6 +1,6 @@
 import asyncio
 import random
-from typing import List
+from typing import List, Set
 
 
 class PaymentGateway:
@@ -8,6 +8,7 @@ class PaymentGateway:
         self._failure_rate = failure_rate
         self.total_charged: float = 0.0
         self.charges: List[dict] = []
+        self._charged_order_ids: Set[str] = set()
 
     async def charge(self, order_id: str, amount: float) -> bool:
         await asyncio.sleep(0.03)
@@ -16,3 +17,12 @@ class PaymentGateway:
         self.total_charged += amount
         self.charges.append({"order_id": order_id, "amount": amount})
         return True
+
+    async def charge_once(self, order_id: str, amount: float) -> bool:
+        """Charge an order exactly once; refuse duplicate charges for the same order."""
+        if order_id in self._charged_order_ids:
+            return False
+        charged = await self.charge(order_id, amount)
+        if charged:
+            self._charged_order_ids.add(order_id)
+        return charged

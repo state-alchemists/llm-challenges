@@ -9,11 +9,13 @@ class PaymentGateway:
         self.charges: List[dict] = []
 
     async def charge(self, order_id: str, amount: float) -> bool:
-        if any(charge['order_id'] == order_id for charge in self.charges):
-            return False  # Prevent duplicate charges
         await asyncio.sleep(0.03)
         if random.random() < self._failure_rate:
             return False
+        # Check for duplicates
+        if any(charge["order_id"] == order_id for charge in self.charges):
+            print(f"Order {order_id}: duplicate charge attempt detected.")
+            return False
         self.total_charged += amount
-        self.charges.append({'order_id': order_id, 'amount': amount})
+        self.charges.append({"order_id": order_id, "amount": amount})
         return True

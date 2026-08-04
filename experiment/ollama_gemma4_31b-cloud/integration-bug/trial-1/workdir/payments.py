@@ -2,7 +2,6 @@ import asyncio
 import random
 from typing import List
 
-
 class PaymentGateway:
     def __init__(self, failure_rate: float = 0.25):
         self._failure_rate = failure_rate

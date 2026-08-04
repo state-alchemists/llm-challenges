@@ -23,8 +23,6 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
-                # The sleep here creates a yield point, allowing other workers
-                # to enter the loop and pick up the same 'pending' job.
                 job["status"] = "processing"
                 return job
         return None

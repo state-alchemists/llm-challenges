@@ -1,11 +1,9 @@
 """Text normalization helpers."""
 
 from __future__ import annotations
-import re
 
 
 import re
-
 
 def slugify(text: str) -> str:
     """Convert text to a URL-safe slug.
@@ -17,15 +15,12 @@ def slugify(text: str) -> str:
     >>> slugify("  multiple   spaces  ")
     'multiple-spaces'
     """
-    result_chars: list[str] = []
-    for char in text:
-        if char.isalnum():
-            result_chars.append(char.lower())
-        elif char.isspace() or char == "-":
-            result_chars.append("-")
-    collapsed = "".join(result_chars)
-    collapsed = re.sub(r"-+", "-", collapsed)  # Collapse multiple hyphens
-    return collapsed.strip("-")
+    text = text.lower()
+    # Replace non-alphanumeric with hyphen
+    text = re.sub(r"[^a-z0-9]+", "-", text)
+    # Strip leading/trailing hyphens
+    text = text.strip("-")
+    return text
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:

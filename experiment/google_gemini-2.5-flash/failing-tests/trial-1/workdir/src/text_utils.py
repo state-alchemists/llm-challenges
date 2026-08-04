@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 """Text normalization helpers."""
 
-import re
+from __future__ import annotations
 
 
 def slugify(text: str) -> str:
@@ -16,11 +14,13 @@ def slugify(text: str) -> str:
     'multiple-spaces'
     """
     text = text.lower()
-    # Replace non-alphanumeric characters with hyphens
-    text = re.sub(r"[^a-z0-9]+", "-", text)
-    # Remove leading/trailing hyphens
-    text = text.strip("-")
-    return text
+    result_chars: list[str] = []
+    for char in text:
+        if char.isalnum():
+            result_chars.append(char)
+        elif len(result_chars) > 0 and result_chars[-1] != "-":
+            result_chars.append("-")
+    return "".join(result_chars).strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:

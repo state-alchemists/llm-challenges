@@ -23,26 +23,24 @@ class JobQueue:
 
     async def dequeue(self) -> Optional[Dict]:
         async with self._lock:
-            for job_id, job in self._jobs.items():
+            for job in self._jobs.values():
                 if job["status"] == "pending":
                     job["status"] = "processing"
                     return job
-            return None
+        return None
 
-    async def complete(self, job_id: int, result: Any) -> None:
-        async with self._lock:
-            self._jobs[job_id]["status"] = "done"
-            self._jobs[job_id]["result"] = result
+    def complete(self, job_id: int, result: Any) -> None:
+        self._jobs[job_id]["status"] = "done"
+        self._jobs[job_id]["result"] = result
 
-    async def fail(self, job_id: int, error: str) -> None:
-        async with self._lock:
-            job = self._jobs[job_id]
-            if job["retries"] < self.max_retries:
-                job["retries"] += 1
-                job["status"] = "pending"
-            else:
-                job["status"] = "failed"
-                job["result"] = error
+    def fail(self, job_id: int, error: str) -> None:
+        job = self._jobs[job_id]
+        if job["retries"] < self.max_retries:
+            job["retries"] += 1
+            job["status"] = "pending"
+        else:
+            job["status"] = "failed"
+            job["result"] = error
 
     @property
     def all_jobs(self) -> Dict[int, Dict]:

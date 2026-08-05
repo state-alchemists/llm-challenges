@@ -1,3 +1,8 @@
+"""Text normalization helpers."""
+
+from __future__ import annotations
+
+
 def slugify(text: str) -> str:
     """Convert text to a URL-safe slug.
 
@@ -15,9 +20,7 @@ def slugify(text: str) -> str:
         elif char.isspace() or char == "-":
             result_chars.append("-")
     collapsed = "".join(result_chars)
-    collapsed = collapsed.strip("-").replace("--", "-")
-    collapsed = "-".join(filter(None, collapsed.split('-')));
-    return collapsed
+    return '-'.join(part for part in collapsed.split('-') if part)
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:

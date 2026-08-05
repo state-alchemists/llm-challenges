@@ -10,8 +10,7 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Reserve the item first: only a successful reservation may be charged,
-    # and the reservation is atomic so stock can never go below zero.
+    # Reserve the stock first, atomically. If it is gone, no money moves.
     reserved = await inventory.reserve(quantity)
     if not reserved:
         print(f"Order {order_id}: out of stock")
@@ -19,10 +18,12 @@ async def checkout(
 
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        # Payment failed: give the reserved item back, nothing was charged.
+        # Payment failed — return the reserved stock so another order can use it.
         await inventory.increment(quantity)
         print(f"Order {order_id}: payment failed")
         return False
 
+    # Charge succeeded and the item was already reserved for this order:
+    # one successful charge always corresponds to exactly one delivered item.
     print(f"Order {order_id}: SUCCESS")
     return True

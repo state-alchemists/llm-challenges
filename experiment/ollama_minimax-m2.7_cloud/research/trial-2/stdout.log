@@ -1,88 +1,77 @@
 [2m
   🧠 The user[0m[2m wants me to read `system_context.md` first, then write an ADR evaluating Kafka vs Redis Streams for a notification subsystem. Let me start by reading the system context file.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_l3mq17qck5xd_1 | Read {'path': 'system_context.md'}
+  🧰 call_function_o078kybws44y_1 | Read {'path': 'system_context.md'}
 [0m[2m
-  🔠 call_function_l3mq17qck5xd_1 Executed
+  🔠 call_function_o078kybws44y_1 Executed
 [0m[2m
-  🧠 The[0m[2m user wants me to write an Architecture Decision Record (ADR) evaluating Kafka vs Redis Streams for the notification subsystem based on the system context provided.
+  🧠 The[0m[2m user wants me to write an ADR evaluating Kafka vs Redis Streams for the notification subsystem. Let me analyze the system context:
      
-     Let me analyze the key[0m[2m constraints and requirements:
+     **Key facts:**
+     - 85[0m[2mK MAU, ~2M tasks/month, ~500 req/s peak
+     - Python/Flask monolith
+     - PostgreSQL + Redis already in use
+     - Team:[0m[2m 6 people, no Kafka experience, no dedicated infra engineer
+     - 2-week constraint for setup/migration
+     - Budget: modest ([0m[2mcan't afford Confluent Cloud)
+     - Must have exactly-once for billing notifications
+     - Already have Redis in production
      
-     **Key Requirements:**
-     1. Decouple notifications from HTTP request cycle (async processing)
+     **Requirements:**
+     1. Decouple from HTTP request cycle ([0m[2masync)
      2. Retry with exponential backoff
-     3. At[0m[2m-least-once delivery for billing events, exactly-once where feasible
-     4. Real-time WebSocket push notifications within 2 quarters
-     5. Handle 10x traffic growth (500 req/s → 500[0m[2m0 req/s)
-     6. 6-person team, no dedicated infra engineer
+     3. At-least-once delivery, exactly-once where feasible
+     4. WebSocket push within 2 quarters
+     5. Handle 10x growth[0m[2m
+     
+     **Kafka strengths:**
+     - Throughput: very high (millions/sec with proper config[0m[2m)
+     - Ordering guarantees: per partition
+     - Message retention: configurable, can be long
+     - Consumer groups: excellent, mature
+     - Exactly-once:[0m[2m Kafka transactions (exactly-once semantics)
+     - Scalability: excellent
+     
+     **Kafka weaknesses:**
+     - Operational complexity: high[0m[2m (ZooKeeper/KRaft, partition management, replication)
+     - No experience on team[0m[2m
+     - 2-week constraint is tight for Kafka
+     - Budget concerns (self-managed vs managed)
+     
+     **Redis Streams strengths:**
+     - Already[0m[2m in production (no new infrastructure)
+     - Operational simplicity (team knows Redis)
+     - Message retention: configurable ([0m[2mup to 512GB per stream)
+     - Consumer groups: XREADGROUP, XACK -[0m[2m good enough
+     - Ordering guarantees: per stream
+     - Exactly-once: via consumer-side idempot[0m[2mency keys
      
      
-     7. Already running[0m[2m Redis, no Kafka experience
-     8. Must ship within 2 weeks
-     9. Must maintain exactly-once for billing notifications
-     10. Modest budget ([0m[2mno Confluent Cloud)
+     - Low operational overhead
      
-     **Scale metrics:**
-     - 85,000 MAU
-     - ~2M tasks/month
-     - Peak 500 req[0m[2m/s → target 5000 req/s
-     - ~22 messages/sec average, ~150 msg/sec at[0m[2m peak (assuming 1-3 notifications per task event)
+     **Redis Streams weaknesses:**
+     - Throughput: lower[0m[2m than Kafka (~100K-1M events/sec depending on hardware)
+     - Not built for durable messaging at[0m[2m massive scale
+     - No native exactly-once (need application-level deduplication)
+     - Scaling:[0m[2m vertical only (in practice)
+     - Message retention is limited by memory unless configured[0m[2m
      
-     Now I'm comparing the two approaches. Kafka[0m[2m handles millions of events per second with sophisticated routing and consumer groups, while Redis Streams tops[0m[2m out around 100K/sec with simpler fan-out capabilities.
-     
-     Looking at the operational side, Kafka needs[0m[2m ZooKeeper or KRaft for coordination and brings significant deployment complexity, whereas[0m[2m Redis Streams runs on existing infrastructure and requires minimal overhead. For message retention, Kafka offers configurable windows while[0m[2m Redis keeps everything until consumers acknowledge. On ordering guarantees, Kafka maintains partition-level[0m[2m ordering and Redis Streams provides per-consumer-group ordering.
-     
-     Both support consumer groups and at-least-once delivery out of the box. For exactly[0m[2m-once semantics, Kafka integrates with external systems through transactions, while Redis Streams relies on idempotent consumers. From a team[0m[2m perspective, Redis has a gentler learning curve and integrates seamlessly with existing Python/Flask and Celery workflows[0m[2m, whereas Kafka requires substantial new expertise.
-     
-     Redis Streams won out because the team already operates it for session storage and rate limiting, so[0m[2m there's no additional infrastructure burden. The operational simplicity means no dedicated platform engineering, deployment[0m[2m fits within the two-week timeline, and horizontal scaling handles the 10x growth projection.[0m[2m The payload size works well within Redis Streams' capacity, and IdempotentMessage[0m[2mProcessing combined with deduplication keys gives us the exactly-once guarantees needed for billing.[0m[2m However, Kafka becomes worth reconsidering if message volume exceeds 100K/sec or if complex multi-consumer[0m[2m fan-out patterns emerge beyond WebSocket notifications.
-     
-     Looking at the traffic more carefully, we're only[0m[2m dealing with around 150 notifications/sec at peak—Kafka is massive overkill for this scale and would introduce[0m[2m unnecessary operational complexity. Redis Streams handles this comfortably while meeting all the requirements.[0m[2m
+     Given the constraints—tight timeline, no Kafka expertise, existing Redis[0m[2m infrastructure, and modest budget—Redis Streams is the practical choice. It handles the 10x growth target without requiring[0m[2m new infrastructure or specialized knowledge, while the application-layer deduplication needed[0m[2m for exactly-once semantics on billing events is a reasonable tradeoff.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_9caljvrpmmov_1 | Write {'path': 'ADR-001-notification-archi ...', 'content': '# ADR-001: Notification Su ...'}
+  🧰 call_function_9i4w2dcctouh_1 | Write {'path': 'ADR-001-notification-archi ...', 'content': '# ADR-001: Notification Su ...'}
 [0m[2m
-  🔠 call_function_9caljvrpmmov_1 Executed
+  🔠 call_function_9i4w2dcctouh_1 Executed
 [0m[2m
-  🧠 I've written[0m[2m the ADR. Let me verify it was written correctly by reading it back.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_wvv1pc7beh02_1 | Read {'path': 'ADR-001-notification-archi ...'}
-[0m[2m
-  🔠 call_function_wvv1pc7beh02_1 Executed
-[0m[2m
-  🧠 The file[0m[2m is complete and correct. Let me verify it meets all the requirements:
+  🧠 The ADR[0m[2m has been written and saved. Let me verify it was written correctly by reading it back.[0m[2m
+  Saved to `ADR-001-notification-architecture.md`. The[0m[2m ADR argues for Redis Streams on the basis of:
      
-     1. **Title** ✓ - "ADR-001: Notification Subsystem Message Broker Selection"[0m[2m
-     2. **Status** ✓ - "Proposed"
-     3. **Context** ✓ - Problem statement, scaling target, constraints, observed load
-     4. **Decision** ✓ -[0m[2m Redis Streams with clear justification
-     5. **Consequences** ✓ - Both pros AND cons listed
-     6. **Alternatives Considered** ✓ - Kafka covered[0m[2m with why rejected
-     7. **Definitive recommendation** ✓ - Redis Streams
+     - **Time to value**: 2-week constraint rules[0m[2m out Kafka — no team experience means a Kafka cluster takes 2+ weeks to reach production-readiness; Redis Streams POC[0m[2m fits in days.
+     - **Operational fit**: Team already runs Redis, no new infrastructure, existing monitoring/backup run[0m[2mbooks apply.
+     - **Throughput headroom**: At 5,000 req/s (10x target[0m[2m) we are 20–200× below Redis Streams' practical ceiling; Kafka's scale is unwarranted.
+[0m[2m- **Exactly-once for billing**: Achieved via application-level idempotency keys (event IDs stored in Redis), which is straightforward given the existing[0m[2m footprint.
      
-     Technical properties covered:
-     - Through[0m[2mput: 50,000-100,000 msg/sec for Redis Streams vs millions for Kafka
-     
-     
-     - Ordering guarantees: per stream per consumer group
-     - Message[0m[2m retention: XTRIM/MAXLEN vs configurable retention
-     - Consumer groups: XREADGROUP vs consumer groups
-     - Exactly-once semantics: idempotent consumers[0m[2m + deduplication vs Kafka Transactions
-     - Operational complexity: zero incremental for Redis vs high for Kafka
-     
-     Everything checks out—the[0m[2m document is ready to go.[0m[2m
-  Saved as `ADR-001-notification-architecture.md`. The ADR covers all required sections with specific technical properties:
-     
-     - **Throughput**:[0m[2m Redis Streams handles 50k–100k msg/sec on a single node — 10x over the 1,500/sec[0m[2m target. Kafka is designed for millions/sec, which is orders of magnitude beyond this workload.
-     - **Ordering**: Both provide[0m[2m per-partition/stream ordering; Redis Streams uses `XREADGROUP` with consumer groups, Kafka uses partition-based ordering[0m[2m.
-     - **Exactly-once**: Redis via idempotent consumers + deduplication hash (meeting the billing requirement); Kafka via[0m[2m native Kafka Transactions (superior but overkill here).
-     - **Message retention**: Redis Streams uses `XTRIM`[0m[2m/`MAXLEN`; Kafka uses time/size-based retention with compaction.
-     - **Consumer groups**: Both supported; Kafka's[0m[2m rebalancing is richer at scale.
-     - **DLQ**: Redis requires manual `XADD` to a `.dlq` stream; Kafka has native DL[0m[2mQ topic support.
-     - **Operational complexity**: Redis is already running — zero new infra, zero learning curve, days to[0m[2m prototype. Kafka requires 3+ brokers, ZooKeeper/KRaft, no in-house expertise, and weeks of setup.
-     - **Cost**: $[0m[2m0 incremental for Redis vs $150–200/month minimum for Kafka brokers.
-     
-     **Recommendation: Redis Streams.** The constraints (6-person team, no Kafka[0m[2m experience, 2-week deadline, existing Redis footprint, modest budget, 1,500/sec sustained load) make[0m[2m Kafka's operational overhead disproportionate to the problem.[0m[2m
-  💸 (Requests: 4 | Tool Calls: 3 | Total: 53721) Input: 50062 | Audio Input: 0 | Output: 3659 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     The cons are addressed directly: DLQ via a dedicated stream, memory controlled via `MAXLEN`, fan[0m[2m-out handled by a single consumer that routes to worker threads internally rather than competing consumer groups.[0m[2m
+  💸 (Requests: 3 | Tool Calls: 2 | Total: 29669) Input: 27516 | Audio Input: 0 | Output: 2153 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "Read `system_context.md`. It describes a real production system and a specific architectural problem we need to solve.
 
 Write an Architecture Decision Record (ADR) evaluating two options for the notification subsystem:
@@ -102,15 +91,11 @@ Make a definitive recommendation. Use specific technical properties (throughput,
 Save as `ADR-001-notification-architecture.md`.
 " --model ollama:minimax-m2.7:cloud --session ollama_minimax-m2.7_cloud-research-trial-2 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_minimax-m2.7_cloud-research-trial-2[0m[0m
-Saved as `ADR-001-notification-architecture.md`. The ADR covers all required sections with specific technical properties:
+Saved to `ADR-001-notification-architecture.md`. The ADR argues for Redis Streams on the basis of:
 
-- **Throughput**: Redis Streams handles 50k–100k msg/sec on a single node — 10x over the 1,500/sec target. Kafka is designed for millions/sec, which is orders of magnitude beyond this workload.
-- **Ordering**: Both provide per-partition/stream ordering; Redis Streams uses `XREADGROUP` with consumer groups, Kafka uses partition-based ordering.
-- **Exactly-once**: Redis via idempotent consumers + deduplication hash (meeting the billing requirement); Kafka via native Kafka Transactions (superior but overkill here).
-- **Message retention**: Redis Streams uses `XTRIM`/`MAXLEN`; Kafka uses time/size-based retention with compaction.
-- **Consumer groups**: Both supported; Kafka's rebalancing is richer at scale.
-- **DLQ**: Redis requires manual `XADD` to a `.dlq` stream; Kafka has native DLQ topic support.
-- **Operational complexity**: Redis is already running — zero new infra, zero learning curve, days to prototype. Kafka requires 3+ brokers, ZooKeeper/KRaft, no in-house expertise, and weeks of setup.
-- **Cost**: $0 incremental for Redis vs $150–200/month minimum for Kafka brokers.
+- **Time to value**: 2-week constraint rules out Kafka — no team experience means a Kafka cluster takes 2+ weeks to reach production-readiness; Redis Streams POC fits in days.
+- **Operational fit**: Team already runs Redis, no new infrastructure, existing monitoring/backup runbooks apply.
+- **Throughput headroom**: At 5,000 req/s (10x target) we are 20–200× below Redis Streams' practical ceiling; Kafka's scale is unwarranted.
+- **Exactly-once for billing**: Achieved via application-level idempotency keys (event IDs stored in Redis), which is straightforward given the existing footprint.
 
-**Recommendation: Redis Streams.** The constraints (6-person team, no Kafka experience, 2-week deadline, existing Redis footprint, modest budget, 1,500/sec sustained load) make Kafka's operational overhead disproportionate to the problem.
+The cons are addressed directly: DLQ via a dedicated stream, memory controlled via `MAXLEN`, fan-out handled by a single consumer that routes to worker threads internally rather than competing consumer groups.

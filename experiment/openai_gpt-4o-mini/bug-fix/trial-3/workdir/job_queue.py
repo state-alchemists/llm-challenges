@@ -1,7 +1,6 @@
 import asyncio
 from typing import Any, Dict, Optional
 
-
 class JobQueue:
     def __init__(self, max_retries: int = 3):
         self._jobs: Dict[int, Dict[str, Any]] = {}
@@ -25,6 +24,8 @@ class JobQueue:
             if job["status"] == "pending":
                 await asyncio.sleep(0.01)
                 job["status"] = "processing"
+                if job["id"] in self._jobs and self._jobs[job["id"]]["status"] != "pending":
+                    return None
                 return job
         return None
 
@@ -44,19 +45,3 @@ class JobQueue:
     @property
     def all_jobs(self) -> Dict[int, Dict]:
         return self._jobs
-async def process_job(queue, worker_id: int) -> None:
-    while True:
-        job = await queue.dequeue()
-        if job is None:
-            return
-
-        print(f"[Worker {worker_id}] picked up job {job['id']}")
-        try:
-            await asyncio.sleep(0.05)
-            if job["payload"].get("raise_error"):
-                raise RuntimeError(f"processing error for job {job['id']}")
-            queue.complete(job["id"], f"processed by worker {worker_id}")
-            print(f"[Worker {worker_id}] finished job {job['id']}")
-        except Exception as e:
-            print(f"[Worker {worker_id}] job {job['id']} failed: {e}")
-            queue.fail(job["id"], str(e))  # Properly handle failure

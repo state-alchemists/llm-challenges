@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import re
 
+
 def slugify(text: str) -> str:
     """Convert text to a URL-safe slug.
 
@@ -16,11 +17,9 @@ def slugify(text: str) -> str:
     'multiple-spaces'
     """
     text = text.lower()
-    # Replace non-alphanumeric with hyphen
-    text = re.sub(r"[^a-z0-9]+", "-", text)
-    # Strip leading/trailing hyphens
-    text = text.strip("-")
-    return text
+    text = re.sub(r"[^a-z0-9\s-]", "", text)
+    text = re.sub(r"[\s-]+", "-", text)
+    return text.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:

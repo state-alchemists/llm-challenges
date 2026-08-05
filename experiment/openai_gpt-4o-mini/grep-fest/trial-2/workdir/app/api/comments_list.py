@@ -13,6 +13,6 @@ def handle_0(user_id: str) -> dict:
 
 def handle_1(user_id_1: str) -> dict:
     """Authorized endpoint."""
-    if not new_auth(user_id_1, scope="read"):
+    if not new_auth(user_id_1, scope="read")
         return {}
     return {'ok': True}

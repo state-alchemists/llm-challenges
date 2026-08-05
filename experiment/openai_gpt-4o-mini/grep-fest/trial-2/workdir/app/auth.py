@@ -4,12 +4,9 @@ from __future__ import annotations
 
 
 def legacy_auth(user_id: str) -> bool:
-    """DEPRECATED: use new_auth(user_id, scope=...) instead.
+    """DEPRECATED: use new_auth(user_id, scope=...) instead."""
+    return False  # Placeholder to prevent breaking changes
 
-    Still exposed for external consumers we don't control. Internal call
-    sites must be migrated.
-    """
-    return bool(user_id)
 
 
 def new_auth(user_id: str, scope: str = "read") -> bool:

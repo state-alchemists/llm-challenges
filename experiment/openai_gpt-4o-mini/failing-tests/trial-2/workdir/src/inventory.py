@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+
 class OutOfStock(Exception):
     """Raised when a reservation would push stock negative."""
+
 
 class Inventory:
     """Tracks on-hand stock per SKU and outstanding reservations."""
 
-    def __init__(self, initial: dict[str, int] = {}) -> None:
-        self._stock = initial.copy()  # Use copy to prevent shared state
+    def __init__(self, initial: dict[str, int] = {}) -> None:  # noqa: B006
+        self._stock = initial.copy()
         self._reserved: dict[str, int] = {}
 
     def add(self, sku: str, qty: int) -> None:
@@ -31,6 +33,6 @@ class Inventory:
         if qty <= 0:
             raise ValueError("qty must be positive")
         current = self._reserved.get(sku, 0)
-        if qty > current:
-            raise ValueError("Cannot release more than reserved")
+        if current - qty < 0:
+            raise ValueError("Cannot release more than reserved quantity")
         self._reserved[sku] = current - qty

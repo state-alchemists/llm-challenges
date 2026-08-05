@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import re
-
 
 def slugify(text: str) -> str:
     """Convert text to a URL-safe slug.
@@ -16,12 +14,14 @@ def slugify(text: str) -> str:
     'multiple-spaces'
     """
     result_chars: list[str] = []
-    for char in text.lower():
+    for char in text:
         if char.isalnum():
-            result_chars.append(char)
+            result_chars.append(char.lower())
         elif char.isspace() or char == "-":
             result_chars.append("-")
-    collapsed = re.sub(r"-+", "-", "".join(result_chars))
+    collapsed = "".join(result_chars)
+    while "--" in collapsed:
+        collapsed = collapsed.replace("--", "-")
     return collapsed.strip("-")
 
 

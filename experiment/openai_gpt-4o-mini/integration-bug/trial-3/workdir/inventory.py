@@ -16,6 +16,12 @@ class Inventory:
             return True
         return False
 
+    async def reserve(self, quantity: int) -> bool:
+        if self._stock >= quantity:
+            self._stock -= quantity
+            return True
+        return False
+
     async def increment(self, quantity: int) -> None:
         await asyncio.sleep(0.01)
         self._stock += quantity

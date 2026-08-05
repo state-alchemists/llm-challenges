@@ -1,5 +1,6 @@
 import asyncio
 from typing import Any, Dict, Optional
+from asyncio import Lock
 
 
 class JobQueue:
@@ -7,7 +8,7 @@ class JobQueue:
         self._jobs: Dict[int, Dict[str, Any]] = {}
         self._next_id = 1
         self.max_retries = max_retries
-        self._lock = asyncio.Lock()
+        self._lock = Lock()
 
     def enqueue(self, payload: dict) -> int:
         job_id = self._next_id
@@ -23,10 +24,14 @@ class JobQueue:
 
     async def dequeue(self) -> Optional[Dict]:
         async with self._lock:
-            for job in self._jobs.values():
+            for job_id, job in self._jobs.items():
                 if job["status"] == "pending":
                     job["status"] = "processing"
+                    await asyncio.sleep(0.01) # Simulate async I/O
                     return job
+                elif job["status"] == "processing" and job["retries"] >= self.max_retries:
+                    job["status"] = "failed"
+                    job["result"] = "Stuck in processing and exceeded max retries"
             return None
 
     def complete(self, job_id: int, result: Any) -> None:

@@ -16,10 +16,10 @@ def slugify(text: str) -> str:
     result_chars: list[str] = []
     for char in text:
         if char.isalnum():
-            result_chars.append(char)
+            result_chars.append(char.lower())
         elif char.isspace() or char == "-":
             result_chars.append("-")
-    collapsed = "".join(result_chars).lower()
+    collapsed = "".join(result_chars)
     while "--" in collapsed:
         collapsed = collapsed.replace("--", "-")
     return collapsed.strip("-")

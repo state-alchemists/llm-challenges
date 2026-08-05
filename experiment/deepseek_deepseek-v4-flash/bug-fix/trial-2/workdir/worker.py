@@ -18,4 +18,6 @@ async def process_job(queue, worker_id: int) -> None:
             print(f"[Worker {worker_id}] finished job {job['id']}")
         except Exception as e:
             print(f"[Worker {worker_id}] job {job['id']} failed: {e}")
+            # Hand the failure back to the queue so it can be retried or
+            # marked "failed" — otherwise the job stays stuck in "processing".
             queue.fail(job["id"], str(e))

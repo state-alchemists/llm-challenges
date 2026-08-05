@@ -15,12 +15,16 @@ def slugify(text: str) -> str:
     """
     text = text.lower()
     result_chars: list[str] = []
+    last_char_was_separator = False
     for char in text:
         if char.isalnum():
             result_chars.append(char)
-        elif len(result_chars) > 0 and result_chars[-1] != "-":
+            last_char_was_separator = False
+        elif not last_char_was_separator and (char.isspace() or char == "-"):
             result_chars.append("-")
-    return "".join(result_chars).strip("-")
+            last_char_was_separator = True
+    collapsed = "".join(result_chars)
+    return collapsed.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:

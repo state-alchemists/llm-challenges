@@ -11,7 +11,7 @@ def extract() -> list[int]:
 
 def transform(values: list[int]) -> float:
     total = sum(values)
-    return total / settings["batch_size"]
+    return total / len(values)
 
 
 def load(value: float) -> None:

@@ -7,8 +7,7 @@ def has_permission(user_roles: list[str] | None, required: str) -> bool:
     """Return True iff the user has the required role (case-insensitive)."""
     if not user_roles:
         return False
-    required_lower = required.lower()
-    return any(role.lower() == required_lower for role in user_roles)
+    return required.lower() in (role.lower() for role in user_roles)
 
 
 def is_admin_or_owner(user_roles: list[str] | None, owner_id: str, user_id: str) -> bool:

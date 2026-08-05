@@ -16,16 +16,3 @@ class PaymentGateway:
         self.total_charged += amount
         self.charges.append({"order_id": order_id, "amount": amount})
         return True
-
-    async def refund(self, order_id: str, amount: float) -> bool:
-        await asyncio.sleep(00.01)
-        # In a real system, this would interact with a payment provider to issue a refund.
-        # For this mock, we'll reverse the recorded charge.
-        charge_found = False
-        for i, charge in enumerate(self.charges):
-            if charge["order_id"] == order_id and charge["amount"] == amount:
-                self.total_charged -= amount
-                self.charges.pop(i)
-                charge_found = True
-                break
-        return charge_found

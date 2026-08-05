@@ -1,140 +1,114 @@
-# Zrb Task API Migration Guide from v1 to v2
+# Zrb CLI Migration Guide from v1 to v2
 
-## Overview
-This guide outlines the breaking changes when migrating from version 1 (v1) to version 2 (v2) of the Zrb Task API, along with examples and a checklist to assist in the transition.
+## Introduction
+This migration guide is designed for experienced developers who are currently using version 1 (v1) of the Zrb CLI and need to transition to version 2 (v2). This guide covers all breaking changes, along with examples and a checklist to ensure a smooth migration.
 
 ## Breaking Changes
 
-### 1. Endpoint Prefix
-- **v1:** `/tasks`
-- **v2:** `/v2/tasks`
+### 1. Endpoint Prefix Change
+All API endpoints are now prefixed with `/v2/`.
 
-**Example:**
-```http
-GET /tasks    
-```
-becomes
-```http
-GET /v2/tasks
-```
-
----
+**Before:**  
+`GET /tasks`  
+**After:**  
+`GET /v2/tasks`
 
 ### 2. Authentication Header Change
-- **v1 Header:** `X-Auth-Token: <your_api_key>`
-- **v2 Header:** `Authorization: Bearer <your_api_token>`
+The authentication method has changed from using `X-Auth-Token` to using a Bearer token in the `Authorization` header.
 
-**Example:**  
-Before:
-```http
+**Before:**
+```
 X-Auth-Token: <your_api_key>
 ```
-After:
-```http
+**After:**
+```
 Authorization: Bearer <your_api_token>
 ```
 
----
-
 ### 3. Task ID Type Change
-- **v1:** `id` is an integer.
-- **v2:** `id` is a UUID string.
+The `id` field in the task object has changed from an integer to a UUID string.
 
-**Example:**
+**Before:**
 ```json
-// v1
 {
   "id": 42,
   "title": "Write tests"
 }
 ```
+**After:**
 ```json
-// v2
 {
   "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "title": "Write tests"
 }
 ```
 
----
+### 4. Task Field Renaming
+The `done` field in the task object has been renamed to `completed`.
 
-### 4. Task Field Name Change
-- **v1:** `done`
-- **v2:** `completed`
-
-**Example:**
+**Before:**
 ```json
-// v1
 {
-  "done": true
+  "done": false
 }
 ```
+**After:**
 ```json
-// v2
 {
-  "completed": true
+  "completed": false
 }
 ```
 
----
+### 5. Required Project ID in Task Creation
+The creation of a task now requires the `project_id` field.
 
-### 5. Project ID Requirement for Task Creation
-- **v1:** No `project_id` required.
-- **v2:** `project_id` is now required during task creation.
-
-**Example:**
+**Before:**
 ```json
-// v1
 {
   "title": "New task title"
 }
 ```
+**After:**
 ```json
-// v2
 {
   "title": "New task title",
   "project_id": "proj_abc123"
 }
 ```
 
----
+### 6. Paginated List Responses
+List endpoints now return a paginated envelope containing the tasks, rather than a bare array.
 
-### 6. Response Format Change for List Endpoints
-- **v1:** Returns a bare array of tasks.
-- **v2:** Returns a paginated envelope.
-
-**Example:**
+**Before:**
 ```json
-// v1
 [
   {"id": 1, "title": "Buy milk"},
   {"id": 2, "title": "Ship v1"}
 ]
 ```
+**After:**
 ```json
-// v2
 {
   "items": [
     {"id": "1", "title": "Buy milk"},
     {"id": "2", "title": "Ship v1"}
   ],
   "total": 2,
-  "next_cursor": null
+  "next_cursor": "cursor_xyz"
 }
 ```
 
----
 
 ## Migration Checklist
-1. Update your API endpoint URL to include `/v2/`.
-2. Change your authentication header to use `Authorization: Bearer <your_api_token>`.
-3. Update all references to task IDs to use UUID strings instead of integers.
-4. Rename all occurrences of the `done` field to `completed`.
-5. Ensure `project_id` is included in all task creation requests.
-6. Adapt your code to handle paginated responses for all list endpoints.
+1. Update all API endpoint URLs to include `/v2/`.
+2. Change authentication from `X-Auth-Token` to Bearer token in the `Authorization` header.
+3. Update data types for `id` fields from integers to UUID strings.
+4. Replace all instances of `done` with `completed`.
+5. Ensure that `project_id` is included in all task creation requests.
+6. Adapt the handling of list responses to manage paginated data.
 
 ## Upgrade Command
-To upgrade to v2, run:
-```sh
-npm install zrb-cli@latest
+To upgrade to version 2 of the Zrb CLI, run the following command:
+```
+npm install zrb-cli@2.0.0
 ```

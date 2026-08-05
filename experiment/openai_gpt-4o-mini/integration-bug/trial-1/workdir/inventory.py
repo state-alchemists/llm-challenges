@@ -14,11 +14,6 @@ class Inventory:
         if self._stock >= quantity:
             self._stock -= quantity
             return True
-        raise Exception("Stock insufficient")
-        await asyncio.sleep(0.02)
-        if self._stock >= quantity:
-            self._stock -= quantity
-            return True
         return False
 
     async def increment(self, quantity: int) -> None:

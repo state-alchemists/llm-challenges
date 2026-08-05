@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from typing import List, Optional
 from .models import Task, TaskCreate, TaskUpdate, Project, TaskStatus
 from .database import tasks, projects
@@ -43,24 +43,36 @@ async def get_task(task_id: int):
 
 @app.post("/tasks", response_model=Task, status_code=201)
 async def create_task(task: TaskCreate, user: str = Depends(require_api_key)):
-    project = next((p for p in projects if p.id == task.project_id), None)
-    if project is None:
+    project_exists = any(p.id == task.project_id for p in projects)
+    if not project_exists:
         raise HTTPException(status_code=404, detail="Project not found")
 
     new_id = max((t.id for t in tasks), default=0) + 1
-    new_task = Task(id=new_id, **task.model_dump())
+    new_task = Task(
+        id=new_id,
+        title=task.title,
+        status=task.status,
+        priority=task.priority,
+        project_id=task.project_id,
+        assigned_to=task.assigned_to,
+    )
     tasks.append(new_task)
     return new_task
 
 
 @app.put("/tasks/{task_id}", response_model=Task)
-async def update_task(task_id: int, task: TaskUpdate, user: str = Depends(require_api_key)):
-    for existing in tasks:
-        if existing.id == task_id:
-            data = task.model_dump(exclude_unset=True)
-            for field, value in data.items():
-                setattr(existing, field, value)
-            return existing
+async def update_task(task_id: int, update: TaskUpdate, user: str = Depends(require_api_key)):
+    for task in tasks:
+        if task.id == task_id:
+            if update.title is not None:
+                task.title = update.title
+            if update.status is not None:
+                task.status = update.status
+            if update.priority is not None:
+                task.priority = update.priority
+            if update.assigned_to is not None:
+                task.assigned_to = update.assigned_to
+            return task
     raise HTTPException(status_code=404, detail="Task not found")
 
 

@@ -7,12 +7,17 @@ class Inventory:
         self._lock = asyncio.Lock()
 
     async def check_stock(self, quantity: int) -> bool:
-        await asyncio.sleep(0.02)
         async with self._lock:
+            await asyncio.sleep(0.02)
             return self._stock >= quantity
 
     async def reserve(self, quantity: int) -> bool:
-        """Atomically reserve `quantity` items if available; otherwise return False."""
+        """Atomically check and reserve stock.
+
+        Returns True only if the quantity was actually reserved; the check
+        and the decrement happen under one lock, so concurrent checkouts
+        cannot oversell.
+        """
         async with self._lock:
             await asyncio.sleep(0.02)
             if self._stock >= quantity:

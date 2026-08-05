@@ -10,25 +10,23 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Attempt to reserve stock first to prevent overselling/ghost charges
-    # We can't change the public interface, but we can add methods to Inventory.
-    # For now, let's use the available methods.
-    
-    # To prevent overselling, we must decrement BEFORE charging or use a reservation system.
-    # If we decrement first, we must increment (refund stock) if payment fails.
-    
-    # 1. Try to decrement stock immediately (Atomic check-and-decrement)
+    # Reserve stock first to prevent overselling and ghost charges
+    # Since we can't change Inventory interface, we use decrement as the reservation
     if not await inventory.decrement(quantity):
         print(f"Order {order_id}: out of stock")
         return False
 
-    # 2. Try to charge the user
-    charged = await gateway.charge(order_id, quantity * price)
-    if not charged:
-        print(f"Order {order_id}: payment failed")
-        # Payment failed, return stock to inventory
+    try:
+        charged = await gateway.charge(order_id, quantity * price)
+        if not charged:
+            print(f"Order {order_id}: payment failed")
+            # Give back the stock since payment failed
+            await inventory.increment(quantity)
+            return False
+    except Exception as e:
+        # Ensure stock is released on unexpected errors during payment
         await inventory.increment(quantity)
-        return False
+        raise e
 
     print(f"Order {order_id}: SUCCESS")
     return True

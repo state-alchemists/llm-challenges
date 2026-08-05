@@ -2,7 +2,6 @@ import asyncio
 from job_queue import JobQueue
 from worker import process_job
 
-
 async def main() -> None:
     queue = JobQueue(max_retries=2)
 
@@ -23,7 +22,6 @@ async def main() -> None:
     print(f"Done:   {len(done)} (expected 10)")
     print(f"Failed: {len(failed)} (expected 2)")
     print(f"Stuck:  {len(stuck)} (expected 0)")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

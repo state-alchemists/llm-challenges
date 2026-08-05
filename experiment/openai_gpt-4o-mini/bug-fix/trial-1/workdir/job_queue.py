@@ -22,8 +22,8 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
+                job["status"] = "processing"  # Set processing status first.
                 await asyncio.sleep(0.01)
-                job["status"] = "processing"
                 return job
         return None
 

@@ -1,5 +1,6 @@
 import asyncio
 
+
 async def process_job(queue, worker_id: int) -> None:
     while True:
         job = await queue.dequeue()
@@ -17,4 +18,12 @@ async def process_job(queue, worker_id: int) -> None:
             print(f"[Worker {worker_id}] finished job {job['id']}")
         except Exception as e:
             print(f"[Worker {worker_id}] job {job['id']} failed: {e}")
+            # Call fail method on queue to mark the job as failed
+            # If a job fails, mark it as failed in the queue
+            queue.fail(job['id'], str(e))
+                                    # Call fail method on queue to mark the job as failed
+            # If a job fails, mark it as failed in the queue
+            queue.fail(job['id'], str(e))
+                                                    # Call fail method on queue to mark the job as failed
+            # If a job fails, mark it as failed in the queue
             queue.fail(job['id'], str(e))

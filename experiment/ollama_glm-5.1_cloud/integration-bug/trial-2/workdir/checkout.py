@@ -10,7 +10,7 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Reserve stock atomically before touching payments.
+    # Reserve stock atomically — eliminates TOCTOU race
     reserved = await inventory.reserve(quantity)
     if not reserved:
         print(f"Order {order_id}: out of stock")
@@ -18,7 +18,7 @@ async def checkout(
 
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        # Payment failed — release the reserved stock.
+        # Payment failed — release the reserved stock
         await inventory.release(quantity)
         print(f"Order {order_id}: payment failed")
         return False

@@ -1,64 +1,37 @@
 [2m
-  🧠 The[0m[2m user wants[0m[2m me to[0m[2m find a[0m[2m specific line[0m[2m in `[0m[2mserver.log[0m[2m` that[0m[2m records[0m[2m a successful[0m[2m order being[0m[2m placed.[0m[2m The line[0m[2m contains `[0m[2mORDER_ID[0m[2m=...[0m[2m` and[0m[2m a customer[0m[2m email.[0m[2m Then I[0m[2m need to[0m[2m write the[0m[2m answer to[0m[2m `answer[0m[2m.txt`[0m[2m in a[0m[2m specific format[0m[2m.
+  🧠 The[0m[2m user wants[0m[2m me to[0m[2m find a[0m[2m specific line[0m[2m in `[0m[2mserver.log[0m[2m` that[0m[2m records[0m[2m a successful[0m[2m order being[0m[2m placed.[0m[2m The line[0m[2m contains `[0m[2mORDER_ID[0m[2m=...[0m[2m` and[0m[2m a customer[0m[2m email.[0m[2m I[0m[2m need to[0m[2m write the[0m[2m answer to[0m[2m `answer[0m[2m.txt`[0m[2m in a[0m[2m specific format[0m[2m.
      
-     Let[0m[2m me start[0m[2m by examining[0m[2m the `[0m[2mserver.log[0m[2m` file[0m[2m.[0m[2m Since[0m[2m it[0m[2m has[0m[2m thousands of[0m[2m lines,[0m[2m I should[0m[2m use grep[0m[2m or a[0m[2m similar tool[0m[2m to find[0m[2m the matching[0m[2m line.[0m[2m The[0m[2m line[0m[2m should contain[0m[2m "ORDER[0m[2m_ID="[0m[2m and an[0m[2m email.[0m[2m
-     
-     Let me[0m[2m first check[0m[2m if the[0m[2m file exists[0m[2m and[0m[2m get[0m[2m a[0m[2m sense of[0m[2m its size[0m[2m, then[0m[2m search for[0m[2m the relevant[0m[2m line.[0m[2m
+     Let[0m[2m me start[0m[2m by examining[0m[2m the `[0m[2mserver.log[0m[2m` file[0m[2m.[0m[2m I can[0m[2m use grep[0m[2m to find[0m[2m lines[0m[2m containing "[0m[2mORDER_ID[0m[2m="[0m[2m and then[0m[2m filter[0m[2m for[0m[2m successful[0m[2m order[0m[2m placement.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Shell:0 | Shell {'command': 'grep -n "ORDER_ID=" server ...', 'description': 'Find lines containing ORDE ...'}
+  🧰 functions.Grep:0 | Grep {'pattern': 'ORDER_ID=', 'path': 'server.log', 'context_lines': 0}
 [0m[2m
-  🧰 functions.Shell:1 | Shell {'command': 'wc -l server.log', 'description': 'Count lines in server.log'}
-[0m  [2m1559:2026-04-15T11:23:07Z INFO order placed  ORDER_ID=42-X9Q  customer="alice@example.com"  amount=$1,283.45
-[0m  [2m    5500 server.log
+  🔠 functions.Grep:0 Executed
 [0m[2m
-  🔠 functions.Shell:1 Executed
-[0m[2m
-  🔠 functions.Shell:0 Executed
-[0m[2m
-  🧠 The[0m[2m grep found[0m[2m exactly one[0m[2m line with[0m[2m `[0m[2mORDER_ID[0m[2m=`[0m[2m at line[0m[2m 155[0m[2m9:[0m[2m
+  🧠 Found[0m[2m exactly one[0m[2m match.[0m[2m The[0m[2m line is[0m[2m:
+     `[0m[2m2026[0m[2m-04[0m[2m-15[0m[2mT11[0m[2m:23[0m[2m:07[0m[2mZ INFO[0m[2m order placed[0m[2m  ORDER[0m[2m_ID=[0m[2m42-X[0m[2m9Q[0m[2m  customer[0m[2m="[0m[2malice@[0m[2mexample.com[0m[2m"[0m[2m  amount=$[0m[2m1,[0m[2m283.[0m[2m45`[0m[2m
      
-     `[0m[2m2026[0m[2m-04[0m[2m-15[0m[2mT11[0m[2m:23[0m[2m:07[0m[2mZ INFO[0m[2m order placed[0m[2m  ORDER[0m[2m_ID=[0m[2m42-X[0m[2m9Q[0m[2m  customer[0m[2m="alice[0m[2m@example[0m[2m.com"[0m[2m  amount[0m[2m=$1[0m[2m,283[0m[2m.45[0m[2m`
+     The ORDER[0m[2m_ID value[0m[2m is `[0m[2m42-X[0m[2m9Q[0m[2m`.[0m[2m
+     The customer[0m[2m email is[0m[2m `alice[0m[2m@example[0m[2m.com`.[0m[2m
      
-     Let[0m[2m me verify[0m[2m this is[0m[2m the only[0m[2m matching[0m[2m line,[0m[2m and then[0m[2m extract the[0m[2m values.[0m[2m The ORDER[0m[2m_ID value[0m[2m is `[0m[2m42-X[0m[2m9Q[0m[2m` and[0m[2m the customer[0m[2m email is[0m[2m `alice[0m[2m@example[0m[2m.com`.[0m[2m
-     
-     Let[0m[2m me double[0m[2m-check there[0m[2m aren't[0m[2m other lines[0m[2m with ORDER[0m[2m_ID.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Shell:2 | Shell {'command': 'grep -c "ORDER_ID=" server.log', 'description': 'Count lines containing ORD ...'}
-[0m  [2m1
-[0m[2m
-  🔠 functions.Shell:2 Executed
-[0m[2m
-  🧠 There[0m[2m is exactly[0m[2m 1 line[0m[2m with ORDER[0m[2m_ID=[0m[2m in[0m[2m the file[0m[2m. The[0m[2m line is[0m[2m:
-     
-     `[0m[2m2026[0m[2m-04[0m[2m-15[0m[2mT11[0m[2m:23[0m[2m:07[0m[2mZ INFO[0m[2m order placed[0m[2m  ORDER[0m[2m_ID=[0m[2m42-X[0m[2m9Q[0m[2m  customer[0m[2m="alice[0m[2m@example[0m[2m.com"[0m[2m  amount[0m[2m=$1[0m[2m,283[0m[2m.45[0m[2m`
-     
-     So[0m[2m:[0m[2m
-     - ORDER[0m[2m_ID value[0m[2m = `[0m[2m42-X[0m[2m9Q[0m[2m`
-     -[0m[2m customer email[0m[2m = `[0m[2malice@[0m[2mexample.com[0m[2m`
-     
-     Now[0m[2m I need[0m[2m to write[0m[2m this[0m[2m to `[0m[2manswer.txt[0m[2m` in[0m[2m the exact[0m[2m format specified[0m[2m:
-     
+     I need[0m[2m to write[0m[2m `answer[0m[2m.txt`[0m[2m with:[0m[2m
+     ```
+     order[0m[2m_id=[0m[2m42-X[0m[2m9Q[0m[2m
+     customer[0m[2m=alice[0m[2m@example[0m[2m.com[0m[2m
      ```[0m[2m
-     order_id[0m[2m=42[0m[2m-X9[0m[2mQ[0m[2m
-     customer=[0m[2malice@[0m[2mexample.com[0m[2m
-     ```[0m[2m
-     
-     No extra[0m[2m whitespace,[0m[2m no quotes[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Write:3 | Write {'content': 'order_id=42-X9Q\ncustomer=a ...', 'path': 'answer.txt'}
+  🧰 functions.Write:1 | Write {'content': 'order_id=42-X9Q\ncustomer=a ...', 'path': 'answer.txt'}
 [0m[2m
-  🔠 functions.Write:3 Executed
+  🔠 functions.Write:1 Executed
 [0m[2m
-  🧠 The[0m[2m file[0m[2m has been[0m[2m written.[0m[2m Let me[0m[2m verify the[0m[2m content by[0m[2m reading it[0m[2m back.[0m[2m
+  🧠 Done[0m[2m. Let[0m[2m me verify[0m[2m the[0m[2m file was[0m[2m written correctly[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Read:4 | Read {'path': 'answer.txt'}
+  🧰 functions.Read:2 | Read {'path': 'answer.txt'}
 [0m[2m
-  🔠 functions.Read:4 Executed
+  🔠 functions.Read:2 Executed
 [0m[2m
-  🧠 The[0m[2m answer[0m[2m file[0m[2m has been[0m[2m written correctly[0m[2m. The[0m[2m user asked[0m[2m me[0m[2m to find[0m[2m the line[0m[2m and[0m[2m write the[0m[2m answer.[0m[2m I've[0m[2m done that[0m[2m. The[0m[2m file is[0m[2m exactly[0m[2m 2 lines[0m[2m with the[0m[2m required[0m[2m format.[0m[2m
-  Found[0m[2m exactly[0m[2m one matching[0m[2m line in[0m[2m `server[0m[2m.log:[0m[2m1559[0m[2m` containing[0m[2m `ORDER[0m[2m_ID=[0m[2m42-X[0m[2m9Q[0m[2m` and[0m[2m `customer[0m[2m="alice[0m[2m@example[0m[2m.com"[0m[2m`. W[0m[2mrote the[0m[2m result[0m[2m to `[0m[2manswer.txt[0m[2m`.[0m[2m
-  💸 (Requests: 5 | Tool Calls: 5 | Total: 39750) Input: 39143 | Audio Input: 0 | Output: 607 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+  🧠 The[0m[2m file is[0m[2m written[0m[2m correctly.[0m[2m The task[0m[2m is complete[0m[2m.[0m[2m
+  Found the[0m[2m single[0m[2m matching line[0m[2m in[0m[2m `server[0m[2m.log:[0m[2m1559[0m[2m` and[0m[2m wrote[0m[2m `answer[0m[2m.txt`[0m[2m with the[0m[2m extracted[0m[2m `[0m[2mORDER[0m[2m_ID`[0m[2m and customer[0m[2m email.[0m[2m
+  💸 (Requests: 4 | Tool Calls: 3 | Total: 32877) Input: 32557 | Audio Input: 0 | Output: 320 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "The file `server.log` contains thousands of lines of server activity.
 
 Exactly one line in that file records a successful order being placed.
@@ -77,4 +50,4 @@ Use any tool you like — grep, Python, reading the file directly — but
 the answer must be exact. There is only one matching line.
 " --model ollama:kimi-k2.6:cloud --session ollama_kimi-k2.6_cloud-big-haystack-trial-2 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_kimi-k2.6_cloud-big-haystack-trial-2[0m[0m
-Found exactly one matching line in `server.log:1559` containing `ORDER_ID=42-X9Q` and `customer="alice@example.com"`. Wrote the result to `answer.txt`.
+Found the single matching line in `server.log:1559` and wrote `answer.txt` with the extracted `ORDER_ID` and customer email.

@@ -1,6 +1,6 @@
 import asyncio
 import random
-from typing import List, Set
+from typing import List, Dict
 
 
 class PaymentGateway:
@@ -8,22 +8,18 @@ class PaymentGateway:
         self._failure_rate = failure_rate
         self.total_charged: float = 0.0
         self.charges: List[dict] = []
-        self._charged_order_ids: Set[str] = set()
+        self._processed: Dict[str, bool] = {}
         self._lock = asyncio.Lock()
 
     async def charge(self, order_id: str, amount: float) -> bool:
-        async with self._lock:
-            if order_id in self._charged_order_ids:
-                return True
-
         await asyncio.sleep(0.03)
-        if random.random() < self._failure_rate:
-            return False
-
         async with self._lock:
-            if order_id in self._charged_order_ids:
-                return True
+            if order_id in self._processed:
+                return self._processed[order_id]
+            if random.random() < self._failure_rate:
+                self._processed[order_id] = False
+                return False
             self.total_charged += amount
             self.charges.append({"order_id": order_id, "amount": amount})
-            self._charged_order_ids.add(order_id)
+            self._processed[order_id] = True
             return True

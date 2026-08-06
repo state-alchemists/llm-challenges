@@ -11,10 +11,11 @@ NUM_ORDERS = 12
 async def main() -> None:
     inventory = Inventory(INITIAL_STOCK)
     gateway = PaymentGateway(failure_rate=0.25)
+    order_lock = asyncio.Lock()
 
     print(f"Starting simulation: {NUM_ORDERS} concurrent orders, stock={INITIAL_STOCK}")
     orders = [
-        checkout(f"order_{i}", 1, ITEM_PRICE, inventory, gateway)
+        checkout(f"order_{i}", 1, ITEM_PRICE, inventory, gateway, order_lock)
         for i in range(NUM_ORDERS)
     ]
     results = await asyncio.gather(*orders)
@@ -31,6 +32,7 @@ async def main() -> None:
     print(f"Total charged:      ${gateway.total_charged:.2f}")
     print(f"Expected charge:    ${successful * ITEM_PRICE:.2f}")
     print(f"Duplicate charges:  {duplicates}")
+    print(f"Charges:            {gateway.charges}")
 
     if inventory.stock < 0:
         print("ERROR: Inventory went negative!")

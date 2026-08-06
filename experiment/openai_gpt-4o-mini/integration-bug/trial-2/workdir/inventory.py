@@ -1,6 +1,5 @@
 import asyncio
 
-
 class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
@@ -14,10 +13,16 @@ class Inventory:
         if self._stock >= quantity:
             self._stock -= quantity
             return True
-        print("Decrement failed: not enough stock.")
         return False
 
-    async def increment(self, quantity: int) -> None:
+    async def reserve(self, quantity: int) -> bool:
+        await asyncio.sleep(0.02)
+        if self._stock >= quantity:
+            self._stock -= quantity
+            return True
+        return False
+
+    async def release(self, quantity: int) -> None:
         await asyncio.sleep(0.01)
         self._stock += quantity
 

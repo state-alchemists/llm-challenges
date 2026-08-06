@@ -10,16 +10,18 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Reserve stock atomically before any payment attempt.
+    # Reserve stock first — atomic check-and-decrement under a lock.
+    # This prevents overselling: if stock is insufficient, we bail immediately.
     reserved = await inventory.reserve(quantity)
     if not reserved:
         print(f"Order {order_id}: out of stock")
         return False
 
+    # Charge the customer. If payment fails, restore the reserved stock
+    # so no ghost charge remains and other orders can use the stock.
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        # Payment failed — release the reserved stock so others can buy it.
-        await inventory.increment(quantity)
+        await inventory.restore(quantity)
         print(f"Order {order_id}: payment failed")
         return False
 

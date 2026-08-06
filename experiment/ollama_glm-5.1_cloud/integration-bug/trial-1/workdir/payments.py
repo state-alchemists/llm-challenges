@@ -10,9 +10,6 @@ class PaymentGateway:
         self.charges: List[dict] = []
 
     async def charge(self, order_id: str, amount: float) -> bool:
-        # Idempotency: already-charged orders succeed without double-counting.
-        if any(c["order_id"] == order_id for c in self.charges):
-            return True
         await asyncio.sleep(0.03)
         if random.random() < self._failure_rate:
             return False

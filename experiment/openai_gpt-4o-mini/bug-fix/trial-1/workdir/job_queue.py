@@ -22,24 +22,20 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
-                job["status"] = "processing"  # Set processing status first.
-                await asyncio.sleep(0.01)
+                job["status"] = "processing"
                 return job
         return None
-
-    def complete(self, job_id: int, result: Any) -> None:
-        self._jobs[job_id]["status"] = "done"
-        self._jobs[job_id]["result"] = result
-
-    def fail(self, job_id: int, error: str) -> None:
-        job = self._jobs[job_id]
-        if job["retries"] < self.max_retries:
-            job["retries"] += 1
-            job["status"] = "pending"
-        else:
-            job["status"] = "failed"
-            job["result"] = error
 
     @property
     def all_jobs(self) -> Dict[int, Dict]:
         return self._jobs
+
+    def complete(self, job_id: int, result: Any) -> None:
+        if job_id in self._jobs:
+            self._jobs[job_id]["status"] = "done"
+            self._jobs[job_id]["result"] = result
+
+    def fail(self, job_id: int, error: str) -> None:
+        if job_id in self._jobs:
+            self._jobs[job_id]["status"] = "failed"
+            self._jobs[job_id]["result"] = error

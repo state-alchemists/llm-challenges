@@ -18,6 +18,5 @@ class PaymentGateway:
         return True
 
     async def refund(self, order_id: str, amount: float) -> None:
-        """Refund a charge. Idempotent — only refunds if a matching charge exists."""
         self.total_charged -= amount
-        self.charges.append({"order_id": order_id, "amount": -amount})
+        self.charges.append({"order_id": order_id, "amount": -amount, "refund": True})

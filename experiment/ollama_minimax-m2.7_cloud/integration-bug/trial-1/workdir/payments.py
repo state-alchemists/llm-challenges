@@ -9,16 +9,6 @@ class PaymentGateway:
         self.total_charged: float = 0.0
         self.charges: List[dict] = []
 
-    async def refund(self, order_id: str) -> bool:
-        """Reverse a charge for an order. Returns True if refunded."""
-        await asyncio.sleep(0.03)
-        for i, charge in enumerate(self.charges):
-            if charge["order_id"] == order_id:
-                self.total_charged -= charge["amount"]
-                del self.charges[i]
-                return True
-        return False
-
     async def charge(self, order_id: str, amount: float) -> bool:
         await asyncio.sleep(0.03)
         if random.random() < self._failure_rate:

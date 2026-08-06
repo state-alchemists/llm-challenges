@@ -1,108 +1,119 @@
-# Zrb Task API Migration Guide
+# Zrb CLI Migration Guide from v1 to v2
 
-## Overview
-This guide will help you migrate from Zrb Task API v1 to v2. It highlights all breaking changes, provides code examples, and includes a migration checklist.
+## Introduction
+This migration guide provides a clear structure for developers migrating from v1 to v2 of the Zrb CLI. It highlights all breaking changes, provides code examples, and includes a migration checklist to ensure a smooth transition.
 
 ## Breaking Changes
 
 ### 1. Endpoint Prefix Change
-**Old:**
-```
+**Breaking Change:** All API endpoints are now prefixed with `/v2/`.
+
+**Before:**
+```http
 GET /tasks
 ```
-**New:**
-```
+**After:**
+```http
 GET /v2/tasks
 ```
 
 ### 2. Authentication Header Change
-**Old:**
-```
+**Breaking Change:** The authentication header has changed from `X-Auth-Token` to a Bearer token.
+
+**Before:**
+```http
 X-Auth-Token: <your_api_key>
 ```
-**New:**
-```
+**After:**
+```http
 Authorization: Bearer <your_api_token>
 ```
-Requests with the old header will result in HTTP 401.
 
 ### 3. Task ID Type Change
-The `id` field has changed from an integer to a UUID string.
-**Old Task Object:**
+**Breaking Change:** The `id` of the task has changed from an integer to a UUID string.
+
+**Before:**
 ```json
 {
   "id": 42,
+  "title": "Write tests",
+  "done": false
 }
 ```
-**New Task Object:**
+**After:**
 ```json
 {
-  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "title": "Write tests",
+  "completed": false
 }
 ```
 
-### 4. Task Field Renamed
-The `done` field has been renamed to `completed`.
-**Old Task Object:**
+### 4. `done` Field Renamed to `completed`
+**Breaking Change:** The `done` field has been renamed to `completed` in task objects.
+
+**Before:**
 ```json
 {
   "done": false
 }
 ```
-**New Task Object:**
+**After:**
 ```json
 {
   "completed": false
 }
 ```
 
-### 5. Required Project ID for Task Creation
-The `project_id` field is now required when creating a task.
-**Old API Request:**
+### 5. Project ID Required for Task Creation
+**Breaking Change:** Creating a task now requires a `project_id`.
+
+**Before:**
 ```json
 {
   "title": "New task title"
 }
 ```
-**New API Request:**
+**After:**
 ```json
 {
   "title": "New task title",
   "project_id": "proj_abc123"
 }
 ```
-Omitting the `project_id` will return HTTP 422.
 
 ### 6. Paginated List Response
-The response for listing tasks is now wrapped in a paginated envelope rather than returning a bare array.
-**Old Response:**
+**Breaking Change:** List endpoints now return a paginated envelope rather than a bare array.
+
+**Before:**
 ```json
 [
-  {"id": 1, ...},
-  {"id": 2, ...}
+  {"id": 1, "title": "Buy milk"},
+  {"id": 2, "title": "Ship v1"}
 ]
 ```
-**New Response:**
+**After:**
 ```json
 {
-  "items": [...],
-  "total": 42,
+  "items": [
+    {"id": 1, "title": "Buy milk"},
+    {"id": 2, "title": "Ship v1"}
+  ],
+  "total": 2,
   "next_cursor": "cursor_xyz"
 }
 ```
-Pass `?cursor=<next_cursor>` to fetch the next page.
 
 ## Migration Checklist
-1. Update all API endpoints to include the `/v2/` prefix.
-2. Change the authentication header from `X-Auth-Token` to `Authorization: Bearer <your_api_token>`.
-3. Update your data structures:
-   - Change task `id` from integer to UUID string.
-   - Rename `done` to `completed` in all task objects.
-4. Ensure to include `project_id` when creating new tasks.
-5. Adjust logic to handle paginated responses from list task endpoints.
+1. Update the API endpoint prefix from `/tasks` to `/v2/tasks`.
+2. Change the authentication header to use Bearer token.
+3. Update the task object `id` field from integer to UUID string.
+4. Rename the `done` field in tasks to `completed`.
+5. Modify the task creation request to include `project_id`.
+6. Update code that handles task list responses to accommodate the new paginated format.
 
 ## Upgrade Command
-To upgrade, run the following command:
+Run the following command to upgrade to v2:
 ```bash
-zrb upgrade --version 2.0
+zrb upgrade
 ```

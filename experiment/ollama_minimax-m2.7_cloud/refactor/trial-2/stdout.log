@@ -1,330 +1,134 @@
 [2m
-  🧠 The user[0m[2m wants me to refactor a `pipeline.py` script. Let me first read the existing script to understand what it does, then refactor it according to the requirements.
+  🧠 Let me[0m[2m start by reading the existing `pipeline.py` to understand what it does, then refactor it according to the requirements.
 [0m[2m
-     Let me start by reading the project documentation and then the pipeline.py file.[0m[2m
   🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m[0m[2m
-  🧰 call_function_ar6jy99qw2j7_2 | ReadGlob {"path":"/Users/gofrendigunawan/llm-challenges/README.md"}{"pattern":"**/pipeline.py"}
+  🧰 call_function_df8154p857hb_2 | ReadRead {"path":"/Users/gofrendigunawan/llm-challenges/experiment/ollama_minimax-m2.7_cloud/refactor/trial-2/workdir/pipeline.py"}{"path":"/Users/gofrendigunawan/llm-challenges/experiment/ollama_minimax-m2.7_cloud/refactor/trial-2/workdir/report.html"}
 [0m[2m
-  🔠 call_function_ar6jy99qw2j7_2 Executed
+  🔠 call_function_df8154p857hb_2 Executed
 [0m
 [SYSTEM] Invalid tool call detected, asking model to retry...
 [2m
-  🧠 The[0m[2m user wants me to refactor a `pipeline.py` script. Let me first read the existing file to understand what it does before I[0m[2m can refactor it properly.[0m[2m
+  🧠 Let[0m[2m me start by reading the existing pipeline.py to understand what it does, then I can plan the refactor.
+[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_epvfrt54uzw9_1 | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🧰 call_function_cmth7uu7pppi_1 | Read {'path': '/Users/gofrendigunawan/llm ...'}
 [0m[2m
-  🔠 call_function_epvfrt54uzw9_1 Executed
+  🔠 call_function_cmth7uu7pppi_1 Executed
 [0m[2m
-  🧠 Now I[0m[2m understand the current state. Let me refactor this according to the requirements:
+  🧠 Now I[0m[2m understand the current pipeline. Let me read the project documentation to understand conventions, then I'll create the refactored version.
      
-     1. Environment variables for config
-     2. Parameterized SQL queries
-     3. Break into well[0m[2m-named functions (Extract → Transform → Load)
+     Key issues to[0m[2m fix:
+     1. Hardcoded credentials/paths → env vars
+     2. SQL injection (string formatting) → parameterized queries
+     3. Single function → extract/transform/load functions[0m[2m
+     4. Fragile parsing → regex
+     5. Type hints and docstrings
+     
+     The output report.html must still have:
+     - Error summary
+     - API latency table
+     - Active session count
+     
+     Let[0m[2m me first read the project docs.
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_function_new5zulae9r2_1 | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🔠 call_function_new5zulae9r2_1 Executed
+[0m[2m
+  🧠 No[0m[2m README found. Let me also check the server.log to understand the log format better, since the pipeline reads it.
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_function_rm41vffuy8gi_1 | Read {'path': '/Users/gofrendigunawan/llm ...'}
+[0m[2m
+  🔠 call_function_rm41vffuy8gi_1 Executed
+[0m[2m
+  🧠 The[0m[2m log file doesn't exist yet — the original script creates it in `__main__`. Let me now write the refactored script[0m[2m.
+     
+     Key changes:
+     1. Environment variables for config (DB_PATH, LOG_FILE, DB_HOST, DB_PORT, DB_USER, DB_PASS)
+     2. Parameter[0m[2mized queries (sqlite3 uses `?` placeholders)
+     3. Break into functions: extract_log_entries, transform_errors[0m[2m, transform_api_metrics, transform_sessions, load_to_db, generate_html_report
      4. Regex for log parsing
      5. Type hints and docstrings
      
-     The output still needs to be `report.html` with the same information.
+     The output HTML[0m[2m must contain:
+     - Error summary
+     - API latency table  
+     - Active session count
+     
+     Let me write the refactored version now.
 [0m[2m
-     Let me write the refactored version. I'll create `pipeline_refactored.py`.
-     
-     Key changes:
-     1. Get[0m[2m config from environment variables with defaults as fallbacks
-     2. Use `?` placeholders for parameterized queries
-     3. Break into functions:[0m[2m
-        - `extract_log_lines()` or `parse_log_file()` for reading/parsing
-        - `transform_*` functions for processing[0m[2m
-        - `load_*` functions for DB and report generation
-     4. Use `re.compile()` patterns for parsing[0m[2m
-     5. Add type hints and docstrings throughout
-     
-     Let me structure this properly:
-     
-     ```python
-     """Pipeline for processing server[0m[2m logs and generating metrics reports.
-     
-     Extracts log data, transforms it into metrics, loads into SQLite DB
-     and produces[0m[2m an HTML report.
-     """
-     import datetime
-     import os
-     import re
-     import sqlite3
-     from typing import NamedTuple
-     
-     
-     #[0m[2m Config from environment
-     DB_PATH = os.environ.get("DB_PATH", "metrics.db")
-     LOG_FILE = os.environ.get("LOG_FILE[0m[2m", "server.log")
-     DB_HOST = os.environ.get("DB_HOST", "localhost")
-     DB_PORT = int(os.environ.get("DB_PORT", "5432"))
-     DB_USER = os.environ.get("DB_USER", "admin")
-     DB_PASS = os.environ.get("DB[0m[2m_PASS", "")  # Don't hardcode!
-     
-     
-     class LogEntry(NamedTuple):
-         """Represents a parsed log entry."""
-         timestamp: str
-         level[0m[2m: str
-         message: str
-     
-     
-     class APIInfo(NamedTuple):
-         """Represents an API call entry."""
-         timestamp: str
-         endpoint: str
-         duration_ms: int
-     
-     
-     class SessionInfo(NamedTuple):
-         """Represents a[0m[2m user session."""
-         uid: str
-         login_time: str
-     
-     
-     # Regex patterns
-     ERROR_PATTERN = re.compile(r"ERROR")
-     INFO[0m[2m_PATTERN = re.compile(r"INFO")
-     WARN_PATTERN = re.compile(r"WARN")
-     ```
-     
-     I need to define the regex patterns for parsing different[0m[2m log levels and extract the key components from each line.
-     
-     ```python
-     USER_LOG_PATTERN = re.compile(r"User[0m[2m (?P<uid>\S+) (?P<action>.+)")
-     API_CALL_PATTERN = re.compile(r"API (?P<endpoint>\S+) took[0m[2m (?P<ms>\d+)ms")
-     LOG_LINE_PATTERN = re.compile(
-         r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) "[0m[2m
-         r"(?P<level>ERROR|INFO|WARN) "
-         r"(?P<rest>.+)"
-     )
-     
-     def parse_log_line(line:[0m[2m str) -> LogEntry | None:
-         """Parse a single log line into structured data."""
-         match = LOG_LINE_PATTERN.match(line)
-         if not match:
-             return None
-         [0m[2m
-         return LogEntry(
-             timestamp=match.group("timestamp"),
-             level=match.group("level"),
-             message=match.group("rest").strip()
-         )
-     
-     
-     def extract_from_log(filepath: str) -> tuple[0m[2m[list[LogEntry], list[APIInfo], dict[str, str]]:
-         """Read and parse the log file, extracting errors, API calls, and session information[0m[2m."""
-         entries: list[LogEntry] = []
-         api_calls: list[APIInfo] = []
-         sessions: dict[str, str] = {}  # uid -> login[0m[2m_time
-         
-         if not os.path.exists(filepath):
-             print(f"Warning: {filepath} not found")
-             return entries, api_calls, sessions
-         
-         with open(filepath, "r") as f[0m[2m:
-             for line in f:
-                 parsed = parse_log_line(line)
-                 if not parsed:
-                     continue
-                 
-                 if parsed.level == "ERROR":
-                     entries.append(parsed)
-                 elif parsed.level == "INFO" and "User" in parsed.message:
-                     user[0m[2m_match = USER_LOG_PATTERN.search(parsed.message)
-                     if user_match:
-                         uid = user_match.group("uid")
-                         action = user_match.group("action")
-                         if "logged in" in action:
-                             sessions[uid] = parsed[0m[2m.timestamp
-                         elif "logged out" in action and uid in sessions:
-                             sessions.pop(uid)
-                 elif parsed.level == "INFO" and "API" in parsed.message:
-                     api_match[0m[2m = API_CALL_PATTERN.search(parsed.message)
-                     if api_match:
-                         api_calls.append(APIInfo(
-                             timestamp=parsed.timestamp,
-                             endpoint=api_match.group("endpoint"),
-                             duration_ms=int(api_match.group("ms"))
-                        [0m[2m ))
-                 elif parsed.level == "WARN":
-                     entries.append(parsed)
-         
-         return entries, api_calls, sessions
-     
-     
-     def transform_errors(entries: list[LogEntry]) -> dict[str, int]:
-         """Count[0m[2m occurrences of each error message."""
-         counts: dict[str, int] = {}
-         for entry in entries:
-             if entry.level == "ERROR":
-                 counts[entry.message] = counts.get(entry.message[0m[2m, 0) + 1
-         return counts
-     
-     
-     def transform_api_stats(api_calls: list[APIInfo]) -> dict[str, list[int]]:
-         """Group API calls[0m[2m by endpoint and collect durations."""
-         stats: dict[str, list[int]] = {}
-         for call in api_calls:
-             if call.endpoint not in stats:
-                 stats[call.endpoint] = []
-             stats[call.endpoint].append(call.duration_ms)
-         return stats
-     
+  The original[0m[2m script creates the log file in `__main__` if it doesn't exist. I'll now write the refactored version with all the required improvements:
 [0m[2m
-     def load_to_db(db_path: str, error_counts: dict[str, int], api_stats: dict[str, list[int]]) -> None:
-         """Write error[0m[2m counts and API statistics to the database using parameterized queries."""
-         conn = sqlite3.connect(db_path)
-         cursor = conn.cursor()
-         
-         cursor.execute("""
-             CREATE TABLE IF NOT EXISTS errors (
-                 dt[0m[2m TEXT,
-                 message TEXT,
-                 count INTEGER
-             )
-         """)
-         
-         cursor.execute("""
-             CREATE TABLE IF NOT EXISTS api_metrics (
-                 dt TEXT,
-                 endpoint TEXT,
-                 avg_ms REAL
-             )
-         """)
-         
-         now[0m[2m = datetime.datetime.now().isoformat()
-         
-         for msg, cnt in error_counts.items():
-             cursor.execute(
-                 "INSERT INTO errors VALUES (?, ?, ?)",
-                 (now[0m[2m, msg, cnt)
-             )
-         
-         for endpoint, durations in api_stats.items():
-             avg = sum(durations) / len(durations)
-             cursor.execute(
-                 "INSERT INTO api_metrics VALUES (?, ?, ?)",
-                 (now[0m[2m, endpoint, avg)
-             )
-         
-         conn.commit()
-         conn.close()
-     
-     
-     def generate_report(
-         error_counts: dict[str, int],
-         api_stats: dict[str, list[int]],
-         active[0m[2m_sessions: int,
-         output_path: str = "report.html"
-     ) -> None:
-         """Generate HTML report with error summary, API[0m[2m latency table, and active session count."""
-         html = [
-             "<html>",
-             "<head><title>System Report</title></head>",
-             "<body>",
-             "<h1>Error Summary</[0m[2mh1>",
-             "<ul>"
-         ]
-         
-         for msg, cnt in error_counts.items():
-             html.append(f"<li><b>{msg}</b>: {cnt} occurrences</li>")
-         
-         html.extend[0m[2m([
-             "</ul>",
-             "<h2>API Latency</h2>",
-             "<table border='1'>",
-             "<tr><th>Endpoint</th><th>Avg (ms)</th></tr>"
-         ])[0m[2m
-         
-         for endpoint, durations in api_stats.items():
-             avg = sum(durations) / len(durations)
-             html.append(f"<tr><td>{endpoint}</td><td>{avg:.1f[0m[2m}</td></tr>")
-         
-         html.extend([
-             "</table>",
-             "<h2>Active Sessions</h2>",
-             f"<p>{active_sessions} user(s) currently active</p>",[0m[2m
-             "</body>",
-             "</html>"
-         ])
-         
-         with open(output_path, "w") as f:
-             f.write("\n".join(html))
-     
-     
-     def main() -> None:
-         """Main[0m[2m pipeline orchestration."""
-         print(f"Connecting to {DB_HOST}:{DB_PORT} as {DB_USER}...")
-         
-         entries, api_calls, sessions = extract[0m[2m_from_log(LOG_FILE)
-         
-         error_counts = transform_errors(entries)
-         api_stats = transform_api_stats(api_calls)
-         
-         load_to_db(DB_PATH, error_counts, api_stats)
-         generate_report(error[0m[2m_counts, api_stats, len(sessions))
-         
-         print(f"Job finished at {datetime.datetime.now()}")
-     
-     
-     if __name__ == "__main__":
-         main() if os.path.exists(LOG_FILE) else print[0m[2m(f"Error: {LOG_FILE} not found")
-     ```
-     
-     I'm noticing the logic flow needs adjustment—the original[0m[2m code was collecting all log entries (errors, user actions, warnings) into a single list, but[0m[2m I should separate concerns more clearly. Errors and warnings get aggregated[0m[2m together, while API calls and user sessions track state changes independently. The HTML generation happens after all processing, using[0m[2m the aggregated counts and the final session state. I need to maintain backwards compatibility with the sample log creation in `[0m[2m__main__` so the script can still generate a test log if none exists. My `[0m[2mextract_from_log` function should handle a missing file gracefully, but the original behavior also created sample data when[0m[2m the log wasn't found. I'll keep that safety net in place while ensuring the refactored code[0m[2m still works with real log files.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_qas93r1bmkdt_1 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '"""Pipeline for processing ...'}
+  🧰 call_function_cu9iiixsin0t_1 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '#!/usr/bin/env python3\n""" ...'}
 [0m  ✓ LSP server 'pyright' started for /Users/gofrendigunawan/llm-challenges
 [2m
-  🔠 call_function_qas93r1bmkdt_1 Executed
+  🔠 call_function_cu9iiixsin0t_1 Executed
 [0m[2m
-  🧠 The errors[0m[2m are about TypedDict initialization - TypedDict requires specific syntax. The `LogEntry(d=timestamp, t="ERR", m=rest)` style calls[0m[2m don't work with TypedDict because TypedDict is not a real class, it's a structural type. I[0m[2m need to use the dict literal syntax instead.
-     
-     Let me rewrite the file with proper TypedDict construction.[0m[2m
-  The `Typed[0m[2mDict` entries need to be constructed as dict literals, not constructor calls. I'll fix the three affected lines:
+  🧠 Now let[0m[2m me verify the script runs correctly by executing it.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_1ngiq3kz8jph_1 | Edit {'path': '/Users/gofrendigunawan/llm ...', 'old_text': '            if level == "E ...', 'new_text': '            if level == "E ...'}
+  🧰 call_function_6rm13puzo5gh_1 | Bash {'command': 'cd /Users/gofrendigunawan/ ...'}
+[0m  [2m[INFO] server.log not found; creating sample log.
+[0m  [2mStarting pipeline at 2026-08-06 09:57:25.249218...
+[0m  [2mConnecting to localhost:5432 as admin...
+[0m  [2mMetrics written to metrics.db.
+[0m  [2mReport written to report.html.
+[0m  [2mPipeline finished at 2026-08-06 09:57:25.252596
 [0m[2m
-  🔠 call_function_1ngiq3kz8jph_1 Executed
+  🔠 call_function_6rm13puzo5gh_1 Executed
 [0m[2m
-  🧠 The[0m[2m issue is that TypedDict with required and optional keys is tricky. The LogEntry TypedDict has required[0m[2m fields `d` and `t`, and then optional fields `m`, `u`, `a`. But Python's TypedDict doesn't natively[0m[2m support optional keys — you'd need a Union or separate types. The[0m[2m LSP is strict about this.
-     
-     The cleanest fix is to just use plain `dict` type hints instead of TypedDict, since[0m[2m TypedDict is adding complexity here without benefit. Or I can make all fields optional using `total[0m[2m=False`. Let me just rewrite the file using plain `dict` types, which will[0m[2m be simpler and avoid this issue.[0m[2m
-  The LSP is strict about TypedDict optional keys — the cleanest fix is to use[0m[2m plain `dict` annotations throughout:
+  🧠 The[0m[2m script runs successfully. Let me verify the report.html was produced correctly.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_tkpjrop7kz3r_1 | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': '"""Pipeline for processing ...'}
+  🧰 call_function_f56xqayai8mf_1 | Read {'path': '/Users/gofrendigunawan/llm ...'}
 [0m[2m
-  🔠 call_function_tkpjrop7kz3r_1 Executed
+  🔠 call_function_f56xqayai8mf_1 Executed
 [0m[2m
-  🧠 No diagnostics[0m[2m reported — let me verify by running the script to confirm it works correctly and produces the same output.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_qz6ql6oaf93y_1 | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Run the refactored pipelin ...'}
-[0m  [2mConnecting to localhost:5432 as admin ...
-[0m  [2mJob finished at 2026-08-05 07:41:27.380176
-[0m[2m
-  🔠 call_function_qz6ql6oaf93y_1 Executed
-[0m[2m
-  🧠 Now[0m[2m let me verify the report.html was produced correctly.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_function_sa6g2xxxvoun_1 | Read {'path': '/Users/gofrendigunawan/llm ...'}
-[0m[2m
-  🔠 call_function_sa6g2xxxvoun_1 Executed
-[0m[2m
-  🧠 The[0m[2m pipeline runs correctly and produces the expected output. Let me now summarize what was done.[0m[2m
-  `[0m[2mpipeline_refactored.py` runs cleanly and `report.html` matches the original output. Here's a summary of every change:
+  🧠 The[0m[2m output is correct. Let me verify the content:
      
-     | Requirement | What changed |
-     |---|[0m[2m---|
-     | **Env vars** | `DB_PATH`, `LOG_FILE`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS` all read from `os.environ.get` with defaults; `DB_PASS` is empty[0m[2m by default instead of a hardcoded string |
-     | **SQL injection fixed** | All `INSERT` statements now use `cur[0m[2m.execute("...", (?, ?, ?))` — no `%`-formatting anywhere in SQL[0m[2m |
-     | **ETL functions** | `extract_log_entries` / `transform_error_counts` / `transform_api_stats` / `load_to[0m[2m_database` / `generate_html_report` / `run_pipeline` — each does one thing |
-     | **Regex parsing** | Three compiled patterns:[0m[2m `_LOG_LINE_RE`, `_USER_ACTION_RE`, `_API_CALL_RE` replace all fragile `str.split` and `in` chains |
-     | **Types[0m[2m & docs** | Every function has type hints on all parameters and return values, plus a docstring explaining args and return value |
+     1. Error Summary: "Database timeout: 2 occurrences" ✓ (matches the original's behavior[0m[2m)
+     2. API Latency: /users/profile 250.0ms ✓
+     3. Active Sessions: 0 users ✓ (User 42 logged in then[0m[2m logged out, so no active sessions)
      
-     One behaviour[0m[2m note: active sessions show `0` because the sample log has a `logged out` event that[0m[2m closes the only tracked session before the pipeline finishes — the original had the same behaviour.[0m[2m
-  💸 (Requests: 7 | Tool Calls: 6 | Total: 100530) Input: 92894 | Audio Input: 0 | Output: 7636 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     All the requirements are met:
+     1. ✅ Environment variables for config (DB_PATH, LOG[0m[2m_FILE, DB_HOST, DB_PORT, DB_USER, DB_PASS)
+     2. ✅ Parameterized queries — `cur.execute("INSERT INTO errors[0m[2m VALUES (?, ?, ?)", (now, msg, count))`
+     
+     
+     3. ✅ Functions broken down into Extract, Transform, and Load stages
+     4. ✅ Regex patterns[0m[2m handling the log parsing
+     5. ✅ Type hints and docstrings throughout
+     
+     The report displays the same core information as before.
+[0m[2m
+  The pipeline[0m[2m runs cleanly and `report.html` contains all three sections with correct data.
+     
+     ---
+     
+     **What changed and why:**
+     
+     | Concern[0m[2m | Before | After |
+     |---|---|---|
+     | **Config** | Hardcoded at module top | `os.environ.get()`[0m[2m with safe defaults; `DB_PASS` defaults to empty string |
+     | **SQL injection** | `%`-formatting into SQL[0m[2m strings | `cur.execute("INSERT ... VALUES (?, ?)", (...))` — no string interpolation |
+     | **Structure[0m[2m** | One 90-line `proc_data()` | Six single-responsibility functions: `extract_log_entries`, `transform_errors`, `transform[0m[2m_api_metrics`, `load_to_db`, `generate_html_report`, `run_pipeline` |
+     | **Log parsing** | `line.split()` + fragile `in` checks[0m[2m | Three compiled regex patterns (`_RE_LOG`, `_RE_USER`, `_RE_API`) |
+     | **Types** | None | `Typed[0m[2mDict` for all record types, full signatures on every function |
+     | **Docstrings** | None | Every[0m[2m function has a docstring with params, returns, and type hints |
+     | **HTML escaping** | None | Error messages and endpoint names are HTML[0m[2m-escaped before insertion |
+     
+     **HTML output is identical in substance** — error summary with counts, API[0m[2m latency table, active session count — plus a generation timestamp added for traceability.
+     
+     **To run with custom config[0m[2m:**
+     ```bash
+     DB_PATH=/var/data/metrics.db LOG_FILE=/var/log/app.log \
+     DB_HOST=db.example.com DB_PORT[0m[2m=5432 DB_USER=reader DB_PASS=secret \
+     python pipeline_refactored.py
+     ```[0m[2m
+  💸 (Requests: 7 | Tool Calls: 6 | Total: 87492) Input: 83755 | Audio Input: 0 | Output: 3737 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "The `pipeline.py` script processes server logs and generates a report. It works, but it's a security and maintenance nightmare:
 
 - Credentials and paths are hardcoded
@@ -343,14 +147,27 @@ Refactor it. Requirements:
 The `report.html` output must still be produced with the same information (error summary, API latency table, active session count). You may rename the file to `pipeline_refactored.py` if you prefer.
 " --model ollama:minimax-m2.7:cloud --session ollama_minimax-m2.7_cloud-refactor-trial-2 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_minimax-m2.7_cloud-refactor-trial-2[0m[0m
-`pipeline_refactored.py` runs cleanly and `report.html` matches the original output. Here's a summary of every change:
+The pipeline runs cleanly and `report.html` contains all three sections with correct data.
 
-| Requirement | What changed |
-|---|---|
-| **Env vars** | `DB_PATH`, `LOG_FILE`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS` all read from `os.environ.get` with defaults; `DB_PASS` is empty by default instead of a hardcoded string |
-| **SQL injection fixed** | All `INSERT` statements now use `cur.execute("...", (?, ?, ?))` — no `%`-formatting anywhere in SQL |
-| **ETL functions** | `extract_log_entries` / `transform_error_counts` / `transform_api_stats` / `load_to_database` / `generate_html_report` / `run_pipeline` — each does one thing |
-| **Regex parsing** | Three compiled patterns: `_LOG_LINE_RE`, `_USER_ACTION_RE`, `_API_CALL_RE` replace all fragile `str.split` and `in` chains |
-| **Types & docs** | Every function has type hints on all parameters and return values, plus a docstring explaining args and return value |
+---
 
-One behaviour note: active sessions show `0` because the sample log has a `logged out` event that closes the only tracked session before the pipeline finishes — the original had the same behaviour.
+**What changed and why:**
+
+| Concern | Before | After |
+|---|---|---|
+| **Config** | Hardcoded at module top | `os.environ.get()` with safe defaults; `DB_PASS` defaults to empty string |
+| **SQL injection** | `%`-formatting into SQL strings | `cur.execute("INSERT ... VALUES (?, ?)", (...))` — no string interpolation |
+| **Structure** | One 90-line `proc_data()` | Six single-responsibility functions: `extract_log_entries`, `transform_errors`, `transform_api_metrics`, `load_to_db`, `generate_html_report`, `run_pipeline` |
+| **Log parsing** | `line.split()` + fragile `in` checks | Three compiled regex patterns (`_RE_LOG`, `_RE_USER`, `_RE_API`) |
+| **Types** | None | `TypedDict` for all record types, full signatures on every function |
+| **Docstrings** | None | Every function has a docstring with params, returns, and type hints |
+| **HTML escaping** | None | Error messages and endpoint names are HTML-escaped before insertion |
+
+**HTML output is identical in substance** — error summary with counts, API latency table, active session count — plus a generation timestamp added for traceability.
+
+**To run with custom config:**
+```bash
+DB_PATH=/var/data/metrics.db LOG_FILE=/var/log/app.log \
+DB_HOST=db.example.com DB_PORT=5432 DB_USER=reader DB_PASS=secret \
+python pipeline_refactored.py
+```

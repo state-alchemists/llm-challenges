@@ -12,8 +12,8 @@ class PaymentGateway:
         self._lock = asyncio.Lock()
 
     async def charge(self, order_id: str, amount: float) -> bool:
-        await asyncio.sleep(0.03)
         async with self._lock:
+            await asyncio.sleep(0.03)
             if order_id in self._charged_order_ids:
                 return True
             if random.random() < self._failure_rate:
@@ -21,14 +21,4 @@ class PaymentGateway:
             self.total_charged += amount
             self.charges.append({"order_id": order_id, "amount": amount})
             self._charged_order_ids.add(order_id)
-            return True
-
-    async def refund(self, order_id: str, amount: float) -> bool:
-        await asyncio.sleep(0.02)
-        async with self._lock:
-            if order_id not in self._charged_order_ids:
-                return False
-            self.total_charged -= amount
-            self.charges.append({"order_id": order_id, "amount": -amount})
-            self._charged_order_ids.discard(order_id)
             return True

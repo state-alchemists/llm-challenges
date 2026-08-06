@@ -11,7 +11,6 @@ NUM_ORDERS = 12
 async def main() -> None:
     inventory = Inventory(INITIAL_STOCK)
     gateway = PaymentGateway(failure_rate=0.25)
-    gateway.reset()  # Reset charges for a new simulation
 
     print(f"Starting simulation: {NUM_ORDERS} concurrent orders, stock={INITIAL_STOCK}")
     orders = [

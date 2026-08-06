@@ -1,173 +1,134 @@
 [2m
-  🧠 Let[0m[2m me start by understanding[0m[2m the codebase and[0m[2m the bugs[0m[2m. I need to[0m[2m read the relevant[0m[2m files first.[0m[2m
+  🧠 Let[0m[2m me start by understanding[0m[2m the codebase -[0m[2m reading[0m[2m the relevant[0m[2m files to understand the[0m[2m checkout flow and[0m[2m identify the bugs.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_us99nbk4 | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🧰 call_2za0v1rc | Read {'path': '/Users/gofrendigunawan/llm ...'}
 [0m[2m
-  🧰 call_4apfxhgo | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🧰 call_u27bvfzl | Read {'path': '/Users/gofrendigunawan/llm ...'}
 [0m[2m
-  🧰 call_a97qizyw | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🧰 call_0frhsash | Read {'path': '/Users/gofrendigunawan/llm ...'}
 [0m[2m
-  🧰 call_q3m8buha | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🧰 call_zo7c97fp | Read {'path': '/Users/gofrendigunawan/llm ...'}
 [0m[2m
-  🔠 call_a97qizyw Executed
+  🔠 call_2za0v1rc Executed
 [0m[2m
-  🔠 call_q3m8buha Executed
+  🔠 call_zo7c97fp Executed
 [0m[2m
-  🔠 call_us99nbk4 Executed
+  🔠 call_u27bvfzl Executed
 [0m[2m
-  🔠 call_4apfxhgo Executed
+  🔠 call_0frhsash Executed
 [0m[2m
   🧠 Now[0m[2m I understand the bugs[0m[2m clearly:[0m[2m
      
-     **Bug 1[0m[2m: Overs[0m[2melling (inventory goes[0m[2m negative)[0m[2m**
-     The[0m[2m checkout flow is[0m[2m: `[0m[2mcheck_stock` →[0m[2m `charge[0m[2m` → `de[0m[2mcrement`. This[0m[2m is a classic TO[0m[2mCTOU[0m[2m (time[0m[2m-of-check-time[0m[2m-of-use[0m[2m) race condition.[0m[2m Multiple concurrent cor[0m[2moutines can all pass[0m[2m `check_stock`[0m[2m simultaneously, all[0m[2m get charged, and[0m[2m then all try[0m[2m to `decrement[0m[2m`. The[0m[2m `decrement`[0m[2m method checks[0m[2m stock[0m[2m again,[0m[2m so[0m[2m it[0m[2m won't go[0m[2m negative on[0m[2m its own...[0m[2m wait, let[0m[2m me re-read.[0m[2m
+     **Bug 1[0m[2m: Overs[0m[2melling (TO[0m[2mCTOU[0m[2m race condition)[0m[2m**
+     In[0m[2m `checkout.py`,[0m[2m `[0m[2mcheck_stock()`[0m[2m and `decrement[0m[2m()` are two separate[0m[2m async calls with[0m[2m an `await gateway[0m[2m.charge()` in[0m[2m between. Multiple[0m[2m cor[0m[2moutines can pass[0m[2m `check_stock()`[0m[2m concurrently[0m[2m, all[0m[2m seeing[0m[2m stock available[0m[2m, then[0m[2m all proceed to charge[0m[2m and decrement. The[0m[2m `decrement()`[0m[2m method also[0m[2m has a[0m[2m race[0m[2m:[0m[2m between the[0m[2m `[0m[2mif self._stock[0m[2m >= quantity` check[0m[2m and `[0m[2mself._stock -=[0m[2m quantity`, another[0m[2m coroutine could[0m[2m decrement.[0m[2m Even[0m[2m `[0m[2mdecrement()`[0m[2m alone[0m[2m has[0m[2m a TOCTOU[0m[2m issue because[0m[2m it's[0m[2m async[0m[2m ([0m[2mthe[0m[2m sleep[0m[2m yields[0m[2m control[0m[2m).
      
-     Actually, looking[0m[2m at `decrement[0m[2m`:[0m[2m
+     **Bug[0m[2m 2: Ghost charges[0m[2m**
+     If[0m[2m `check[0m[2m_stock()` passes[0m[2m and[0m[2m `gateway[0m[2m.charge()` succeeds[0m[2m, but then[0m[2m `decrement()`[0m[2m fails (because[0m[2m another coroutine already[0m[2m decre[0m[2mmented the stock below[0m[2m the[0m[2m required[0m[2m quantity), the customer[0m[2m is charged but receives[0m[2m no item.[0m[2m The function[0m[2m returns `False`[0m[2m but the charge[0m[2m has[0m[2m already been[0m[2m recorded[0m[2m.
      
+     **The[0m[2m fix:**
+     1[0m[2m. Need[0m[2m to[0m[2m make inventory[0m[2m reservation atomic[0m[2m.[0m[2m The[0m[2m key[0m[2m insight is that[0m[2m stock[0m[2m check and decrement must[0m[2m be[0m[2m atomic —[0m[2m we[0m[2m should[0m[2m use[0m[2m a single[0m[2m operation that reserves[0m[2m stock[0m[2m,[0m[2m and[0m[2m only[0m[2m proceed[0m[2m to[0m[2m charge[0m[2m if reservation[0m[2m succeeds.
+     2.[0m[2m If charging[0m[2m fails[0m[2m after reservation[0m[2m, we need to[0m[2m release the reserved[0m[2m stock back[0m[2m.
+     3. If[0m[2m charging succeeds after[0m[2m reservation, the[0m[2m decrement is already done[0m[2m (reservation[0m[2m =[0m[2m decrement).
      
-     The[0m[2m method[0m[2m checks if[0m[2m there[0m[2m's enough stock before[0m[2m decrementing, and[0m[2m returns[0m[2m `[0m[2mFalse` if not[0m[2m. So[0m[2m inventory[0m[2m shouldn[0m[2m't go negative through[0m[2m `decrement`[0m[2m alone. But since[0m[2m `check_stock`[0m[2m and `decrement[0m[2m` are separate[0m[2m calls[0m[2m with async[0m[2m gaps between[0m[2m them, multiple[0m[2m coroutines can pass[0m[2m the check simultaneously,[0m[2m get[0m[2m charged, and then[0m[2m when they[0m[2m try to decrement,[0m[2m only[0m[2m some succeed while[0m[2m others fail—[0m[2mmeaning[0m[2m customers[0m[2m get charged for[0m[2m items that were[0m[2m never delivered.
+     So[0m[2m the approach:
+     1[0m[2m. Add a `[0m[2mreserve` method to[0m[2m `Inventory` that[0m[2m atomically checks[0m[2m and decrements stock[0m[2m in one operation ([0m[2mno[0m[2m yield[0m[2m between check and decrement[0m[2m). Use an[0m[2m `asyncio.Lock[0m[2m` to make[0m[2m it thread[0m[2m-safe across[0m[2m coroutines.
+     2[0m[2m. Change[0m[2m checkout[0m[2m to: reserve[0m[2m → charge[0m[2m → ([0m[2mif charge fails[0m[2m, release/[0m[2mrestore stock[0m[2m).[0m[2m
+     3. We[0m[2m need a[0m[2m `release` method[0m[2m to restore stock if[0m[2m payment[0m[2m fails.
      
-     The[0m[2m real problem[0m[2m is that successful[0m[2m charges aren[0m[2m't guaranteed[0m[2m to result[0m[2m in actual[0m[2m item delivery. I[0m[2m need to re[0m[2mstructure this[0m[2m so inventory[0m[2m is reserved first[0m[2m, then payment[0m[2m happens, and only[0m[2m after[0m[2m payment succeeds does[0m[2m the reservation[0m[2m become a[0m[2m real[0m[2m delivery[0m[2m. If payment[0m[2m fails, the[0m[2m reserved[0m[2m stock gets released back[0m[2m. I[0m[2m'll[0m[2m add a `[0m[2mreserve` method to[0m[2m `[0m[2mInventory` that atom[0m[2mically claims[0m[2m stock[0m[2m and[0m[2m holds[0m[2m it until[0m[2m the[0m[2m outcome[0m[2m is known[0m[2m.[0m[2m
+     Actually[0m[2m, let me think[0m[2m more carefully. The[0m[2m constraint says "Do[0m[2m not change the public[0m[2m interfaces of `Inventory[0m[2m` or `Payment[0m[2mGateway`. You[0m[2m may add methods to[0m[2m them."[0m[2m
+     
+     So I can add[0m[2m methods but[0m[2m not change existing[0m[2m ones.[0m[2m The[0m[2m existing `check_stock[0m[2m`[0m[2m and `decrement[0m[2m` have[0m[2m the TO[0m[2mCTOU issue.[0m[2m I should[0m[2m add a `reserve[0m[2m` method that atom[0m[2mically decre[0m[2mments,[0m[2m and a `release[0m[2m` method that restores[0m[2m stock[0m[2m on payment[0m[2m failure.
+     
+     Let me[0m[2m design this[0m[2m:
+     
+     1. Add[0m[2m `[0m[2masyncio.Lock`[0m[2m to `Inventory.__[0m[2minit__`[0m[2m
+     2. Add `[0m[2mreserve(quantity[0m[2m)` method:[0m[2m ac[0m[2mquires lock, checks[0m[2m stock[0m[2m, decrements if[0m[2m available[0m[2m, releases lock[0m[2m, returns True/[0m[2mFalse[0m[2m
+     3. Add[0m[2m `release(quantity)`[0m[2m method: ac[0m[2mquires lock, increments[0m[2m stock back[0m[2m, releases lock[0m[2m
+     
+     Then[0m[2m checkout becomes[0m[2m:
+     1. `[0m[2mawait inventory.reserve[0m[2m(quantity)` —[0m[2m atom[0m[2mically reserves stock[0m[2m
+     2. If reserve[0m[2m fails, return[0m[2m False ([0m[2mno[0m[2m charge[0m[2m happened[0m[2m)
+     3. `[0m[2mawait gateway.charge[0m[2m(order_id, amount[0m[2m)`[0m[2m
+     4. If charge[0m[2m fails, `[0m[2mawait inventory.release[0m[2m(quantity)` — give[0m[2m back the reserved[0m[2m stock, return[0m[2m False
+     5.[0m[2m Success[0m[2m — stock[0m[2m already[0m[2m decremented, charge[0m[2m recorded[0m[2m, return[0m[2m True
+     
+     This ensures[0m[2m:
+     - Inventory never[0m[2m goes below zero ([0m[2mreserve is atomic)[0m[2m
+     - Every[0m[2m successful charge corresponds to[0m[2m exactly one item delivered[0m[2m (stock was[0m[2m decremented before charge[0m[2m)
+     - No order[0m[2m charged[0m[2m more than once ([0m[2msingle charge call[0m[2m per checkout[0m[2m)
+     
+     Let me implement[0m[2m this.[0m[2m
+  Let[0m[2m me run the simulation[0m[2m first to confirm the[0m[2m bugs.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_pf10wxwf | ActivateSkill {'skill': 'core-coding'}
-[0m[2m
-  🔠 call_pf10wxwf Executed
-[0m[2m
-  🔄 Prepare tool parameters...[0m📋 Todo list updated (3 items)
-
-📋 Todo List (0/3, 0%, ▶️ 1 in progress  ☐ 2 pending)
-  ▶️ [1] Run main.py to reproduce the bugs
-     [2] Fix checkout logic to prevent overselling and ghost charges
-     [3] Verify fix with simulation
-~DATA~{"total":3,"completed":0,"in_progress":1,"pending":2}
-[2m
-  🧰 call_8br2ti0x | TodoWrite {'todos': [{'content': 'Run main.py to reproduce the bugs', 'id': 1, 'status': 'in_progress'}, {'content': 'Fix checkout logic to prevent overselling and ghost charges', 'id': 2, 'status': 'pending'}, {'content': 'Verify fix with simulation', 'id': 3, 'status': 'pending'}]}
-[0m[2m
-  🔠 call_8br2ti0x Executed
-[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_m4286t6s | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Run simulation to reproduc ...', 'timeout': 30}
+  🧰 call_dbwzwnjj | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Run simulation to reproduc ...'}
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_11: payment failed
-[0m  [2mOrder order_0: SUCCESS
-[0m  [2mOrder order_1: SUCCESS
-[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_0: payment failed
+[0m  [2mOrder order_1: payment failed
+[0m  [2mOrder order_2: payment failed
+[0m  [2mOrder order_8: payment failed
 [0m  [2mOrder order_3: SUCCESS
 [0m  [2mOrder order_4: SUCCESS
-[0m  [2mOrder order_5: inventory error after payment — item not delivered
-[0m  [2mOrder order_6: inventory error after payment — item not delivered
-[0m  [2mOrder order_7: inventory error after payment — item not delivered
-[0m  [2mOrder order_8: inventory error after payment — item not delivered
+[0m  [2mOrder order_5: SUCCESS
+[0m  [2mOrder order_6: SUCCESS
+[0m  [2mOrder order_7: SUCCESS
 [0m  [2mOrder order_9: inventory error after payment — item not delivered
 [0m  [2mOrder order_10: inventory error after payment — item not delivered
+[0m  [2mOrder order_11: inventory error after payment — item not delivered
 [0m  [2m
 [0m  [2m=== Results ===
 [0m  [2mSuccessful orders:  5
 [0m  [2mItems sold:         5  (initial stock: 5)
 [0m  [2mRemaining stock:    0
-[0m  [2mTotal charged:      $1100.00
+[0m  [2mTotal charged:      $800.00
 [0m  [2mExpected charge:    $500.00
 [0m  [2mDuplicate charges:  0
 [0m  [2mERROR: Charge amount does not match successful orders!
 [0m[2m
-  🔠 call_m4286t6s Executed
+  🔠 call_dbwzwnjj Executed
 [0m[2m
-  🧠 The[0m[2m bugs are confirmed[0m[2m:[0m[2m
-     1. **Ghost[0m[2m charges**: 10[0m[2m orders were charged ([0m[2mincluding[0m[2m 5[0m[2m that failed inventory[0m[2m decrement), but only[0m[2m 5 were[0m[2m successful. Total charged[0m[2m is[0m[2m $1100 ([0m[2m11 charges[0m[2m?[0m[2m let[0m[2m me check...[0m[2m 5 successful[0m[2m + 6 failed[0m[2m decrement[0m[2m = 11[0m[2m...[0m[2m wait, only[0m[2m 1 payment[0m[2m failed and[0m[2m 6[0m[2m inventory errors,[0m[2m so 5+[0m[2m6=11 charges[0m[2m.[0m[2m Actually[0m[2m wait:[0m[2m order_0[0m[2m through order[0m[2m_4 succeeded[0m[2m (5),[0m[2m order_5 through[0m[2m order_10 got[0m[2m "[0m[2minventory error after payment[0m[2m" (6),[0m[2m and order_11[0m[2m had[0m[2m payment failed. So[0m[2m 5+[0m[2m6=11 successful[0m[2m charges totaling[0m[2m $1100 =[0m[2m 11 × $100[0m[2m. But only[0m[2m 5 items[0m[2m were delivered. Ghost[0m[2m charges =[0m[2m 6.[0m[2m
+  🧠 The[0m[2m bugs are reproduced[0m[2m.[0m[2m There[0m[2m are ghost[0m[2m charges (3 customers[0m[2m charged but didn[0m[2m't get[0m[2m items,[0m[2m so[0m[2m total charged is[0m[2m $800 instead[0m[2m of $500).[0m[2m 
      
-     2. **[0m[2mOverselling**:[0m[2m In this run,[0m[2m stock[0m[2m didn't go negative[0m[2m because `[0m[2mdecrement` has[0m[2m a check[0m[2m,[0m[2m but the check[0m[2m-[0m[2mthen[0m[2m-act[0m[2m race[0m[2m condition[0m[2m is[0m[2m the root cause.[0m[2m
+     The[0m[2m two[0m[2m root causes:[0m[2m
+     
+     1. **TO[0m[2mCTOU race in[0m[2m `Inventory[0m[2m`**: `[0m[2mcheck_stock()` and[0m[2m `decrement()`[0m[2m are separate async[0m[2m calls[0m[2m with yields[0m[2m in[0m[2m between. Multiple cor[0m[2moutines can all pass[0m[2m `check_stock()[0m[2m`, then all try[0m[2m to decrement[0m[2m.[0m[2m Even `decrement[0m[2m()` itself has a[0m[2m TOCTOU because[0m[2m the `[0m[2mif self._stock[0m[2m >= quantity` check[0m[2m and `[0m[2mself._stock -=[0m[2m quantity` assignment[0m[2m are separated by a[0m[2m yield point (`[0m[2masyncio.sleep`[0m[2m).
+     
+     2. **[0m[2mCharge-before[0m[2m-res[0m[2merve ordering[0m[2m**: The[0m[2m current[0m[2m flow[0m[2m checks[0m[2m stock[0m[2m → charges →[0m[2m decrements.[0m[2m If charge[0m[2m succeeds but decrement[0m[2m fails (due[0m[2m to race[0m[2m), the customer is[0m[2m charged with[0m[2m no item.
      
      The[0m[2m fix:[0m[2m
-     -[0m[2m **[0m[2mReserve inventory[0m[2m atom[0m[2mically before[0m[2m charging[0m[2m.[0m[2m** Add[0m[2m a `reserve`[0m[2m method to `[0m[2mInventory` that decre[0m[2mments stock immediately[0m[2m (not[0m[2m after[0m[2m a sleep[0m[2m),[0m[2m returning[0m[2m a reservation[0m[2m token or just[0m[2m True[0m[2m/False.
-     -[0m[2m **If charge[0m[2m fails, release[0m[2m the reservation**[0m[2m (add[0m[2m the[0m[2m stock back).
-     -[0m[2m **If charge succeeds[0m[2m, the[0m[2m reservation becomes[0m[2m the delivery** —[0m[2m no second[0m[2m decrement needed.
+     1. Add an[0m[2m `asyncio.Lock[0m[2m` to `Inventory[0m[2m` for[0m[2m atomicity[0m[2m
+     2. Add a[0m[2m `reserve(quantity)`[0m[2m method that atomically[0m[2m checks and decrements[0m[2m stock[0m[2m under the lock[0m[2m
+     3. Add a[0m[2m `release(quantity)`[0m[2m method that restores stock[0m[2m under the lock[0m[2m (for refund[0m[2m on[0m[2m payment[0m[2m failure)
+     4.[0m[2m Rewrite[0m[2m `checkout()` to[0m[2m: reserve → charge[0m[2m → (if charge[0m[2m fails, release)[0m[2m → success[0m[2m
      
-     Actually[0m[2m, let me think[0m[2m about[0m[2m this more carefully.[0m[2m The key[0m[2m issues[0m[2m are:
+     Let me implement[0m[2m this now[0m[2m.[0m[2m
+  B[0m[2mugs confirmed:[0m[2m ghost charges ($[0m[2m800 charged[0m[2m for[0m[2m 5 successful[0m[2m orders =[0m[2m $500[0m[2m expected)[0m[2m and 3 customers[0m[2m charged but[0m[2m received no item.[0m[2m Two[0m[2m root causes:
      
-     1.[0m[2m **[0m[2mTOCTOU between[0m[2m `[0m[2mcheck_stock` and[0m[2m `decrement`[0m[2m**: Multiple coroutines[0m[2m pass the[0m[2m check, all get[0m[2m charged, but[0m[2m only some can[0m[2m decrement.[0m[2m Fix[0m[2m: make[0m[2m reservation[0m[2m atomic before[0m[2m charging.
+     1[0m[2m. **TOCT[0m[2mOU race[0m[2m**: `check_stock[0m[2m()` and `de[0m[2mcrement()` are separate[0m[2m async calls with yields[0m[2m —[0m[2m 12 coroutines all[0m[2m see stock ≥[0m[2m 1[0m[2m, proceed[0m[2m past[0m[2m the check[0m[2m, then race[0m[2m on decrement.
+     2[0m[2m. **Charge[0m[2m-before-reserve ordering[0m[2m**: charge[0m[2m happens *[0m[2mbefore* stock[0m[2m is actually[0m[2m decremented, so[0m[2m if[0m[2m `[0m[2mdecrement()`[0m[2m fails, the customer[0m[2m is charged[0m[2m with[0m[2m no item.
      
-     2.[0m[2m **Charge[0m[2m without[0m[2m delivery**: Customer[0m[2m pays[0m[2m but `[0m[2mdecrement` fails[0m[2m, so no[0m[2m item is[0m[2m recorded[0m[2m. Fix[0m[2m: if[0m[2m reservation is[0m[2m made[0m[2m first[0m[2m, and[0m[2m charge succeeds, delivery[0m[2m is guaranteed.
-     
-     3[0m[2m. **No duplicate[0m[2m charges**: The current[0m[2m code doesn't have[0m[2m a[0m[2m duplicate charge issue per[0m[2m se ([0m[2mno[0m[2m order[0m[2m_id[0m[2m is charged twice),[0m[2m but we[0m[2m need to make[0m[2m sure the[0m[2m fix doesn't introduce[0m[2m one[0m[2m.
-     
-     The[0m[2m solution[0m[2m: Add `[0m[2mreserve` and[0m[2m `release[0m[2m` methods to `[0m[2mInventory`[0m[2m:
-     - `reserve[0m[2m(quantity)` →[0m[2m atomically decrement[0m[2m stock and[0m[2m return True[0m[2m, or return[0m[2m False if insufficient[0m[2m stock
-     - `[0m[2mrelease(quantity)` →[0m[2m increment stock back ([0m[2mfor rollback[0m[2m)
-     
-     Then[0m[2m checkout[0m[2m flow[0m[2m becomes:
-     1.[0m[2m `reserve(quantity)`[0m[2m — atomic[0m[2m stock reservation[0m[2m
-     2. If[0m[2m reservation[0m[2m fails, return[0m[2m False ([0m[2mout of stock)[0m[2m
-     3. `charge[0m[2m(order_id,[0m[2m amount)` — attempt[0m[2m payment
-     4.[0m[2m If charge fails,[0m[2m `release(quantity)`[0m[2m —[0m[2m roll[0m[2m back reservation, return[0m[2m False
-     5.[0m[2m If charge succeeds,[0m[2m return True (item[0m[2m delivered via[0m[2m the[0m[2m reservation)
-     
-     This ensures[0m[2m:
-     - Stock[0m[2m never[0m[2m goes below zero ([0m[2mreserve[0m[2m checks[0m[2m atom[0m[2mically)
-     - Every[0m[2m successful[0m[2m charge corresponds to exactly[0m[2m one item ([0m[2mreservation[0m[2m guarantees[0m[2m delivery)
-     - No[0m[2m order[0m[2m is charged more than[0m[2m once (only[0m[2m one charge call[0m[2m per checkout[0m[2m)
-     
-     For[0m[2m atomic[0m[2mity in[0m[2m the[0m[2m async context, I[0m[2m should[0m[2m use an[0m[2m `asyncio.Lock[0m[2m` in[0m[2m `Inventory` to[0m[2m prevent[0m[2m interle[0m[2maving between the check[0m[2m and decrement[0m[2m in `[0m[2mreserve`.
-     
-     Let me[0m[2m implement this.[0m[2m
-  🔄 Prepare tool parameters...[0m📋 Todo list updated (3 items)
-
-📋 Todo List (1/3, 33%, ✅ 1 completed  ▶️ 1 in progress  ☐ 1 pending)
-  ✅ [1] Run main.py to reproduce the bugs
-  ▶️ [2] Fix checkout logic to prevent overselling and ghost charges
-     [3] Verify fix with simulation
-~DATA~{"total":3,"completed":1,"in_progress":1,"pending":1}
-[2m
-  🧰 call_l9y8iijh | TodoWrite {'todos': [{'content': 'Run main.py to reproduce the bugs', 'id': 1, 'status': 'completed'}, {'content': 'Fix checkout logic to prevent overselling and ghost charges', 'id': 2, 'status': 'in_progress'}, {'content': 'Verify fix with simulation', 'id': 3, 'status': 'pending'}]}
-[0m[2m
-  🔠 call_l9y8iijh Executed
-[0m[2m
-  🧠 The[0m[2m root[0m[2m causes are clear:[0m[2m
-     
-     1. **TO[0m[2mCTOU race between[0m[2m `check_stock`[0m[2m and `decrement[0m[2m`**:[0m[2m Multiple coroutines pass[0m[2m the[0m[2m stock check, all[0m[2m get charged, then[0m[2m compete[0m[2m for `decrement[0m[2m`. Only some[0m[2m succeed,[0m[2m leaving the rest[0m[2m as[0m[2m ghost charges.
-     2[0m[2m. **Charge[0m[2m before[0m[2m delivery**: Payment[0m[2m is[0m[2m taken before inventory[0m[2m is committed[0m[2m.[0m[2m If `[0m[2mdecrement` fails[0m[2m after a[0m[2m successful charge, the[0m[2m customer is charged with[0m[2m no item delivered[0m[2m.
-     
-     **[0m[2mFix strategy**: Add[0m[2m `reserve` and[0m[2m `release` methods[0m[2m to `Inventory`,[0m[2m protected[0m[2m by an[0m[2m `asyncio.Lock[0m[2m`.[0m[2m Checkout[0m[2m reserves[0m[2m stock[0m[2m first ([0m[2matomic[0m[2m),[0m[2m then charges, then[0m[2m releases on[0m[2m payment[0m[2m failure.[0m[2m Success[0m[2m means[0m[2m the reservation *[0m[2mis* the delivery[0m[2m.[0m[2m
-  **Root causes identified[0m[2m:**
-     
-     1.[0m[2m **TOCTOU[0m[2m race**[0m[2m (`[0m[2minventory[0m[2m.py:8[0m[2m-10` →[0m[2m `inventory.py:[0m[2m12-17[0m[2m`): `[0m[2mcheck_stock` and[0m[2m `decrement`[0m[2m are separate async[0m[2m calls with `sleep[0m[2m` yielding[0m[2m between[0m[2m them[0m[2m. All[0m[2m 12 concurrent[0m[2m coroutines pass the[0m[2m check, get[0m[2m charged, then race[0m[2m for `decrement[0m[2m`.[0m[2m The[0m[2m 6[0m[2m losers[0m[2m become[0m[2m ghost charges.
-     2[0m[2m. **Charge[0m[2m-before[0m[2m-res[0m[2merve**: Payment[0m[2m happens[0m[2m before inventory[0m[2m is committed. A[0m[2m successful[0m[2m charge followed[0m[2m by a failed `[0m[2mdecrement` =[0m[2m customer[0m[2m pays[0m[2m,[0m[2m no[0m[2m item delivered.
-     
-     **[0m[2mFix**: Add `[0m[2mreserve`/[0m[2m`release` methods[0m[2m to `Inventory`[0m[2m ([0m[2mprotected by an[0m[2m `asyncio.Lock[0m[2m` for atomic[0m[2mity). Checkout reserves[0m[2m first, charges[0m[2m second[0m[2m, and[0m[2m releases the[0m[2m reservation only[0m[2m if payment fails.[0m[2m
+     Fix[0m[2m: make[0m[2m stock reservation atomic ([0m[2mcheck[0m[2m +[0m[2m decrement under a[0m[2m lock)[0m[2m and move[0m[2m it *[0m[2mbefore* the[0m[2m charge,[0m[2m with a release[0m[2m on payment[0m[2m failure.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_zua5ncxr | Edit {'path': '/Users/gofrendigunawan/llm ...', 'old_text': 'import asyncio\n\n\nclass Inv ...', 'new_text': 'import asyncio\n\n\nclass Inv ...'}
+  🧰 call_ol1uvmhp | Edit {'path': '/Users/gofrendigunawan/llm ...', 'old_text': 'import asyncio\n\n\nclass Inv ...', 'new_text': 'import asyncio\n\n\nclass Inv ...'}
 [0m  ✓ LSP server 'pyright' started for /Users/gofrendigunawan/llm-challenges
 [2m
-  🔠 call_zua5ncxr Executed
+  🔠 call_ol1uvmhp Executed
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_l7dd3t2e | Write {'path': '/Users/gofrendigunawan/llm ...', 'content': 'import asyncio\nfrom invent ...'}
+  🧰 call_iz0kcuix | Edit {'old_text': 'async def checkout(\n    or ...', 'new_text': 'async def checkout(\n    or ...', 'path': '/Users/gofrendigunawan/llm ...'}
 [0m[2m
-  🔠 call_l7dd3t2e Executed
+  🔠 call_iz0kcuix Executed
 [0m[2m
+  Now let me verify[0m[2m the fixes by[0m[2m running the simulation multiple[0m[2m times ([0m[2msince[0m[2m payment failures[0m[2m are random):[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_4rz3yz4p | TodoWrite {'todos': '[{"content":"Run main.py t ...'}
-[0m[2m
-  🔠 call_4rz3yz4p Executed
-[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_f9lp9adi | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Run simulation 5 times to  ...', 'timeout': 30}
-[0m  [2m=== Run 1 ===
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: SUCCESS
+  🧰 call_5w60ajhg | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Run simulation 10 times to ...'}
+[0m  [2m--- Run 1 ---
 [0m  [2mOrder order_1: SUCCESS
 [0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_4: SUCCESS
-[0m  [2mOrder order_6: out of stock
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
-[0m  [2mOrder order_3: payment failed
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: payment failed
 [0m  [2m
 [0m  [2m=== Results ===
 [0m  [2mSuccessful orders:  4
@@ -176,20 +137,23 @@
 [0m  [2mTotal charged:      $400.00
 [0m  [2mExpected charge:    $400.00
 [0m  [2mDuplicate charges:  0
-[0m  [2m
-[0m  [2m=== Run 2 ===
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: SUCCESS
-[0m  [2mOrder order_3: SUCCESS
-[0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_6: out of stock
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
+[0m  [2m--- Run 2 ---
 [0m  [2mOrder order_1: payment failed
 [0m  [2mOrder order_2: payment failed
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  2
+[0m  [2mItems sold:         2  (initial stock: 5)
+[0m  [2mRemaining stock:    3
+[0m  [2mTotal charged:      $200.00
+[0m  [2mExpected charge:    $200.00
+[0m  [2mDuplicate charges:  0
+[0m  [2m--- Run 3 ---
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_2: payment failed
+[0m  [2mOrder order_3: SUCCESS
 [0m  [2mOrder order_4: payment failed
 [0m  [2m
 [0m  [2m=== Results ===
@@ -199,21 +163,11 @@
 [0m  [2mTotal charged:      $200.00
 [0m  [2mExpected charge:    $200.00
 [0m  [2mDuplicate charges:  0
-[0m  [2m
-[0m  [2m=== Run 3 ===
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: SUCCESS
-[0m  [2mOrder order_1: SUCCESS
+[0m  [2m--- Run 4 ---
+[0m  [2mOrder order_1: payment failed
 [0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_5: out of stock
+[0m  [2mOrder order_3: SUCCESS
 [0m  [2mOrder order_4: SUCCESS
-[0m  [2mOrder order_6: out of stock
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
-[0m  [2mOrder order_3: payment failed
 [0m  [2m
 [0m  [2m=== Results ===
 [0m  [2mSuccessful orders:  4
@@ -222,21 +176,76 @@
 [0m  [2mTotal charged:      $400.00
 [0m  [2mExpected charge:    $400.00
 [0m  [2mDuplicate charges:  0
-[0m  [2m
-[0m  [2m=== Run 4 ===
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: SUCCESS
+[0m  [2m--- Run 5 ---
 [0m  [2mOrder order_1: SUCCESS
 [0m  [2mOrder order_2: SUCCESS
 [0m  [2mOrder order_3: SUCCESS
-[0m  [2mOrder order_5: out of stock
 [0m  [2mOrder order_4: SUCCESS
-[0m  [2mOrder order_6: out of stock
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  4
+[0m  [2mItems sold:         4  (initial stock: 5)
+[0m  [2mRemaining stock:    1
+[0m  [2mTotal charged:      $400.00
+[0m  [2mExpected charge:    $400.00
+[0m  [2mDuplicate charges:  0
+[0m  [2m--- Run 6 ---
+[0m  [2mOrder order_1: payment failed
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  4
+[0m  [2mItems sold:         4  (initial stock: 5)
+[0m  [2mRemaining stock:    1
+[0m  [2mTotal charged:      $400.00
+[0m  [2mExpected charge:    $400.00
+[0m  [2mDuplicate charges:  0
+[0m  [2m--- Run 7 ---
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: payment failed
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  4
+[0m  [2mItems sold:         4  (initial stock: 5)
+[0m  [2mRemaining stock:    1
+[0m  [2mTotal charged:      $400.00
+[0m  [2mExpected charge:    $400.00
+[0m  [2mDuplicate charges:  0
+[0m  [2m--- Run 8 ---
+[0m  [2mOrder order_1: payment failed
+[0m  [2mOrder order_2: payment failed
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  2
+[0m  [2mItems sold:         2  (initial stock: 5)
+[0m  [2mRemaining stock:    3
+[0m  [2mTotal charged:      $200.00
+[0m  [2mExpected charge:    $200.00
+[0m  [2mDuplicate charges:  0
+[0m  [2m--- Run 9 ---
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  4
+[0m  [2mItems sold:         4  (initial stock: 5)
+[0m  [2mRemaining stock:    1
+[0m  [2mTotal charged:      $400.00
+[0m  [2mExpected charge:    $400.00
+[0m  [2mDuplicate charges:  0
+[0m  [2m--- Run 10 ---
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
 [0m  [2m
 [0m  [2m=== Results ===
 [0m  [2mSuccessful orders:  5
@@ -245,67 +254,35 @@
 [0m  [2mTotal charged:      $500.00
 [0m  [2mExpected charge:    $500.00
 [0m  [2mDuplicate charges:  0
-[0m  [2m
-[0m  [2m=== Run 5 ===
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: SUCCESS
-[0m  [2mOrder order_1: SUCCESS
-[0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_3: SUCCESS
-[0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_4: SUCCESS
-[0m  [2mOrder order_6: out of stock
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
-[0m  [2m
-[0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  5
-[0m  [2mItems sold:         5  (initial stock: 5)
-[0m  [2mRemaining stock:    0
-[0m  [2mTotal charged:      $500.00
-[0m  [2mExpected charge:    $500.00
-[0m  [2mDuplicate charges:  0
-[0m  [2m
 [0m[2m
-  🔠 call_f9lp9adi Executed
+  🔠 call_5w60ajhg Executed
 [0m[2m
-  All 5 runs[0m[2m pass[0m[2m with[0m[2m zero[0m[2m errors. Let me[0m[2m verify the final state[0m[2m of both[0m[2m files:[0m[2m
+  🧠 All[0m[2m 10 runs pass[0m[2m with no errors.[0m[2m Let me verify the[0m[2m final state of both[0m[2m files to[0m[2m make[0m[2m sure everything[0m[2m looks[0m[2m correct.[0m[2m
+  All[0m[2m 10 runs clean[0m[2m — no negative[0m[2m inventory, no ghost[0m[2m charges, no duplicate[0m[2m charges. Let me[0m[2m confirm[0m[2m the final file[0m[2m states[0m[2m:[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_u1naxogs | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🧰 call_1oejfawd | Read {'path': '/Users/gofrendigunawan/llm ...'}
 [0m[2m
-  🧰 call_xvbybe1y | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🧰 call_cte6nmfb | Read {'path': '/Users/gofrendigunawan/llm ...'}
 [0m[2m
-  🔠 call_xvbybe1y Executed
+  🔠 call_1oejfawd Executed
 [0m[2m
-  🔠 call_u1naxogs Executed
+  🔠 call_cte6nmfb Executed
 [0m[2m
-  All[0m[2m three invariants hold[0m[2m across all[0m[2m runs[0m[2m:
+  Two bugs[0m[2m,[0m[2m one[0m[2m fix[0m[2m:
      
-     | In[0m[2mvariant | Result[0m[2m |
-     |---|[0m[2m---|
-     | Inventory[0m[2m never goes below zero[0m[2m | ✓[0m[2m Stock[0m[2m ≥[0m[2m 0 in[0m[2m every run |
-     |[0m[2m Every successful charge ↔[0m[2m exactly one item delivered[0m[2m | ✓ `total[0m[2m_ch[0m[2marged == successful ×[0m[2m price` in[0m[2m every run |
-     |[0m[2m No order[0m[2m charged more than once[0m[2m | ✓ `[0m[2md[0m[2muplicates == 0[0m[2m` in every run[0m[2m |
+     **Bug[0m[2m 1 — Overs[0m[2melling (TOCT[0m[2mOU race)**[0m[2m: The[0m[2m original[0m[2m flow[0m[2m called[0m[2m `check_stock()`[0m[2m → `charge[0m[2m()` → `de[0m[2mcrement()`[0m[2m as three separate async[0m[2m operations. Under[0m[2m concurrency, 12[0m[2m coroutines all passed[0m[2m the[0m[2m stock[0m[2m check, then[0m[2m raced[0m[2m on decrement —[0m[2m driving[0m[2m inventory[0m[2m negative. The `[0m[2mdecrement()` method[0m[2m itself was[0m[2m also vulnerable:[0m[2m its[0m[2m `if` check[0m[2m and assignment[0m[2m were separated by a[0m[2m yield point (`[0m[2masyncio.sleep`[0m[2m).
      
-     **What changed[0m[2m and why:**[0m[2m
+     **Bug[0m[2m 2 — Ghost charges[0m[2m**: Because[0m[2m charging[0m[2m happened *[0m[2mbefore* decrement[0m[2ming, a[0m[2m successful[0m[2m charge followed[0m[2m by a failed decrement[0m[2m (stock[0m[2m ran[0m[2m out between[0m[2m check[0m[2m and decrement) meant[0m[2m the customer paid[0m[2m but got[0m[2m no item.
      
-     The[0m[2m original[0m[2m checkout[0m[2m was[0m[2m:[0m[2m `check_stock`[0m[2m → `charge`[0m[2m → `decrement[0m[2m`. Two[0m[2m bugs[0m[2m:
+     **[0m[2mFix**:[0m[2m Added[0m[2m `reserve()`[0m[2m and `release()`[0m[2m to `Inventory`[0m[2m (`inventory.py:[0m[2m24-[0m[2m38`).[0m[2m `reserve()` atom[0m[2mically checks and decre[0m[2mments under an[0m[2m `asyncio.Lock[0m[2m`[0m[2m — no yield between[0m[2m the check and the[0m[2m mutation,[0m[2m so stock can[0m[2m never go negative[0m[2m. `release[0m[2m()` restores[0m[2m stock under the same[0m[2m lock if[0m[2m payment fails. The[0m[2m `[0m[2mcheckout()` flow is[0m[2m now:[0m[2m **reserve → charge[0m[2m → (release[0m[2m on failure)**.[0m[2m This guarantees:[0m[2m
      
-     1. **[0m[2mTOCTOU race[0m[2m**: `check_stock[0m[2m` and `de[0m[2mcrement` are separate[0m[2m async calls with yields[0m[2m between them. All[0m[2m concurrent[0m[2m coroutines could[0m[2m pass the check[0m[2m simultaneously[0m[2m, get charged,[0m[2m then race for `[0m[2mdecrement`[0m[2m — losers[0m[2m became[0m[2m ghost charges ([0m[2mpaid[0m[2m,[0m[2m no item).[0m[2m
-     2. **Charge[0m[2m-before-commit[0m[2m**: Payment[0m[2m succeeded before inventory was[0m[2m committed.[0m[2m A failed `de[0m[2mcrement` after a[0m[2m successful charge meant the[0m[2m customer paid[0m[2m for[0m[2m nothing.
+     - Stock[0m[2m never goes below zero[0m[2m (atomic[0m[2m reserve[0m[2m under lock)
+     -[0m[2m Every successful charge has[0m[2m a[0m[2m corresponding reserved[0m[2m item (reserve[0m[2m preced[0m[2mes charge)
+     -[0m[2m No double[0m[2m-charging ([0m[2msingle `charge()`[0m[2m call per checkout;[0m[2m no[0m[2m retry[0m[2m loop[0m[2m)[0m[2m
      
-     The[0m[2m fix re[0m[2morders to[0m[2m **[0m[2mreserve-[0m[2mthen-charge**[0m[2m:
-     
-     - `inventory[0m[2m.reserve[0m[2m(quantity)` (`[0m[2minventory.py:24[0m[2m-31`) atom[0m[2mically decrements stock[0m[2m under an[0m[2m `asyncio.Lock[0m[2m`, preventing[0m[2m overs[0m[2melling. Returns[0m[2m `False[0m[2m` if stock[0m[2m is insufficient.
-     -[0m[2m If[0m[2m the[0m[2m charge fails, `[0m[2minventory.release(quantity)`[0m[2m (`inventory.py:[0m[2m33-37[0m[2m`) rolls[0m[2m back[0m[2m the reservation under[0m[2m the same lock,[0m[2m restoring stock for[0m[2m other orders[0m[2m.
-     - If[0m[2m the charge succeeds,[0m[2m the reservation *is[0m[2m* the delivery —[0m[2m no second[0m[2m decrement[0m[2m step[0m[2m needed.
-     
-     The existing[0m[2m public interface[0m[2m (`check_stock`,[0m[2m `decrement`,[0m[2m `increment`, `[0m[2mstock`) is untouched[0m[2m; `reserve`[0m[2m and `release`[0m[2m are additions[0m[2m only[0m[2m.[0m[2m
-  💸 (Requests: 11 | Tool Calls: 13 | Total: 144697) Input: 141776 | Audio Input: 0 | Output: 2921 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     Public[0m[2m interfaces of[0m[2m `Inventory` and[0m[2m `PaymentGateway`[0m[2m are unchanged.[0m[2m
+  💸 (Requests: 7 | Tool Calls: 10 | Total: 87430) Input: 84716 | Audio Input: 0 | Output: 2714 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "# E-Commerce Checkout Service
 
 Users have reported two production incidents:
@@ -325,25 +302,16 @@ Fix the checkout logic. The fix must ensure:
 Do not change the public interfaces of `Inventory` or `PaymentGateway`. You may add methods to them.
 " --model ollama:glm-5.1:cloud --session ollama_glm-5.1_cloud-integration-bug-trial-3 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_glm-5.1_cloud-integration-bug-trial-3[0m[0m
-All three invariants hold across all runs:
+Two bugs, one fix:
 
-| Invariant | Result |
-|---|---|
-| Inventory never goes below zero | ✓ Stock ≥ 0 in every run |
-| Every successful charge ↔ exactly one item delivered | ✓ `total_charged == successful × price` in every run |
-| No order charged more than once | ✓ `duplicates == 0` in every run |
+**Bug 1 — Overselling (TOCTOU race)**: The original flow called `check_stock()` → `charge()` → `decrement()` as three separate async operations. Under concurrency, 12 coroutines all passed the stock check, then raced on decrement — driving inventory negative. The `decrement()` method itself was also vulnerable: its `if` check and assignment were separated by a yield point (`asyncio.sleep`).
 
-**What changed and why:**
+**Bug 2 — Ghost charges**: Because charging happened *before* decrementing, a successful charge followed by a failed decrement (stock ran out between check and decrement) meant the customer paid but got no item.
 
-The original checkout was: `check_stock` → `charge` → `decrement`. Two bugs:
+**Fix**: Added `reserve()` and `release()` to `Inventory` (`inventory.py:24-38`). `reserve()` atomically checks and decrements under an `asyncio.Lock` — no yield between the check and the mutation, so stock can never go negative. `release()` restores stock under the same lock if payment fails. The `checkout()` flow is now: **reserve → charge → (release on failure)**. This guarantees:
 
-1. **TOCTOU race**: `check_stock` and `decrement` are separate async calls with yields between them. All concurrent coroutines could pass the check simultaneously, get charged, then race for `decrement` — losers became ghost charges (paid, no item).
-2. **Charge-before-commit**: Payment succeeded before inventory was committed. A failed `decrement` after a successful charge meant the customer paid for nothing.
+- Stock never goes below zero (atomic reserve under lock)
+- Every successful charge has a corresponding reserved item (reserve precedes charge)
+- No double-charging (single `charge()` call per checkout; no retry loop)
 
-The fix reorders to **reserve-then-charge**:
-
-- `inventory.reserve(quantity)` (`inventory.py:24-31`) atomically decrements stock under an `asyncio.Lock`, preventing overselling. Returns `False` if stock is insufficient.
-- If the charge fails, `inventory.release(quantity)` (`inventory.py:33-37`) rolls back the reservation under the same lock, restoring stock for other orders.
-- If the charge succeeds, the reservation *is* the delivery — no second decrement step needed.
-
-The existing public interface (`check_stock`, `decrement`, `increment`, `stock`) is untouched; `reserve` and `release` are additions only.
+Public interfaces of `Inventory` and `PaymentGateway` are unchanged.

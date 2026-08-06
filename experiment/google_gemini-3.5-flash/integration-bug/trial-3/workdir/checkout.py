@@ -2,7 +2,6 @@ import asyncio
 from inventory import Inventory
 from payments import PaymentGateway
 
-# Track processed or processing order IDs to avoid duplicate charges
 _active_orders = set()
 _charged_orders = set()
 
@@ -42,7 +41,6 @@ async def checkout(
         if reserved and order_id not in _charged_orders:
             try:
                 await asyncio.shield(inventory.increment(quantity))
-            except asyncio.CancelledError:
+            except Exception:
                 pass
         _active_orders.discard(order_id)
-

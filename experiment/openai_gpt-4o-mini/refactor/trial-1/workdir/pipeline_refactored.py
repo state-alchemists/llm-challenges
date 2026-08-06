@@ -1,161 +1,128 @@
+import datetime
 import os
 import re
 import sqlite3
-import datetime
-from typing import List, Dict, Any
 
-# Load configurations from environment variables
+# Get configurations from environment variables
 DB_PATH = os.getenv("DB_PATH", "metrics.db")
 LOG_FILE = os.getenv("LOG_FILE", "server.log")
 DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
+DB_PORT = int(os.getenv("DB_PORT", 5432))
 DB_USER = os.getenv("DB_USER", "admin")
 DB_PASS = os.getenv("DB_PASS", "password123")
 
+# Function to parse log lines using regex
+def parse_log_line(line: str) -> dict[str, str]:
+    match = re.match(r"^(?P<date>\S+ \S+) (?P<level>\S+)(?P<message>.*)", line)
+    if match and isinstance(match.groupdict(), dict):
+        return match.groupdict() if match else {} if match else {} if match else {} if match else {}
+    return {}, {}
 
-def parse_log_line(line: str) -> Dict[str, Any]:
-    """
-    Parse a single log line and return its components.
-    
-    :param line: A line from the server log.
-    :return: A dictionary containing log details.
-    """
-    parts = line.split(" ")
-    if len(parts) < 3:
-        return {}
-    lvl = parts[2]
-    dt = "{} {}".format(parts[0], parts[1])
+from typing import Dict
 
-    if lvl == "ERROR":
-        message = " ".join(parts[3:]).strip()
-        return {"date": dt, "type": "ERR", "message": message}
-    elif lvl == "INFO":
-        if "User" in line:
-            uid = line.split("User ")[1].split(" ")[0]
-            action = line.split("User {} ".format(uid))[1].strip()
-            return {"date": dt, "type": "USR", "user": uid, "action": action}
-        elif "API" in line:
-            endpoint = line.split("API ")[1].split(" ")[0]
-            duration = line.split("took ")[1].split("ms")[0] if "took" in line else "0"
-            return {"date": dt, "type": "API", "endpoint": endpoint, "duration": int(duration)}
-    elif lvl == "WARN":
-        message = " ".join(parts[3:]).strip()
-        return {"date": dt, "type": "WARN", "message": message}
-    return {}
+# Function to process log file and return structured data
+def process_log() -> tuple[list[dict], dict, list[dict]]:
+    d_list = []  # List to hold error messages
+    sessions = {}  # Dictionary to hold active sessions
+    api_calls = []  # List to hold API call metrics
 
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r") as f:
+            for line in f:
+                parsed_line = parse_log_line(line)
+                if parsed_line:
+                    lvl = parsed_line['level']
+                    dt = parsed_line['date']
+                    msg = parsed_line['message'].strip()
+                    if lvl == "ERROR":
+                        d_list.append({"d": dt, "t": "ERR", "m": msg})
+                    elif lvl == "INFO":
+                        if "User" in msg:
+                            uid = re.search(r"User (\d+)", msg)
+                            if uid:
+                                uid = uid.group(1)
+                                action = msg.split("User " + uid)[1].strip()
+                                if "logged in" in action:
+                                    sessions[uid] = dt
+                                elif "logged out" in action and uid in sessions:
+                                    sessions.pop(uid)
+                                d_list.append({"d": dt, "t": "USR", "u": uid, "a": action})
+                        elif "API" in msg:
+                            endpoint = re.search(r"API (\S+)?", msg)
+                            dur = re.search(r"took (\d+)ms", msg)
+                            api_calls.append({
+                                "d": dt,
+                                "endpoint": endpoint.group(1) if endpoint else "unknown",
+                                "ms": int(dur.group(1)) if dur else 0
+                            })
+                    elif lvl == "WARN":
+                        d_list.append({"d": dt, "t": "WARN", "m": msg})
+    return d_list, {uid: sessions[uid] for uid in sessions}, api_calls
 
-def load_logs() -> List[Dict[str, Any]]:
-    """
-    Load and parse logs from the log file.
-    
-    :return: A list of dictionaries representing parsed log entries.
-    """
-    log_entries = []
-    if not os.path.exists(LOG_FILE):
-        return log_entries
-    with open(LOG_FILE, "r") as f:
-        for line in f:
-            entry = parse_log_line(line)
-            if entry:
-                log_entries.append(entry)
-    return log_entries
+# Function to insert error data into database
+def insert_error_data(connection: sqlite3.Connection, errors: dict):
+    cursor = connection.cursor()
+    for msg, count in errors.items():
+        cursor.execute("INSERT INTO errors VALUES (?, ?, ?)", (datetime.datetime.now(), msg, count))
+    connection.commit()
 
-
-def process_logs(log_entries: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Process log entries and extract relevant metrics.
-    
-    :param log_entries: A list of parsed log entries.
-    :return: A dictionary containing error counts, session details, and API latency.
-    """
-    error_counts = {}
-    sessions = {}
-    api_calls = []
-
-    for entry in log_entries:
-        if entry["type"] == "ERR":
-            msg = entry["message"]
-            error_counts[msg] = error_counts.get(msg, 0) + 1
-        elif entry["type"] == "USR":
-            uid = entry["user"]
-            dt = entry["date"]
-            if "logged in" in entry["action"]:
-                sessions[uid] = dt
-            elif "logged out" in entry["action"] and uid in sessions:
-                sessions.pop(uid)
-        elif entry["type"] == "API":
-            api_calls.append(entry)
-
+# Function to insert API metrics into database
+def insert_api_metrics(connection: sqlite3.Connection, api_calls: list[dict]):
+    cursor = connection.cursor()
     endpoint_stats = {}
     for call in api_calls:
         ep = call["endpoint"]
-        endpoint_stats.setdefault(ep, []).append(call["duration"])
-
-    return {
-        "error_counts": error_counts,
-        "sessions": sessions,
-        "endpoint_stats": endpoint_stats
-    }
-
-
-def save_to_database(metrics: Dict[str, Any]) -> None:
-    """
-    Save processed metrics to the database.
-    
-    :param metrics: A dictionary containing metrics to be saved.
-    """
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("CREATE TABLE IF NOT EXISTS errors (dt TEXT, message TEXT, count INTEGER)")
-    c.execute("CREATE TABLE IF NOT EXISTS api_metrics (dt TEXT, endpoint TEXT, avg_ms REAL)")
-
-    now = datetime.datetime.now()
-
-    for msg, count in metrics["error_counts"].items():
-        c.execute("INSERT INTO errors VALUES (?, ?, ?)", (now, msg, count))
-
-    for ep, times in metrics["endpoint_stats"].items():
+        endpoint_stats.setdefault(ep, []).append(call["ms"])
+    for ep, times in endpoint_stats.items():
         avg = sum(times) / len(times)
-        c.execute("INSERT INTO api_metrics VALUES (?, ?, ?)" , (now, ep, avg))
+        cursor.execute("INSERT INTO api_metrics VALUES (?, ?, ?)", (datetime.datetime.now(), ep, avg))
+    connection.commit()
 
-    conn.commit()
-    conn.close()
-
-
-def generate_report(metrics: Dict[str, Any]) -> None:
-    """
-    Generate an HTML report based on the metrics.
-    
-    :param metrics: A dictionary containing metrics for the report.
-    """
+# Function to generate HTML report
+def generate_report(errors: dict, api_calls: list[dict], sessions: dict) -> str:
     out = "<html>\n<head><title>System Report</title></head>\n<body>\n"
     out += "<h1>Error Summary</h1>\n<ul>\n"
-    for err_msg, count in metrics["error_counts"].items():
-        out += "<li><b>{}</b>: {} occurrences</li>\n".format(err_msg, count)
+    for err_msg, count in errors.items():
+        out += f"<li><b>{err_msg}</b>: {count} occurrences</li>\n"
     out += "</ul>\n"
 
     out += "<h2>API Latency</h2>\n<table border='1'>\n"
     out += "<tr><th>Endpoint</th><th>Avg (ms)</th></tr>\n"
-    for ep, times in metrics["endpoint_stats"].items():
-        avg = sum(times) / len(times)
-        out += "<tr><td>{}</td><td>{}</td></tr>\n".format(ep, round(avg, 1))
+    endpoint_stats = {call['endpoint']: call['ms'] for call in api_calls}
+    for ep, ms in endpoint_stats.items():
+        out += f"<tr><td>{ep}</td><td>{round(ms, 1)}</td></tr>\n"
     out += "</table>\n"
 
     out += "<h2>Active Sessions</h2>\n"
-    out += "<p>{} user(s) currently active</p>\n".format(len(metrics["sessions"]))
+    out += f"<p>{len(sessions)} user(s) currently active</p>\n"
     out += "</body>\n</html>"
+    return out
+
+# Main function to orchestrate ETL process
+def main():
+    print(f"Connecting to {DB_HOST}:{DB_PORT} as {DB_USER}...")
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("CREATE TABLE IF NOT EXISTS errors (dt TEXT, message TEXT, count INTEGER)")
+    conn.execute("CREATE TABLE IF NOT EXISTS api_metrics (dt TEXT, endpoint TEXT, avg_ms REAL)")
+
+    errors, sessions, api_calls = process_log()
+    error_counts = {msg: errors.count(msg) for msg in errors}
+    insert_error_data(conn, error_counts)
+    insert_api_metrics(conn, api_calls)
+    report = generate_report(error_counts, api_calls, sessions)
 
     with open("report.html", "w") as f:
-        f.write(out)
+        f.write(report)
 
-
-
-def proc_data():
-    log_entries = load_logs()
-    metrics = process_logs(log_entries)
-    save_to_database(metrics)
-    generate_report(metrics)
-
+    print("Job finished at " + str(datetime.datetime.now()))
 
 if __name__ == "__main__":
-    proc_data()
+    if not os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "w") as f:
+            f.write("2024-01-01 12:00:00 INFO User 42 logged in\n")
+            f.write("2024-01-01 12:05:00 ERROR Database timeout\n")
+            f.write("2024-01-01 12:05:05 ERROR Database timeout\n")
+            f.write("2024-01-01 12:08:00 INFO API /users/profile took 250ms\n")
+            f.write("2024-01-01 12:09:00 WARN Memory usage at 87%\n")
+            f.write("2024-01-01 12:10:00 INFO User 42 logged out\n")
+    main()

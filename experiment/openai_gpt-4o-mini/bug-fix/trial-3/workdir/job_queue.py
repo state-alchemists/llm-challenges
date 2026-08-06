@@ -1,6 +1,7 @@
 import asyncio
 from typing import Any, Dict, Optional
 
+
 class JobQueue:
     def __init__(self, max_retries: int = 3):
         self._jobs: Dict[int, Dict[str, Any]] = {}
@@ -22,10 +23,14 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
+                job["status"] = "processing"  # Immediately mark as processing
+                await asyncio.sleep(0.01)
+                return job
+        return None
+        for job in self._jobs.values():
+            if job["status"] == "pending":
                 await asyncio.sleep(0.01)
                 job["status"] = "processing"
-                if job["id"] in self._jobs and self._jobs[job["id"]]["status"] != "pending":
-                    return None
                 return job
         return None
 
@@ -34,6 +39,17 @@ class JobQueue:
         self._jobs[job_id]["result"] = result
 
     def fail(self, job_id: int, error: str) -> None:
+        # Logging the error for debugging
+        print(f"Job {job_id} failed with error: {error}. Retries: {self._jobs[job_id]['retries']}/{self.max_retries}.")
+        # Correctly retrieve job before handling failures. handling after updating the jobs.
+        job = self._jobs[job_id]
+        if job["retries"] < self.max_retries:
+            job["retries"] += 1
+            job["status"] = "pending"  # Re-queue for later processing
+        else:
+            job["status"] = "failed"
+            job["result"] = error
+        # Correctly retrieve job before handling failures. handling after updating the jobs.
         job = self._jobs[job_id]
         if job["retries"] < self.max_retries:
             job["retries"] += 1

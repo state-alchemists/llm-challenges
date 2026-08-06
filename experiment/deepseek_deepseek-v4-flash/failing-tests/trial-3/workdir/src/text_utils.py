@@ -17,7 +17,7 @@ def slugify(text: str) -> str:
     for char in text.lower():
         if char.isalnum():
             result_chars.append(char)
-        elif result_chars and result_chars[-1] != "-":
+        elif (char.isspace() or char == "-") and (not result_chars or result_chars[-1] != "-"):
             result_chars.append("-")
     return "".join(result_chars).strip("-")
 
@@ -29,4 +29,4 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_len:
         return text
-    return text[: max_len - len(suffix)] + suffix
+    return text[: max(0, max_len - len(suffix))] + suffix

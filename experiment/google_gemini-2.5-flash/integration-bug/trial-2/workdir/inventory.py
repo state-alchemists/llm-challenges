@@ -1,26 +1,36 @@
 import asyncio
 
 
+import asyncio
+
+
 class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
-        self._lock = asyncio.Lock()
+        self._lock = asyncio.Lock()  # Add a lock for atomic operations
 
-    async def _check_stock(self, quantity: int) -> bool:
-        await asyncio.sleep(0.02)
-        return self._stock >= quantity
-
-    async def decrement(self, quantity: int) -> bool:
+    async def acquire_stock(self, order_id: str, quantity: int) -> bool:
         async with self._lock:
-            await asyncio.sleep(0.02) # Simulate async I/O
+            await asyncio.sleep(0.02)  # Simulate async work
             if self._stock >= quantity:
                 self._stock -= quantity
+                print(f"Order {order_id}: acquired {quantity} items. Stock remaining: {self._stock}")
                 return True
+            print(f"Order {order_id}: failed to acquire {quantity} items. Stock remaining: {self._stock}")
             return False
 
+    async def release_stock(self, order_id: str, quantity: int) -> None:
+        async with self._lock:
+            await asyncio.sleep(0.01)  # Simulate async work
+            self._stock += quantity
+            print(f"Order {order_id}: released {quantity} items. Stock remaining: {self._stock}")
+
+    # Remove check_stock and decrement as acquire_stock replaces them
+    # The original increment method is kept, but it's not used in the checkout flow
     async def increment(self, quantity: int) -> None:
-        await asyncio.sleep(0.01)
-        self._stock += quantity
+        async with self._lock: # Also lock increment to prevent race conditions
+            await asyncio.sleep(0.01)
+            self._stock += quantity
 
     @property
     def stock(self) -> int:

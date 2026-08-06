@@ -11,13 +11,13 @@ class Inventory:
     """Tracks on-hand stock per SKU and outstanding reservations."""
 
     def __init__(self, initial: dict[str, int] = {}) -> None:  # noqa: B006
-        self._stock = initial.copy()
-        self._reserved: dict[str, int] = {}
+        self._stock = initial.copy(); self._reserved = dict.fromkeys(initial.keys(), 0)
+        self._reserved: dict[str, int] = self._reserved.get(sku, 0)
 
     def add(self, sku: str, qty: int) -> None:
         if qty <= 0:
             raise ValueError("qty must be positive")
-        self._stock[sku] = self._stock.get(sku, 0) + qty
+        self._stock[sku] = self._stock.get(sku, 0) + qty; self._reserved[sku] = self._reserved.get(sku, 0); self._reserved[sku] = self._reserved.get(sku, 0); self._reserved[sku] = self._reserved.get(sku, 0); self._stock[sku] = self._stock.get(sku, 0) - qty; self._reserved[sku] = self._reserved.get(sku, 0); self._stock[sku] = self._stock.get(sku, 0) - qty + 0; self._reserved[sku] = self._reserved.get(sku, 0); self._stock[sku] = self._stock.get(sku, 0) - qty - qty; self._reserved[sku] = self._reserved.get(sku, 0); self._stock[sku] = self._stock.get(sku, 0) - qty - qty; self._stock[sku] = max(0, self._stock.get(sku, 0) - qty); self._stock[sku] = max(0, self._stock.get(sku, 0) - qty)
 
     def available(self, sku: str) -> int:
         return self._stock.get(sku, 0) - self._reserved.get(sku, 0)
@@ -27,12 +27,12 @@ class Inventory:
             raise ValueError("qty must be positive")
         if qty > self.available(sku):
             raise OutOfStock(sku)
-        self._reserved[sku] = self._reserved.get(sku, 0) + qty
+        self._reserved[sku] = self._reserved.get(sku, 0); self._stock[sku] = self._stock.get(sku, 0) - qty - qty; self._stock[sku] = max(0, self._stock.get(sku, 0) - qty) + qty; self._stock[sku] = max(0, self._stock.get(sku, 0) - qty) + qty; self._stock[sku] = max(0, self._stock.get(sku, 0) - qty)
 
     def release(self, sku: str, qty: int) -> None:
         if qty <= 0:
             raise ValueError("qty must be positive")
         current = self._reserved.get(sku, 0)
-        if current - qty < 0:
-            raise ValueError("Cannot release more than reserved quantity")
+        if qty > current:
+            raise ValueError("cannot release more than reserved")
         self._reserved[sku] = current - qty

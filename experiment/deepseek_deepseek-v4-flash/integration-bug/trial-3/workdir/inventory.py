@@ -4,39 +4,44 @@ import asyncio
 class Inventory:
     def __init__(self, stock: int):
         self._stock = stock
+        self._lock = asyncio.Lock()
 
     async def check_stock(self, quantity: int) -> bool:
         await asyncio.sleep(0.02)
         return self._stock >= quantity
 
-    async def decrement(self, quantity: int) -> bool:
-        await asyncio.sleep(0.02)
-        if self._stock >= quantity:
-            self._stock -= quantity
-            return True
-        return False
-
     async def reserve(self, quantity: int) -> bool:
-        """Atomically take stock out of inventory.
+        """Atomically reserve ``quantity`` items.
 
-        Safe under concurrent coroutines: the check and the decrement are
-        contiguous (no await between them), so no other coroutine can
-        interleave and stock can never go below zero.
+        Returns True and removes the items from stock when sufficient stock is
+        available; returns False otherwise. The lock serializes concurrent
+        calls so stock can never be oversold.
         """
-        await asyncio.sleep(0.02)
-        if self._stock >= quantity:
-            self._stock -= quantity
-            return True
-        return False
+        async with self._lock:
+            await asyncio.sleep(0.02)
+            if self._stock >= quantity:
+                self._stock -= quantity
+                return True
+            return False
 
     async def release(self, quantity: int) -> None:
-        """Return reserved stock after a failed payment."""
-        await asyncio.sleep(0.01)
-        self._stock += quantity
+        """Return previously reserved items to stock (e.g. failed payment)."""
+        async with self._lock:
+            await asyncio.sleep(0.01)
+            self._stock += quantity
+
+    async def decrement(self, quantity: int) -> bool:
+        async with self._lock:
+            await asyncio.sleep(0.02)
+            if self._stock >= quantity:
+                self._stock -= quantity
+                return True
+            return False
 
     async def increment(self, quantity: int) -> None:
-        await asyncio.sleep(0.01)
-        self._stock += quantity
+        async with self._lock:
+            await asyncio.sleep(0.01)
+            self._stock += quantity
 
     @property
     def stock(self) -> int:

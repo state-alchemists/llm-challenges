@@ -14,9 +14,9 @@ async def list_projects():
 
 @app.get("/tasks", response_model=List[Task])
 async def list_tasks(
-    status: Optional[TaskStatus] = Query(default=None),
-    priority: Optional[int] = Query(default=None),
-    assigned_to: Optional[str] = Query(default=None),
+    status: Optional[TaskStatus] = None,
+    priority: Optional[int] = None,
+    assigned_to: Optional[str] = None,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1),
 ):
@@ -34,13 +34,13 @@ async def list_tasks(
 
 
 @app.post("/tasks", response_model=Task, status_code=201)
-async def create_task(task: TaskCreate, user: str = Depends(require_api_key)):
-    project = next((p for p in projects if p.id == task.project_id), None)
-    if project is None:
+async def create_task(task_create: TaskCreate, user: str = Depends(require_api_key)):
+    project_exists = any(p.id == task_create.project_id for p in projects)
+    if not project_exists:
         raise HTTPException(status_code=404, detail="Project not found")
 
     new_id = max((t.id for t in tasks), default=0) + 1
-    new_task = Task(id=new_id, **task.model_dump())
+    new_task = Task(id=new_id, **task_create.model_dump())
     tasks.append(new_task)
     return new_task
 
@@ -54,18 +54,13 @@ async def get_task(task_id: int):
 
 
 @app.put("/tasks/{task_id}", response_model=Task)
-async def update_task(
-    task_id: int,
-    update: TaskUpdate,
-    user: str = Depends(require_api_key),
-):
+async def update_task(task_id: int, task_update: TaskUpdate, user: str = Depends(require_api_key)):
     for task in tasks:
         if task.id == task_id:
-            data = update.model_dump(exclude_unset=True)
-            updated = task.model_copy(update=data)
-            idx = tasks.index(task)
-            tasks[idx] = updated
-            return updated
+            update_data = task_update.model_dump(exclude_unset=True)
+            for field, value in update_data.items():
+                setattr(task, field, value)
+            return task
     raise HTTPException(status_code=404, detail="Task not found")
 
 

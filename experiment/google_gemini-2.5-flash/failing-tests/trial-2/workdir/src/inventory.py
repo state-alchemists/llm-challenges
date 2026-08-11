@@ -11,7 +11,7 @@ class Inventory:
     """Tracks on-hand stock per SKU and outstanding reservations."""
 
     def __init__(self, initial: dict[str, int] = {}) -> None:  # noqa: B006
-        self._stock = dict(initial)
+        self._stock = initial.copy() if initial else {}
         self._reserved: dict[str, int] = {}
 
     def add(self, sku: str, qty: int) -> None:

@@ -1,6 +1,7 @@
 import asyncio
 from typing import Any, Dict, Optional
 
+
 class JobQueue:
     def __init__(self, max_retries: int = 3):
         self._jobs: Dict[int, Dict[str, Any]] = {}
@@ -22,8 +23,8 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
-                job["status"] = "processing"
                 await asyncio.sleep(0.01)
+                job["status"] = "processing"
                 return job
         return None
 

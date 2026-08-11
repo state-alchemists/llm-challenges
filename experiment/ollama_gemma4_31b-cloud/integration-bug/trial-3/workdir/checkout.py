@@ -2,6 +2,7 @@ import asyncio
 from inventory import Inventory
 from payments import PaymentGateway
 
+
 async def checkout(
     order_id: str,
     quantity: int,
@@ -9,27 +10,20 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # To prevent overselling and ghost charges, we must ensure
-    # that stock is reserved before payment is attempted.
-    # If payment fails, we release the stock.
-    # If payment succeeds but stock decrement fails (which shouldn't happen if reserved),
-    # we must refund or handle the error.
-
-    # 1. Try to reserve/decrement stock first (Atomic check-and-set)
-    decremented = await inventory.decrement(quantity)
-    if not decremented:
+    # 1. Reserve stock first to prevent overselling
+    # We use decrement as a reservation here.
+    # Since it's now locked, it's atomic.
+    if not await inventory.decrement(quantity):
         print(f"Order {order_id}: out of stock")
         return False
 
-    # 2. Attempt payment
+    # 2. Charge the customer
     charged = await gateway.charge(order_id, quantity * price)
     if not charged:
-        print(f"Order {order_id}: payment failed")
-        # Restore stock since payment failed
+        # Rollback stock if payment fails
         await inventory.increment(quantity)
+        print(f"Order {order_id}: payment failed")
         return False
 
-    # Since we decremented stock BEFORE payment, and payment succeeded,
-    # the order is now successful.
     print(f"Order {order_id}: SUCCESS")
     return True

@@ -18,29 +18,36 @@ async def checkout(
         return False
 
     _active_orders.add(order_id)
-    reserved = False
+
     try:
+        # First, reserve the stock
         decremented = await inventory.decrement(quantity)
         if not decremented:
             print(f"Order {order_id}: out of stock")
             return False
-        reserved = True
 
-        charged = await gateway.charge(order_id, quantity * price)
+        try:
+            charged = await gateway.charge(order_id, quantity * price)
+        except Exception as e:
+            # If charging raises an exception, we must release the reserved stock
+            try:
+                await inventory.increment(quantity)
+            except Exception as inc_err:
+                print(f"Order {order_id}: failed to release stock after charge error: {inc_err}")
+            print(f"Order {order_id}: payment failed with error: {e}")
+            raise e
+
         if not charged:
+            # If charging failed, we must release the reserved stock
+            try:
+                await inventory.increment(quantity)
+            except Exception as inc_err:
+                print(f"Order {order_id}: failed to release stock after payment failure: {inc_err}")
             print(f"Order {order_id}: payment failed")
             return False
 
         _charged_orders.add(order_id)
         print(f"Order {order_id}: SUCCESS")
         return True
-    except Exception as e:
-        print(f"Order {order_id}: unexpected error: {e}")
-        return False
     finally:
-        if reserved and order_id not in _charged_orders:
-            try:
-                await asyncio.shield(inventory.increment(quantity))
-            except Exception:
-                pass
         _active_orders.discard(order_id)

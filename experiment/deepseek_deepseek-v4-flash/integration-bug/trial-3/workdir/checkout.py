@@ -10,14 +10,20 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # Reserve stock *before* charging so a charge is only ever made when the
-    # item can actually be delivered. Release the reservation if payment fails.
+    # Reserve the items first: a charge is only made once the stock is
+    # guaranteed, so the order can never oversell or charge without delivery.
     reserved = await inventory.reserve(quantity)
     if not reserved:
         print(f"Order {order_id}: out of stock")
         return False
 
-    charged = await gateway.charge(order_id, quantity * price)
+    try:
+        charged = await gateway.charge(order_id, quantity * price)
+    except Exception:
+        # Unexpected payment error — give the reserved items back.
+        await inventory.release(quantity)
+        raise
+
     if not charged:
         await inventory.release(quantity)
         print(f"Order {order_id}: payment failed")

@@ -11,11 +11,10 @@ class Inventory:
         return self._stock >= quantity
 
     async def reserve(self, quantity: int) -> bool:
-        """Atomically reserve ``quantity`` items.
+        """Atomically set aside `quantity` items.
 
-        Returns True and removes the items from stock when sufficient stock is
-        available; returns False otherwise. The lock serializes concurrent
-        calls so stock can never be oversold.
+        Returns True only if the stock could be decremented; the items are
+        held for the caller so a later charge cannot oversell or ghost.
         """
         async with self._lock:
             await asyncio.sleep(0.02)
@@ -25,7 +24,7 @@ class Inventory:
             return False
 
     async def release(self, quantity: int) -> None:
-        """Return previously reserved items to stock (e.g. failed payment)."""
+        """Return previously reserved items back to stock (e.g. payment failed)."""
         async with self._lock:
             await asyncio.sleep(0.01)
             self._stock += quantity

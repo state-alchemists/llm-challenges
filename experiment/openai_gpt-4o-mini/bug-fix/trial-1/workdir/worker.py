@@ -11,6 +11,7 @@ async def process_job(queue, worker_id: int) -> None:
         try:
             await asyncio.sleep(0.05)
 
+            # Introduce the check for job 'raise_error'
             if job["payload"].get("raise_error"):
                 raise RuntimeError(f"processing error for job {job['id']}")
 
@@ -18,12 +19,21 @@ async def process_job(queue, worker_id: int) -> None:
             print(f"[Worker {worker_id}] finished job {job['id']}")
         except Exception as e:
             print(f"[Worker {worker_id}] job {job['id']} failed: {e}")
-            # Call fail method on queue to mark the job as failed
-            # If a job fails, mark it as failed in the queue
-            queue.fail(job['id'], str(e))
-                                    # Call fail method on queue to mark the job as failed
-            # If a job fails, mark it as failed in the queue
-            queue.fail(job['id'], str(e))
-                                                    # Call fail method on queue to mark the job as failed
-            # If a job fails, mark it as failed in the queue
-            queue.fail(job['id'], str(e))
+            # Call fail method when an error occurs
+            queue.fail(job["id"], str(e))
+    while True:
+        job = await queue.dequeue()
+        if job is None:
+            return
+
+        print(f"[Worker {worker_id}] picked up job {job['id']}")
+        try:
+            await asyncio.sleep(0.05)
+
+            if job["payload"].get("raise_error"):
+                raise RuntimeError(f"processing error for job {job['id']}")
+
+            queue.complete(job["id"], f"processed by worker {worker_id}")
+            print(f"[Worker {worker_id}] finished job {job['id']}")
+        except Exception as e:
+            print(f"[Worker {worker_id}] job {job['id']} failed: {e}")

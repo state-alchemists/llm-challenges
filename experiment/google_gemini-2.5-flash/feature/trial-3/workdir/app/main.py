@@ -28,21 +28,27 @@ async def list_tasks(
     if assigned_to:
         filtered_tasks = [task for task in filtered_tasks if task.assigned_to == assigned_to]
 
-    # Pagination
     start_index = (page - 1) * page_size
     end_index = start_index + page_size
     return filtered_tasks[start_index:end_index]
 
 
+@app.get("/tasks/{task_id}", response_model=Task)
+async def get_task(task_id: int):
+    for task in tasks:
+        if task.id == task_id:
+            return task
+    raise HTTPException(status_code=404, detail="Task not found")
+
+
 @app.post("/tasks", response_model=Task, status_code=201)
 async def create_task(task: TaskCreate, api_key: str = Depends(require_api_key)):
-    # Validate project_id
-    if not any(p.id == task.project_id for p in projects):
+    project_exists = any(p.id == task.project_id for p in projects)
+    if not project_exists:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Generate unique ID
     new_id = max([t.id for t in tasks]) + 1 if tasks else 1
-    new_task = Task(id=new_id, **task.model_dump())
+    new_task = Task(id=new_id, **task.dict())
     tasks.append(new_task)
     return new_task
 
@@ -51,7 +57,7 @@ async def create_task(task: TaskCreate, api_key: str = Depends(require_api_key))
 async def update_task(task_id: int, task_update: TaskUpdate, api_key: str = Depends(require_api_key)):
     for idx, task in enumerate(tasks):
         if task.id == task_id:
-            updated_data = task_update.model_dump(exclude_unset=True)
+            updated_data = task_update.dict(exclude_unset=True)
             for key, value in updated_data.items():
                 setattr(tasks[idx], key, value)
             return tasks[idx]
@@ -63,13 +69,5 @@ async def delete_task(task_id: int, api_key: str = Depends(require_api_key)):
     for idx, task in enumerate(tasks):
         if task.id == task_id:
             del tasks[idx]
-            return {"message": "Task deleted successfully"}
-    raise HTTPException(status_code=404, detail="Task not found")
-
-
-@app.get("/tasks/{task_id}", response_model=Task)
-async def get_task(task_id: int):
-    for task in tasks:
-        if task.id == task_id:
-            return task
+            return
     raise HTTPException(status_code=404, detail="Task not found")

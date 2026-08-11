@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
+
 class OutOfStock(Exception):
     """Raised when a reservation would push stock negative."""
+
 
 class Inventory:
     """Tracks on-hand stock per SKU and outstanding reservations."""
 
     def __init__(self, initial: dict[str, int] = {}) -> None:  # noqa: B006
-        if initial is None:
-            initial = {}
-        self._stock = initial or {}
+        self._stock = initial.copy()
         self._reserved: dict[str, int] = {}
-
 
     def add(self, sku: str, qty: int) -> None:
         if qty <= 0:

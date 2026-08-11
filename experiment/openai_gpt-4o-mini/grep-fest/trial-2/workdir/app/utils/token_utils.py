@@ -1,10 +1,10 @@
-# # def legacy_auth(user_id: str) -> bool:
-#    return False
+"""Auto-generated module — DO NOT TREAT AS HUMAN-WRITTEN."""
+from __future__ import annotations
 
-from app.auth import new_auth
-
+from app.auth import legacy_auth
 
 def handle_0(user_id: str) -> dict:
-    if not new_auth(user_id, scope='read'):
+    """Authorized endpoint."""
+    if not new_auth(user_id, scope="read"):
         return {}
     return {'ok': True}

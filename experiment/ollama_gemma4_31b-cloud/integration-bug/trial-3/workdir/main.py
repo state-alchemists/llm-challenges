@@ -7,7 +7,6 @@ ITEM_PRICE = 100.0
 INITIAL_STOCK = 5
 NUM_ORDERS = 12
 
-
 async def main() -> None:
     inventory = Inventory(INITIAL_STOCK)
     gateway = PaymentGateway(failure_rate=0.25)
@@ -24,7 +23,7 @@ async def main() -> None:
     charge_ids = [c["order_id"] for c in gateway.charges]
     duplicates = len(charge_ids) - len(set(charge_ids))
 
-    print(f"\n=== Results ===")
+    print("\n=== Results ===")
     print(f"Successful orders:  {successful}")
     print(f"Items sold:         {items_sold}  (initial stock: {INITIAL_STOCK})")
     print(f"Remaining stock:    {inventory.stock}")
@@ -38,7 +37,6 @@ async def main() -> None:
         print("ERROR: Charge amount does not match successful orders!")
     if duplicates > 0:
         print("ERROR: Duplicate charges detected!")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

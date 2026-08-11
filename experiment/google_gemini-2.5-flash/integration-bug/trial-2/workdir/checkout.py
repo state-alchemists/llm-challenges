@@ -10,21 +10,21 @@ async def checkout(
     inventory: Inventory,
     gateway: PaymentGateway,
 ) -> bool:
-    # 1. Acquire stock first to prevent overselling
-    stock_acquired = await inventory.acquire_stock(order_id, quantity)
-    if not stock_acquired:
-        print(f"Order {order_id}: out of stock or failed to acquire")
+    available = await inventory.check_stock(quantity)
+    if not available:
+        print(f"Order {order_id}: out of stock")
         return False
 
-    # 2. Process payment
-    charged = await gateway.charge(order_id, quantity * price)
+    amount_to_charge = quantity * price
+    charged = await gateway.charge(order_id, amount_to_charge)
     if not charged:
-        # If payment fails, release the acquired stock
-        print(f"Order {order_id}: payment failed. Releasing stock.")
-        await inventory.release_stock(order_id, quantity)
+        print(f"Order {order_id}: payment failed")
         return False
 
-    # 3. If both stock acquired and payment successful, the order is a SUCCESS.
-    # The previous `decremented` step is now part of `acquire_stock`.
+    decremented = await inventory.decrement(quantity)
+    if not decremented:
+        print(f"Order {order_id}: inventory error after payment — item not delivered. Initiating refund.")
+        await gateway.refund(order_id, amount_to_charge)
+        return False
     print(f"Order {order_id}: SUCCESS")
     return True

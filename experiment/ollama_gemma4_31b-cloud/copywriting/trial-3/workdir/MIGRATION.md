@@ -1,11 +1,11 @@
 # Migrating to Zrb CLI v2
 
-Zrb CLI v2 introduces several breaking changes to improve API consistency, scalability, and security. This guide will help you migrate your existing v1 integrations to v2.
+Zrb CLI v2 introduces several breaking changes to improve scalability, security, and data organization. This guide will help you transition your integration from v1 to v2.
 
 ## Breaking Changes
 
-### 1. API Endpoint Versioning
-All endpoints are now prefixed with `/v2/`. Any requests sent to v1 endpoints will either be deprecated or return errors.
+### 1. Endpoint Prefixing
+All API endpoints have been versioned. You must now prefix your request paths with `/v2/`.
 
 **v1**
 `GET /tasks`
@@ -16,7 +16,7 @@ All endpoints are now prefixed with `/v2/`. Any requests sent to v1 endpoints wi
 ---
 
 ### 2. Authentication Header
-Authentication has moved from a custom header to the standard Bearer token format.
+We have moved from a custom auth token to the industry-standard Bearer token format.
 
 **v1**
 ```http
@@ -31,7 +31,7 @@ Authorization: Bearer <your_api_token>
 ---
 
 ### 3. Task ID Type Change
-Task IDs have transitioned from integers to UUID strings to support distributed scaling.
+Task IDs have changed from integers to UUID strings to prevent ID enumeration and improve distributed system reliability.
 
 **v1**
 ```json
@@ -51,29 +51,29 @@ Task IDs have transitioned from integers to UUID strings to support distributed 
 
 ---
 
-### 4. Field Rename: `done` → `completed`
-The boolean field `done` has been renamed to `completed` for better clarity.
+### 4. Field Rename: `done` $\rightarrow$ `completed`
+The `done` field has been renamed to `completed` for better clarity.
 
 **v1**
 ```json
 {
-  "title": "Ship v1",
-  "done": true
+  "title": "Write tests",
+  "done": false
 }
 ```
 
 **v2**
 ```json
 {
-  "title": "Ship v1",
-  "completed": true
+  "title": "Write tests",
+  "completed": false
 }
 ```
 
 ---
 
 ### 5. Required `project_id` for Task Creation
-Tasks must now be associated with a project. Providing a `project_id` is mandatory when creating tasks.
+Tasks must now be associated with a project. The `project_id` field is now required when creating a task.
 
 **v1**
 ```json
@@ -117,17 +117,18 @@ List endpoints no longer return a bare array. They now return a paginated envelo
 
 ## Migration Checklist
 
-- [ ] Update all API base URLs to include the `/v2/` prefix.
+- [ ] Update base URL or append `/v2/` to all task endpoints.
 - [ ] Update authentication logic to use the `Authorization: Bearer` header.
-- [ ] Update data models to handle UUID strings instead of integers for Task IDs.
-- [ ] Rename all occurrences of the `done` field to `completed` in request and response handlers.
-- [ ] Ensure `project_id` is passed during task creation.
-- [ ] Update list-fetching logic to parse the paginated envelope (`items` array) and handle `next_cursor` for pagination.
+- [ ] Update data models to handle `id` as a string (UUID) instead of an integer.
+- [ ] Rename all references of the `done` field to `completed`.
+- [ ] Update task creation logic to include a valid `project_id`.
+- [ ] Update list response handling to extract tasks from the `items` array in the new envelope.
+- [ ] Implement cursor-based pagination for large task lists.
 
 ## Upgrade Command
 
 To upgrade your CLI to the latest version, run:
 
 ```bash
-zrb upgrade --version v2
+zrb update --version v2
 ```

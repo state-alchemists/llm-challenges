@@ -1,79 +1,88 @@
 [2m
-  🧠 Let[0m[2m me start by understanding[0m[2m the codebase -[0m[2m reading[0m[2m the three files mentioned[0m[2m.[0m[2m
+  🧠 Let[0m[2m me start by understanding[0m[2m the codebase and[0m[2m the issues. I[0m[2m need to read the[0m[2m relevant[0m[2m files first[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_9ugu479l | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🧰 call_jd2m29qc | Read {'path': '/Users/gofrendigunawan/llm-...'}
 [0m[2m
-  🧰 call_bvio5r6f | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🧰 call_tjdpap4n | Read {'path': '/Users/gofrendigunawan/llm-...'}
 [0m[2m
-  🧰 call_j9tav92p | Read {'path': '/Users/gofrendigunawan/llm ...'}
+  🧰 call_ksfklb02 | Read {'path': '/Users/gofrendigunawan/llm-...'}
 [0m[2m
-  🔠 call_9ugu479l Executed
+  🔠 call_jd2m29qc Executed
 [0m[2m
-  🔠 call_bvio5r6f Executed
+  🔠 call_ksfklb02 Executed
 [0m[2m
-  🔠 call_j9tav92p Executed
+  🔠 call_tjdpap4n Executed
 [0m[2m
   🧠 Let[0m[2m me analyze the two[0m[2m bugs:
      
      **Bug[0m[2m 1: Duplicate[0m[2m processing**[0m[2m
+     In `Job[0m[2mQueue.dequeue()[0m[2m`, there's an[0m[2m `await asyncio.sleep[0m[2m(0.01[0m[2m)` between finding[0m[2m a[0m[2m "[0m[2mpending" job and[0m[2m setting its status to[0m[2m "processing". Since[0m[2m multiple workers run[0m[2m concurrently via `async[0m[2mio.gather`,[0m[2m a[0m[2m second[0m[2m worker can enter[0m[2m the `[0m[2mfor job in self[0m[2m._jobs.values()`[0m[2m loop, find the[0m[2m same job still[0m[2m in "pending"[0m[2m status (because the[0m[2m first worker[0m[2m hasn't changed[0m[2m it yet —[0m[2m it's sleeping),[0m[2m and also[0m[2m pick it up.[0m[2m This is a classic[0m[2m TO[0m[2mCTOU ([0m[2mtime-of-check[0m[2m-time-of[0m[2m-use) race condition[0m[2m.
      
-     In `de[0m[2mqueue()[0m[2m`, there's an[0m[2m `await asyncio.sleep[0m[2m(0.01[0m[2m)` between checking[0m[2m `[0m[2mjob[0m[2m["status"] ==[0m[2m "pending"` and[0m[2m setting `job["[0m[2mstatus"] = "[0m[2mprocessing"`. Since[0m[2m multiple workers run[0m[2m concurrently via[0m[2m `asyncio.g[0m[2mather`, when one[0m[2m worker hits[0m[2m the[0m[2m `await` in[0m[2m `dequeue`,[0m[2m control[0m[2m yields to another worker[0m[2m which[0m[2m can also find[0m[2m the same job still[0m[2m in "pending"[0m[2m status[0m[2m and[0m[2m start[0m[2m processing it too[0m[2m. This is a[0m[2m classic race[0m[2m condition —[0m[2m the status[0m[2m check and update[0m[2m must[0m[2m be atomic.
-     
-     Fix[0m[2m: Remove the `[0m[2mawait` between[0m[2m the check[0m[2m and the status[0m[2m update, or better[0m[2m yet, make the[0m[2m check[0m[2m-and-set[0m[2m atomic so[0m[2m no[0m[2m other[0m[2m coroutine can intervene[0m[2m.[0m[2m
+     The fix:[0m[2m Set[0m[2m the job[0m[2m's[0m[2m status to "processing[0m[2m" atom[0m[2mically before yielding[0m[2m control.[0m[2m The `await asyncio[0m[2m.sleep(0.[0m[2m01)` should come[0m[2m *[0m[2mafter* the[0m[2m status change, not[0m[2m before.[0m[2m
      
      **Bug 2[0m[2m: Vanishing failures[0m[2m**
+     In `worker[0m[2m.py`, when an[0m[2m exception is caught at[0m[2m line 19[0m[2m-20, the[0m[2m exception is only[0m[2m printed —[0m[2m `queue.fail[0m[2m()`[0m[2m is never called.[0m[2m So the job stays[0m[2m in "processing"[0m[2m status forever, and[0m[2m never[0m[2m transitions[0m[2m to "failed"[0m[2m or back[0m[2m to "pending"[0m[2m for retry.[0m[2m
      
-     In `process[0m[2m_job()`, the[0m[2m `[0m[2mexcept` block catches[0m[2m the exception and prints[0m[2m a[0m[2m message, but **[0m[2mnever calls `queue[0m[2m.fail()`**.[0m[2m So when[0m[2m a job raises[0m[2m an error[0m[2m, its[0m[2m status stays "processing[0m[2m" forever —[0m[2m it's never marked[0m[2m as "failed"[0m[2m and never re[0m[2m-[0m[2mqueued for retry.[0m[2m The job[0m[2m effectively[0m[2m vanishes from[0m[2m the queue's[0m[2m perspective.
+     The fix: Call[0m[2m `queue.fail(job[0m[2m["id"], str[0m[2m(e))` in[0m[2m the except block.[0m[2m
      
-     Fix[0m[2m: Add[0m[2m `queue.fail(job[0m[2m["id"], str[0m[2m(e))` in[0m[2m the except block.[0m[2m
-     
-     Let me now[0m[2m fix[0m[2m both issues[0m[2m.[0m[2m
+     Let me fix both[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m📋 Todo list updated (3 items)
 
 📋 Todo List (0/3, 0%, ▶️ 1 in progress  ☐ 2 pending)
-  ▶️ [1] Fix Bug 1: Race condition in dequeue() — await between status check and update allows duplicate pickup
-     [2] Fix Bug 2: Missing queue.fail() call in worker exception handler — jobs never marked failed or retried
-     [3] Run simulation to verify both fixes
+  ▶️ [1] Fix Bug 1: Race condition in dequeue() — await between check and state change allows duplicate pickup
+     [2] Fix Bug 2: worker.py never calls queue.fail() — failed jobs stay in 'processing' forever
+     [3] Verify fixes by running main.py simulation
 ~DATA~{"total":3,"completed":0,"in_progress":1,"pending":2}
 [2m
-  🧰 call_gutr9ebr | TodoWrite {'todos': [{'content': 'Fix Bug 1: Race condition in dequeue() — await between status check and update allows duplicate pickup', 'id': '1', 'status': 'in_progress'}, {'content': 'Fix Bug 2: Missing queue.fail() call in worker exception handler — jobs never marked failed or retried', 'id': '2', 'status': 'pending'}, {'content': 'Run simulation to verify both fixes', 'id': '3', 'status': 'pending'}]}
+  🧰 call_yu89a2ca | TodoWrite {'todos': [{'content': 'Fix Bug 1: Race condition in dequeue() — await between check and state change allows duplicate pickup', 'id': 1, 'status': 'in_progress'}, {'content': "Fix Bug 2: worker.py never calls queue.fail() — failed jobs stay in 'processing' forever", 'id': 2, 'status': 'pending'}, {'content': 'Verify fixes by running main.py simulation', 'id': 3, 'status': 'pending'}]}
 [0m[2m
-  🔠 call_gutr9ebr Executed
+  🔠 call_yu89a2ca Executed
 [0m[2m
-  Two root[0m[2m causes identified[0m[2m:
+  I've identified both[0m[2m root[0m[2m causes. Let me[0m[2m fix them.
      
-     1[0m[2m. **Duplicate processing[0m[2m**[0m[2m (`[0m[2mjob_queue.py:[0m[2m24[0m[2m-27[0m[2m`): `[0m[2mdequeue()` yields[0m[2m control[0m[2m via[0m[2m `await asyncio.sleep[0m[2m(0.01[0m[2m)` *[0m[2mafter[0m[2m* checking `[0m[2mstatus == "pending[0m[2m"` but *before[0m[2m* setting it[0m[2m to `"processing"[0m[2m`. Multiple workers can[0m[2m see[0m[2m the same job as[0m[2m pending[0m[2m and both pick[0m[2m it up.[0m[2m
+     **[0m[2mBug 1 —[0m[2m Duplicate processing:**[0m[2m In `JobQueue[0m[2m.dequeue()`, there[0m[2m's a[0m[2m `[0m[2mawait asyncio.sleep([0m[2m0.01)`[0m[2m *[0m[2mbetween* checking[0m[2m `job[0m[2m["status"] ==[0m[2m "pending"` and[0m[2m setting it to `"[0m[2mprocessing"[0m[2m`. When[0m[2m multiple workers are scheduled[0m[2m via[0m[2m `asyncio.g[0m[2mather`, they[0m[2m can all enter[0m[2m the loop,[0m[2m find the same job[0m[2m still "[0m[2mpending"[0m[2m (the first[0m[2m worker[0m[2m hasn't updated[0m[2m it yet), and[0m[2m all[0m[2m pick[0m[2m it up. The[0m[2m fix is[0m[2m to set[0m[2m the status to[0m[2m `"[0m[2mprocessing"`[0m[2m *before* yielding[0m[2m control with[0m[2m `[0m[2mawait`.
      
-     2. **Van[0m[2mishing failures** (`[0m[2mworker.py:19[0m[2m-20`):[0m[2m The `except`[0m[2m block catches the exception[0m[2m and prints it[0m[2m, but never calls[0m[2m `queue.fail()[0m[2m`. The[0m[2m job stays in `"[0m[2mprocessing"` forever —[0m[2m never[0m[2m retried, never[0m[2m marked `"failed"`[0m[2m.
-     
-     Fixing both[0m[2m now:[0m[2m
+     **Bug[0m[2m 2 — Van[0m[2mishing failures:** In[0m[2m `worker.py`,[0m[2m the `except`[0m[2m block only[0m[2m prints the error[0m[2m —[0m[2m it never calls `[0m[2mqueue.fail()`.[0m[2m So crashed[0m[2m jobs stay stuck[0m[2m in `"processing"`[0m[2m forever, never retr[0m[2mied and[0m[2m never marked `"[0m[2mfailed"[0m[2m`.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_evknkgpg | Edit {'path': '/Users/gofrendigunawan/llm ...', 'old_text': '    async def dequeue(self ...', 'new_text': '    async def dequeue(self ...'}
-[0m[2m
-  🧰 call_2ot1ja95 | Edit {'path': '/Users/gofrendigunawan/llm ...', 'old_text': '        except Exception a ...', 'new_text': '        except Exception a ...'}
+  🧰 call_0epnk611 | Edit {'path': '/Users/gofrendigunawan/llm-...', 'old_text': '    async def dequeue(self)...', 'new_text': '    async def dequeue(self)...'}
 [0m  ✓ LSP server 'pyright' started for /Users/gofrendigunawan/llm-challenges
 [2m
-  🔠 call_evknkgpg Executed
+  🔠 call_0epnk611 Executed
 [0m[2m
-  🔠 call_2ot1ja95 Executed
+  🔄 Prepare tool parameters...[0m📋 Todo list updated (3 items)
+
+📋 Todo List (1/3, 33%, ✅ 1 completed  ▶️ 1 in progress  ☐ 1 pending)
+  ✅ [1] Fix Bug 1: Race condition in dequeue() — await between check and state change allows duplicate pickup
+  ▶️ [2] Fix Bug 2: worker.py never calls queue.fail() — failed jobs stay in 'processing' forever
+     [3] Verify fixes by running main.py simulation
+~DATA~{"total":3,"completed":1,"in_progress":1,"pending":1}
+[2m
+  🧰 call_g0z5q6u8 | TodoWrite {'todos': [{'content': 'Fix Bug 1: Race condition in dequeue() — await between check and state change allows duplicate pickup', 'id': 1, 'status': 'completed'}, {'content': "Fix Bug 2: worker.py never calls queue.fail() — failed jobs stay in 'processing' forever", 'id': 2, 'status': 'in_progress'}, {'content': 'Verify fixes by running main.py simulation', 'id': 3, 'status': 'pending'}]}
+[0m[2m
+  🔠 call_g0z5q6u8 Executed
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_e1iv7yr7 | Edit {'path': '/Users/gofrendigunawan/llm-...', 'old_text': '        except Exception as...', 'new_text': '        except Exception as...'}
+[0m[2m
+  🔠 call_e1iv7yr7 Executed
 [0m[2m
   🔄 Prepare tool parameters...[0m📋 Todo list updated (3 items)
 
 📋 Todo List (2/3, 66%, ✅ 2 completed  ▶️ 1 in progress)
-  ✅ [1] Fix Bug 1: Race condition in dequeue() — await between status check and update allows duplicate pickup
-  ✅ [2] Fix Bug 2: Missing queue.fail() call in worker exception handler — jobs never marked failed or retried
-  ▶️ [3] Run simulation to verify both fixes
+  ✅ [1] Fix Bug 1: Race condition in dequeue() — await between check and state change allows duplicate pickup
+  ✅ [2] Fix Bug 2: worker.py never calls queue.fail() — failed jobs stay in 'processing' forever
+  ▶️ [3] Verify fixes by running main.py simulation
 ~DATA~{"total":3,"completed":2,"in_progress":1,"pending":0}
 [2m
-  🧰 call_a2xh1mg8 | TodoWrite {'todos': [{'content': 'Fix Bug 1: Race condition in dequeue() — await between status check and update allows duplicate pickup', 'id': '1', 'status': 'completed'}, {'content': 'Fix Bug 2: Missing queue.fail() call in worker exception handler — jobs never marked failed or retried', 'id': '2', 'status': 'completed'}, {'content': 'Run simulation to verify both fixes', 'id': '3', 'status': 'in_progress'}]}
+  🧰 call_y476gdal | TodoWrite {'todos': [{'content': 'Fix Bug 1: Race condition in dequeue() — await between check and state change allows duplicate pickup', 'id': 1, 'status': 'completed'}, {'content': "Fix Bug 2: worker.py never calls queue.fail() — failed jobs stay in 'processing' forever", 'id': 2, 'status': 'completed'}, {'content': 'Verify fixes by running main.py simulation', 'id': 3, 'status': 'in_progress'}]}
 [0m[2m
-  🔠 call_a2xh1mg8 Executed
+  🔠 call_y476gdal Executed
 [0m[2m
+  Now let me verify[0m[2m the fix[0m[2m by running the simulation[0m[2m:[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_l2kdz2t9 | Shell {'command': 'cd /Users/gofrendigunawan/ ...', 'description': 'Run the simulation to veri ...'}
+  🧰 call_y3w1y17g | Shell {'command': 'cd /Users/gofrendigunawan/l...', 'description': 'Run the simulation to verif...', 'timeout': 30}
 [0m  [2m[Worker 0] picked up job 1
 [0m  [2m[Worker 1] picked up job 2
 [0m  [2m[Worker 2] picked up job 3
@@ -112,28 +121,39 @@
 [0m  [2mFailed: 2 (expected 2)
 [0m  [2mStuck:  0 (expected 0)
 [0m[2m
-  🔠 call_l2kdz2t9 Executed
+  🔠 call_y3w1y17g Executed
 [0m[2m
+  All three expectations[0m[2m match[0m[2m:[0m[2m
   🔄 Prepare tool parameters...[0m📋 Todo list updated (3 items)
 
 📋 Todo List (3/3, 100%, ✅ 3 completed)
-  ✅ [1] Fix Bug 1: Race condition in dequeue() — await between status check and update allows duplicate pickup
-  ✅ [2] Fix Bug 2: Missing queue.fail() call in worker exception handler — jobs never marked failed or retried
-  ✅ [3] Run simulation to verify both fixes
+  ✅ [1] Fix Bug 1: Race condition in dequeue() — await between check and state change allows duplicate pickup
+  ✅ [2] Fix Bug 2: worker.py never calls queue.fail() — failed jobs stay in 'processing' forever
+  ✅ [3] Verify fixes by running main.py simulation
 ~DATA~{"total":3,"completed":3,"in_progress":0,"pending":0}
 [2m
-  🧰 call_38k7xo8q | TodoWrite {'todos': [{'content': 'Fix Bug 1: Race condition in dequeue() — await between status check and update allows duplicate pickup', 'id': 1, 'status': 'completed'}, {'content': 'Fix Bug 2: Missing queue.fail() call in worker exception handler — jobs never marked failed or retried', 'id': 2, 'status': 'completed'}, {'content': 'Run simulation to verify both fixes', 'id': 3, 'status': 'completed'}]}
+  🧰 call_3ds8f737 | TodoWrite {'todos': [{'content': 'Fix Bug 1: Race condition in dequeue() — await between check and state change allows duplicate pickup', 'id': 1, 'status': 'completed'}, {'content': "Fix Bug 2: worker.py never calls queue.fail() — failed jobs stay in 'processing' forever", 'id': 2, 'status': 'completed'}, {'content': 'Verify fixes by running main.py simulation', 'id': 3, 'status': 'completed'}]}
 [0m[2m
-  🔠 call_38k7xo8q Executed
+  🔠 call_3ds8f737 Executed
 [0m[2m
-  Both fixes[0m[2m verified[0m[2m —[0m[2m simulation passes with the[0m[2m expected counts[0m[2m ([0m[2m10[0m[2m done, 2[0m[2m failed, 0[0m[2m stuck).
+  Both bugs are[0m[2m fixed and[0m[2m verified. Here's[0m[2m the summary:
      
-     ###[0m[2m Root causes[0m[2m and fixes
+     ---[0m[2m
      
-     **[0m[2mBug 1 —[0m[2m Duplicate processing** (`[0m[2mjob_queue.py:[0m[2m24[0m[2m-27`):[0m[2m `dequeue()`[0m[2m had an `await[0m[2m asyncio.sleep([0m[2m0.01)`[0m[2m *[0m[2mbetween* the status[0m[2m check (`==[0m[2m "pending"[0m[2m`) and the status[0m[2m update (`=[0m[2m "processing"`[0m[2m). This[0m[2m yielded control to other[0m[2m coroutines, which[0m[2m could see the same[0m[2m job still as[0m[2m `"pending"` and[0m[2m pick it up again[0m[2m. **[0m[2mFix**:[0m[2m moved the `[0m[2mawait` to[0m[2m *after* the[0m[2m status transition[0m[2m,[0m[2m making[0m[2m the check-and-set[0m[2m atomic from[0m[2m the event[0m[2m loop's perspective.[0m[2m
+     ### Bug 1[0m[2m —[0m[2m Duplicate processing[0m[2m
      
-     **Bug 2[0m[2m — Vanishing failures[0m[2m** (`worker[0m[2m.py:19-[0m[2m20`): The[0m[2m `except` block[0m[2m printed[0m[2m the[0m[2m error but never called[0m[2m `queue.fail()[0m[2m`. Failed[0m[2m jobs stayed in `"[0m[2mprocessing"` forever —[0m[2m never retried,[0m[2m never marked `"failed[0m[2m"`. **Fix[0m[2m**: added `queue[0m[2m.fail(job["id[0m[2m"], str(e))[0m[2m` so the job[0m[2m is either[0m[2m re-[0m[2mqueued for[0m[2m retry or[0m[2m transition[0m[2med to `"failed[0m[2m"` when retries[0m[2m are exhausted.[0m[2m
-  💸 (Requests: 7 | Tool Calls: 9 | Total: 77764) Input: 76344 | Audio Input: 0 | Output: 1420 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     **Root cause:**[0m[2m In[0m[2m `JobQueue.dequeue[0m[2m()`[0m[2m (line 23[0m[2m–[0m[2m28), the status[0m[2m was set to `"[0m[2mprocessing"` *[0m[2mafter* an `[0m[2mawait asyncio.sleep([0m[2m0.01)[0m[2m`. When[0m[2m multiple workers ran[0m[2m concurrently,[0m[2m they could all enter[0m[2m the loop, find[0m[2m the same job still[0m[2m `"pending"` ([0m[2mthe first worker hadn[0m[2m't updated[0m[2m it yet), and[0m[2m all claim[0m[2m it. Classic[0m[2m TOCTOU race[0m[2m condition.
+     
+     **Fix[0m[2m:** Moved `[0m[2mjob["status"][0m[2m = "processing"`[0m[2m *before* the[0m[2m `await`,[0m[2m so the status change[0m[2m is atomic from[0m[2m the event[0m[2m loop's perspective —[0m[2m no other coroutine[0m[2m can claim[0m[2m the same job.[0m[2m
+     
+     ###[0m[2m Bug 2 —[0m[2m Vanishing failures[0m[2m
+     
+     **Root cause:**[0m[2m In `worker.py[0m[2m` (line[0m[2m 19–20),[0m[2m the `except`[0m[2m block only printed the[0m[2m error — it never[0m[2m called `queue.fail[0m[2m()`. So crashed[0m[2m jobs stayed stuck[0m[2m in `"processing"`[0m[2m forever:[0m[2m never[0m[2m retried, never[0m[2m marked `"failed"[0m[2m`, invisible[0m[2m to failure[0m[2m reporting[0m[2m.
+     
+     **[0m[2mFix:** Added `[0m[2mqueue.fail(job["[0m[2mid"], str(e[0m[2m))` to[0m[2m the `except`[0m[2m block,[0m[2m which[0m[2m transitions[0m[2m the job back to[0m[2m `"pending"`[0m[2m (for[0m[2m retry) or `"[0m[2mfailed"` (when[0m[2m retries are[0m[2m exhausted).
+     
+     **[0m[2mVerification:** Simulation[0m[2m output[0m[2m matches[0m[2m all expectations —[0m[2m Done: 10[0m[2m, Failed:[0m[2m 2, Stuck[0m[2m: 0.[0m[2m
+  💸 (Requests: 9 | Tool Calls: 10 | Total: 74169) Input: 72512 | Audio Input: 0 | Output: 1657 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "Our background job processor has been acting up in production. Two separate issues have been reported:
 
 1. **Duplicate processing**: Some jobs appear to be executed more than once. We've seen side effects (emails, charges) triggered twice for a single job ID.
@@ -144,10 +164,20 @@ The system is in `job_queue.py` (the queue) and `worker.py` (the processor). `ma
 Find the root causes and fix them. Do not change the public method signatures.
 " --model ollama:glm-5.1:cloud --session ollama_glm-5.1_cloud-bug-fix-trial-3 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_glm-5.1_cloud-bug-fix-trial-3[0m[0m
-Both fixes verified — simulation passes with the expected counts (10 done, 2 failed, 0 stuck).
+Both bugs are fixed and verified. Here's the summary:
 
-### Root causes and fixes
+---
 
-**Bug 1 — Duplicate processing** (`job_queue.py:24-27`): `dequeue()` had an `await asyncio.sleep(0.01)` *between* the status check (`== "pending"`) and the status update (`= "processing"`). This yielded control to other coroutines, which could see the same job still as `"pending"` and pick it up again. **Fix**: moved the `await` to *after* the status transition, making the check-and-set atomic from the event loop's perspective.
+### Bug 1 — Duplicate processing
 
-**Bug 2 — Vanishing failures** (`worker.py:19-20`): The `except` block printed the error but never called `queue.fail()`. Failed jobs stayed in `"processing"` forever — never retried, never marked `"failed"`. **Fix**: added `queue.fail(job["id"], str(e))` so the job is either re-queued for retry or transitioned to `"failed"` when retries are exhausted.
+**Root cause:** In `JobQueue.dequeue()` (line 23–28), the status was set to `"processing"` *after* an `await asyncio.sleep(0.01)`. When multiple workers ran concurrently, they could all enter the loop, find the same job still `"pending"` (the first worker hadn't updated it yet), and all claim it. Classic TOCTOU race condition.
+
+**Fix:** Moved `job["status"] = "processing"` *before* the `await`, so the status change is atomic from the event loop's perspective — no other coroutine can claim the same job.
+
+### Bug 2 — Vanishing failures
+
+**Root cause:** In `worker.py` (line 19–20), the `except` block only printed the error — it never called `queue.fail()`. So crashed jobs stayed stuck in `"processing"` forever: never retried, never marked `"failed"`, invisible to failure reporting.
+
+**Fix:** Added `queue.fail(job["id"], str(e))` to the `except` block, which transitions the job back to `"pending"` (for retry) or `"failed"` (when retries are exhausted).
+
+**Verification:** Simulation output matches all expectations — Done: 10, Failed: 2, Stuck: 0.

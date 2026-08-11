@@ -1,156 +1,594 @@
 [2m
-  🧠 Let[0m[2m me analyze[0m[2m the problem[0m[2m:
+  🧠 The[0m[2m user wants[0m[2m me to[0m[2m fix a[0m[2m checkout[0m[2m service that[0m[2m has race[0m[2m condition[0m[2m issues causing[0m[2m overselling[0m[2m and ghost[0m[2m charges.[0m[2m I[0m[2m need to[0m[2m:
      
-     1[0m[2m. **[0m[2mOvers[0m[2melling**:[0m[2m Inventory goes[0m[2m negative -[0m[2m this[0m[2m is a[0m[2m race condition[0m[2m issue in[0m[2m concurrent access[0m[2m to[0m[2m inventory[0m[2m
-     2.[0m[2m **Ghost[0m[2m charges**:[0m[2m Customers charged[0m[2m but no[0m[2m item[0m[2m delivered[0m[2m - this[0m[2m is likely[0m[2m due[0m[2m to charge[0m[2m happening[0m[2m before[0m[2m inventory[0m[2m reservation[0m[2m/d[0m[2med[0m[2muction fails[0m[2m
+     1[0m[2m. First[0m[2m understand[0m[2m the codebase[0m[2m by reading[0m[2m the relevant[0m[2m files[0m[2m
+     2.[0m[2m Run the[0m[2m simulation to[0m[2m reproduce the[0m[2m issues[0m[2m
+     3.[0m[2m Fix the[0m[2m checkout logic[0m[2m while[0m[2m maintaining public[0m[2m interfaces[0m[2m
      
-     I[0m[2m need to[0m[2m:
-     1[0m[2m. Read[0m[2m the existing[0m[2m code[0m[2m (`[0m[2mcheckout.py[0m[2m`, `[0m[2minventory.py[0m[2m`, `[0m[2mpayments.py[0m[2m`, `[0m[2mmain.py[0m[2m`)
-     2[0m[2m. Understand[0m[2m the current[0m[2m flow[0m[2m
-     3.[0m[2m Fix[0m[2m the race[0m[2m conditions without[0m[2m changing[0m[2m public interfaces[0m[2m
-     4[0m[2m. Run[0m[2m `[0m[2mmain.py[0m[2m` to[0m[2m verify[0m[2m
-     
-     Let me[0m[2m start by[0m[2m reading all[0m[2m the[0m[2m files.[0m[2m
+     Let me[0m[2m start by[0m[2m reading the[0m[2m files and[0m[2m running the[0m[2m simulation.[0m[2m
+  I'll[0m[2m inspect[0m[2m the codebase[0m[2m,[0m[2m reproduce the[0m[2m issues,[0m[2m and then[0m[2m fix the[0m[2m checkout logic[0m[2m.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Read:0 | Read {'path': 'checkout.py'}
+  🧰 functions.Read:0 | Read {'path': '/Users/gofrendigunawan/llm-...'}
 [0m[2m
-  🧰 functions.Read:1 | Read {'path': 'inventory.py'}
+  🧰 functions.Read:1 | Read {'path': '/Users/gofrendigunawan/llm-...'}
 [0m[2m
-  🧰 functions.Read:2 | Read {'path': 'payments.py'}
+  🧰 functions.Read:2 | Read {'path': '/Users/gofrendigunawan/llm-...'}
 [0m[2m
-  🧰 functions.Read:3 | Read {'path': 'main.py'}
+  🧰 functions.Read:3 | Read {'path': '/Users/gofrendigunawan/llm-...'}
 [0m[2m
   🔠 functions.Read:2 Executed
 [0m[2m
-  🔠 functions.Read:3 Executed
-[0m[2m
   🔠 functions.Read:0 Executed
+[0m[2m
+  🔠 functions.Read:3 Executed
 [0m[2m
   🔠 functions.Read:1 Executed
 [0m[2m
-  🧠 Now[0m[2m I[0m[2m understand the[0m[2m issues:[0m[2m
+  🧠 Let[0m[2m me analyze[0m[2m the issues[0m[2m:
      
-     1.[0m[2m **O[0m[2mverselling[0m[2m**: `[0m[2mcheck_stock[0m[2m` and[0m[2m `de[0m[2mcrement`[0m[2m are separate[0m[2m async[0m[2m calls[0m[2m with a[0m[2m `sleep[0m[2m(0[0m[2m.02[0m[2m)` between[0m[2m them[0m[2m. Multiple[0m[2m concurrent tasks[0m[2m can check[0m[2m stock[0m[2m simultaneously[0m[2m,[0m[2m all see[0m[2m `[0m[2mstock[0m[2m >= quantity[0m[2m`, then[0m[2m all decrement[0m[2m.[0m[2m There's[0m[2m no atomic[0m[2mity[0m[2m or locking[0m[2m. The[0m[2m `de[0m[2mcrement`[0m[2m method also[0m[2m has[0m[2m a TO[0m[2mCT[0m[2mOU race[0m[2m:[0m[2m it[0m[2m checks `[0m[2mself._[0m[2mstock >=[0m[2m quantity`[0m[2m and then[0m[2m subtract[0m[2ms,[0m[2m but with[0m[2m async[0m[2m sleep in[0m[2m between,[0m[2m another task[0m[2m can[0m[2m interleave[0m[2m.
+     1[0m[2m. **[0m[2mOvers[0m[2melling**:[0m[2m In[0m[2m `checkout[0m[2m.py`,[0m[2m the flow[0m[2m is:[0m[2m
+        -[0m[2m `[0m[2mcheck_stock[0m[2m`[0m[2m -[0m[2m checks[0m[2m if stock[0m[2m >=[0m[2m quantity ([0m[2mnon[0m[2m-[0m[2matomic,[0m[2m just[0m[2m reads[0m[2m)[0m[2m
+        - `[0m[2mcharge`[0m[2m - charges[0m[2m the[0m[2m customer[0m[2m
+        -[0m[2m `de[0m[2mcrement`[0m[2m - decre[0m[2mments stock[0m[2m
      
-     2[0m[2m. **[0m[2mGhost charges[0m[2m**: The[0m[2m flow is[0m[2m:[0m[2m check stock[0m[2m → charge[0m[2m → decrement[0m[2m. If[0m[2m stock[0m[2m check[0m[2m passes[0m[2m,[0m[2m charge succeeds[0m[2m, but[0m[2m decrement fails[0m[2m (because[0m[2m another[0m[2m task[0m[2m grabbed[0m[2m the[0m[2m last item[0m[2m), the[0m[2m customer is[0m[2m charged but[0m[2m gets[0m[2m nothing[0m[2m. There's[0m[2m no refund[0m[2m mechanism[0m[2m.
+        The[0m[2m problem[0m[2m is a[0m[2m race condition[0m[2m:[0m[2m two concurrent[0m[2m orders can[0m[2m both pass[0m[2m `check[0m[2m_stock`[0m[2m when stock[0m[2m is[0m[2m 1,[0m[2m then both[0m[2m get[0m[2m charged,[0m[2m and then[0m[2m both decrement[0m[2m (but[0m[2m `de[0m[2mcrement`[0m[2m has its[0m[2m own check[0m[2m,[0m[2m so only[0m[2m one would[0m[2m succeed...[0m[2m wait,[0m[2m `[0m[2mdecrement[0m[2m` does[0m[2m `if[0m[2m self._[0m[2mstock >=[0m[2m quantity`,[0m[2m but[0m[2m there's[0m[2m no lock[0m[2m,[0m[2m so two[0m[2m concurrent calls[0m[2m could both[0m[2m read `[0m[2mself._[0m[2mstock >=[0m[2m quantity`[0m[2m as True[0m[2m, then[0m[2m both subtract[0m[2m.[0m[2m Since[0m[2m there's no[0m[2m synchronization[0m[2m in `[0m[2mInventory[0m[2m`, we[0m[2m can get[0m[2m negative stock[0m[2m.[0m[2m
      
-     3[0m[2m. **[0m[2mDuplicate charges[0m[2m**: The[0m[2m `charge[0m[2m` method[0m[2m app[0m[2mends to[0m[2m `charges[0m[2m` list[0m[2m, but[0m[2m doesn't[0m[2m check if[0m[2m the same[0m[2m `order[0m[2m_id`[0m[2m was already[0m[2m charged.[0m[2m The requirement[0m[2m says "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once"[0m[2m —[0m[2m meaning[0m[2m per[0m[2m `[0m[2morder_id[0m[2m`, not[0m[2m per[0m[2m call[0m[2m.[0m[2m Wait[0m[2m, but[0m[2m `[0m[2mcheckout`[0m[2m is called[0m[2m once[0m[2m per order[0m[2m_id in[0m[2m `[0m[2mmain.py[0m[2m`. Actually[0m[2m, looking[0m[2m more carefully[0m[2m, if[0m[2m `checkout[0m[2m` is[0m[2m called multiple[0m[2m times with[0m[2m the same[0m[2m `order[0m[2m_id`,[0m[2m it[0m[2m could charge[0m[2m multiple times[0m[2m. But[0m[2m in the[0m[2m current[0m[2m `[0m[2mmain.py[0m[2m`, each[0m[2m order has[0m[2m a unique[0m[2m ID[0m[2m. H[0m[2mmm,[0m[2m let me[0m[2m re-read[0m[2m:[0m[2m "No[0m[2m order is[0m[2m charged more[0m[2m than once[0m[2m" —[0m[2m this likely[0m[2m means if[0m[2m `[0m[2mgateway[0m[2m.ch[0m[2marge`[0m[2m is called[0m[2m with[0m[2m the same[0m[2m `order[0m[2m_id`,[0m[2m it should[0m[2m not[0m[2m charge[0m[2m again.[0m[2m Or[0m[2m perhaps[0m[2m it[0m[2m means the[0m[2m checkout function[0m[2m should be[0m[2m idempotent[0m[2m. Looking[0m[2m at `[0m[2mpayments[0m[2m.py`,[0m[2m there's no[0m[2m dedu[0m[2mplication on[0m[2m `order[0m[2m_id`.[0m[2m
+        Wait[0m[2m, looking[0m[2m at[0m[2m `Inventory[0m[2m.de[0m[2mcrement`[0m[2m more[0m[2m carefully:[0m[2m
+        ```[0m[2mpython[0m[2m
+        async[0m[2m def decrement[0m[2m(self,[0m[2m quantity:[0m[2m int)[0m[2m -> bool[0m[2m:[0m[2m
+            await asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)[0m[2m
+            if[0m[2m self._[0m[2mstock >=[0m[2m quantity:[0m[2m
+                self[0m[2m._stock[0m[2m -= quantity[0m[2m
+                return True[0m[2m
+            return False[0m[2m
+        ```[0m[2m
+        
+        In[0m[2m Python asyncio[0m[2m, because[0m[2m there's only[0m[2m one thread[0m[2m,[0m[2m the[0m[2m race[0m[2m condition is[0m[2m actually[0m[2m different[0m[2m from[0m[2m threading[0m[2m. With[0m[2m asyncio[0m[2m, unless[0m[2m two cor[0m[2moutines are[0m[2m inter[0m[2mleaved at[0m[2m `[0m[2mawait`[0m[2m points,[0m[2m they won't[0m[2m race[0m[2m on[0m[2m the actual[0m[2m Python[0m[2m bytecode[0m[2m. But[0m[2m the[0m[2m `await[0m[2m asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)`[0m[2m IS[0m[2m an await[0m[2m point,[0m[2m which[0m[2m means other[0m[2m coroutines[0m[2m can run[0m[2m. So[0m[2m:[0m[2m
+        
+        -[0m[2m Cor[0m[2moutine A[0m[2m reaches[0m[2m `de[0m[2mcrement`,[0m[2m hits[0m[2m `await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.02[0m[2m)`, pa[0m[2muses[0m[2m
+        -[0m[2m Coroutine[0m[2m B reaches[0m[2m `de[0m[2mcrement`,[0m[2m hits `[0m[2mawait asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)`,[0m[2m pauses[0m[2m
+        - Cor[0m[2moutine A[0m[2m resumes,[0m[2m checks[0m[2m `self[0m[2m._stock[0m[2m >= quantity[0m[2m` ([0m[2mTrue),[0m[2m decrements[0m[2m
+        - Cor[0m[2moutine B[0m[2m resumes,[0m[2m checks `[0m[2mself._[0m[2mstock >=[0m[2m quantity`[0m[2m -[0m[2m but[0m[2m wait[0m[2m, since[0m[2m this[0m[2m is single[0m[2m-threaded[0m[2m and[0m[2m there[0m[2m are no[0m[2m await points[0m[2m between the[0m[2m check and[0m[2m the decrement[0m[2m in[0m[2m the[0m[2m code,[0m[2m cor[0m[2moutine B[0m[2m would[0m[2m see[0m[2m the updated[0m[2m value[0m[2m from A[0m[2m...[0m[2m unless[0m[2m A[0m[2m hasn't[0m[2m run[0m[2m the[0m[2m check+[0m[2mde[0m[2mcrement yet[0m[2m.[0m[2m
+        
+        Actually[0m[2m, let[0m[2m me think[0m[2m more carefully[0m[2m. When[0m[2m A[0m[2m hits[0m[2m `[0m[2mawait asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)`,[0m[2m it susp[0m[2mends[0m[2m. Then[0m[2m B might[0m[2m run[0m[2m and also[0m[2m hit `[0m[2mawait asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)`.[0m[2m After[0m[2m both sleeps[0m[2m complete[0m[2m, the[0m[2m event loop[0m[2m resumes[0m[2m them[0m[2m. The[0m[2m order matters[0m[2m. If[0m[2m A resumes[0m[2m first,[0m[2m it does[0m[2m the[0m[2m check and[0m[2m decrement atom[0m[2mically ([0m[2mno await[0m[2m points[0m[2m), then[0m[2m B resumes[0m[2m and[0m[2m sees[0m[2m the updated[0m[2m stock[0m[2m. If[0m[2m B resumes[0m[2m first,[0m[2m same thing[0m[2m. So[0m[2m actually[0m[2m in pure[0m[2m asyncio without[0m[2m threading[0m[2m, `[0m[2mde[0m[2mcrement`[0m[2m itself[0m[2m might be[0m[2m safe[0m[2m because[0m[2m there's no[0m[2m await between[0m[2m the check[0m[2m and the[0m[2m decrement.[0m[2m
+        
+        BUT[0m[2m `[0m[2mcheck_stock[0m[2m` and[0m[2m `de[0m[2mcrement`[0m[2m are separate[0m[2m calls[0m[2m with an[0m[2m await[0m[2m in[0m[2m between ([0m[2mthe gateway[0m[2m.ch[0m[2marge).[0m[2m So:[0m[2m
+        -[0m[2m A[0m[2m checks stock[0m[2m (True[0m[2m)[0m[2m
+        -[0m[2m B checks[0m[2m stock ([0m[2mTrue)[0m[2m  
+        - A[0m[2m charges and[0m[2m decre[0m[2mments[0m[2m
+        -[0m[2m B charges[0m[2m and decre[0m[2mments[0m[2m
+        -[0m[2m Result:[0m[2m 2 items[0m[2m sold when[0m[2m only[0m[2m 1 was[0m[2m in stock[0m[2m![0m[2m
+        
+        And[0m[2m the stock[0m[2m goes[0m[2m to[0m[2m -1[0m[2m because[0m[2m `de[0m[2mcrement`[0m[2m doesn't[0m[2m prevent[0m[2m this[0m[2m when[0m[2m called[0m[2m with[0m[2m a[0m[2m valid[0m[2m quantity[0m[2m.
      
-     Actually,[0m[2m I[0m[2m think the[0m[2m duplicate charge[0m[2m issue could[0m[2m happen[0m[2m if `[0m[2mcheckout`[0m[2m is ret[0m[2mried or[0m[2m called[0m[2m multiple times[0m[2m with the[0m[2m same `[0m[2morder_id[0m[2m`. The[0m[2m current `[0m[2mmain.py[0m[2m` doesn't[0m[2m do[0m[2m this,[0m[2m but the[0m[2m requirement is[0m[2m a[0m[2m general one[0m[2m. Let[0m[2m me check[0m[2m if[0m[2m the[0m[2m `[0m[2mcharge[0m[2m` method[0m[2m itself[0m[2m needs to[0m[2m be id[0m[2mempotent per[0m[2m `order[0m[2m_id`.[0m[2m
+     2[0m[2m. **[0m[2mGhost charges[0m[2m**: The[0m[2m payment[0m[2m happens[0m[2m BEFORE[0m[2m inventory is[0m[2m decremented[0m[2m. If[0m[2m two[0m[2m orders[0m[2m check stock[0m[2m concurrently[0m[2m, both[0m[2m see[0m[2m stock[0m[2m is available[0m[2m.[0m[2m Then[0m[2m both get[0m[2m charged.[0m[2m Then both[0m[2m try to[0m[2m decrement.[0m[2m Even[0m[2m if `[0m[2mdecrement[0m[2m` were[0m[2m thread[0m[2m-safe,[0m[2m one[0m[2m might[0m[2m fail[0m[2m after[0m[2m being[0m[2m charged,[0m[2m leading to[0m[2m a ghost[0m[2m charge.[0m[2m
      
-     Let[0m[2m me also[0m[2m check[0m[2m if[0m[2m `Payment[0m[2mGateway`[0m[2m can[0m[2m have[0m[2m methods[0m[2m added:[0m[2m "You[0m[2m may add[0m[2m methods to[0m[2m them."[0m[2m So[0m[2m I can[0m[2m add ded[0m[2muplication[0m[2m to `[0m[2mPaymentGateway[0m[2m`.
+     3.[0m[2m **Duplicate[0m[2m charges**:[0m[2m Looking at[0m[2m `Payment[0m[2mGateway.ch[0m[2marge`,[0m[2m there's no[0m[2m idempot[0m[2mency check[0m[2m. If[0m[2m the[0m[2m same `[0m[2morder_id[0m[2m` is[0m[2m passed[0m[2m twice[0m[2m, it[0m[2m will[0m[2m charge twice[0m[2m. In[0m[2m the checkout[0m[2m flow,[0m[2m `checkout[0m[2m` itself[0m[2m is[0m[2m only[0m[2m called once[0m[2m per order[0m[2m, so[0m[2m duplicate[0m[2m charges would[0m[2m only[0m[2m happen if[0m[2m main[0m[2m.py[0m[2m calls it[0m[2m twice with[0m[2m the same[0m[2m order_id[0m[2m...[0m[2m which[0m[2m it doesn't[0m[2m. But[0m[2m wait -[0m[2m could[0m[2m the[0m[2m payment[0m[2m gateway charge[0m[2m the same[0m[2m order_id[0m[2m twice[0m[2m if[0m[2m there's[0m[2m some[0m[2m retry logic[0m[2m? No[0m[2m, there[0m[2m isn't.[0m[2m However[0m[2m, the[0m[2m problem[0m[2m says "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once".[0m[2m Let[0m[2m me re[0m[2m-read...[0m[2m Actually[0m[2m in[0m[2m the current[0m[2m code,[0m[2m if[0m[2m we[0m[2m fix[0m[2m the race[0m[2m conditions[0m[2m properly[0m[2m, each[0m[2m order_id[0m[2m should only[0m[2m be charged[0m[2m once.[0m[2m But maybe[0m[2m the issue[0m[2m is that[0m[2m if we[0m[2m need[0m[2m to add[0m[2m retry logic[0m[2m, we[0m[2m need id[0m[2mempotency[0m[2m. Or[0m[2m maybe in[0m[2m the current[0m[2m code,[0m[2m because[0m[2m of[0m[2m how[0m[2m asyncio[0m[2m works[0m[2m, the[0m[2m same order[0m[2m could[0m[2m somehow be[0m[2m charged multiple[0m[2m times[0m[2m? No[0m[2m, looking[0m[2m at the[0m[2m code,[0m[2m each order[0m[2m is a[0m[2m separate cor[0m[2moutine with[0m[2m a unique[0m[2m ID[0m[2m.
      
-     Let[0m[2m me think[0m[2m about the[0m[2m fixes:[0m[2m
+     Wait[0m[2m, let[0m[2m me re[0m[2m-read the[0m[2m requirements:[0m[2m
+     - "[0m[2mEvery successful[0m[2m charge corresponds[0m[2m to exactly[0m[2m one item[0m[2m delivered"[0m[2m - This[0m[2m means if[0m[2m charged[0m[2m, item[0m[2m must be[0m[2m delivered.[0m[2m
+     - "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once"[0m[2m - This[0m[2m means id[0m[2mempotency[0m[2m on payment[0m[2m.
      
-     For[0m[2m `Inventory[0m[2m`:
-     -[0m[2m Need to[0m[2m make[0m[2m stock[0m[2m operations[0m[2m atomic.[0m[2m Since this[0m[2m is asyncio[0m[2m-based[0m[2m, I[0m[2m should[0m[2m use an[0m[2m `async[0m[2mio.Lock[0m[2m` to[0m[2m serialize[0m[2m access[0m[2m to stock[0m[2m operations.[0m[2m
-     - Or[0m[2m better:[0m[2m create[0m[2m an[0m[2m atomic `[0m[2mreserve`[0m[2m method that[0m[2m checks and[0m[2m decrements[0m[2m in one[0m[2m locked[0m[2m operation.[0m[2m
-     - The[0m[2m public[0m[2m interfaces[0m[2m shouldn't[0m[2m change,[0m[2m but I[0m[2m can add[0m[2m new[0m[2m methods.[0m[2m The[0m[2m existing `[0m[2mcheck_stock[0m[2m`, `[0m[2mdecrement[0m[2m`, `[0m[2mincrement`[0m[2m should remain[0m[2m,[0m[2m but I[0m[2m can[0m[2m add[0m[2m a[0m[2m `reserve[0m[2m` method[0m[2m.
+     Actually[0m[2m, looking[0m[2m at `[0m[2mmain[0m[2m.py`[0m[2m line[0m[2m 25:[0m[2m
+     ```python[0m[2m
+     du[0m[2mplicates =[0m[2m len(ch[0m[2marge_ids[0m[2m) -[0m[2m len(set[0m[2m(charge[0m[2m_ids))[0m[2m
+     ```
      
-     For[0m[2m `checkout[0m[2m.py[0m[2m`:
-     -[0m[2m The flow[0m[2m should be[0m[2m: reserve[0m[2m inventory →[0m[2m if[0m[2m successful,[0m[2m charge →[0m[2m if charge[0m[2m fails[0m[2m, release[0m[2m inventory.[0m[2m
-     - This[0m[2m prevents[0m[2m overs[0m[2melling ([0m[2mres[0m[2mervation is[0m[2m atomic)[0m[2m and prevents[0m[2m ghost charges[0m[2m (we[0m[2m reserve[0m[2m first[0m[2m, then[0m[2m charge;[0m[2m if charge[0m[2m fails,[0m[2m we release[0m[2m).
+     This[0m[2m checks for[0m[2m duplicate order[0m[2m_ids[0m[2m in charges[0m[2m. With[0m[2m the current[0m[2m code,[0m[2m since[0m[2m each order[0m[2m_id is[0m[2m unique and[0m[2m `[0m[2mcheckout`[0m[2m is called[0m[2m once per[0m[2m order,[0m[2m there shouldn't[0m[2m be duplicates[0m[2m unless we[0m[2m somehow[0m[2m call[0m[2m `charge[0m[2m` twice[0m[2m for[0m[2m the same[0m[2m order.[0m[2m But the[0m[2m requirement says[0m[2m "No[0m[2m order is[0m[2m charged more[0m[2m than once[0m[2m".[0m[2m This[0m[2m might[0m[2m be[0m[2m a hint[0m[2m that[0m[2m we need[0m[2m to make[0m[2m the payment[0m[2m idempotent[0m[2m, or[0m[2m maybe[0m[2m I'm[0m[2m missing[0m[2m something.[0m[2m
      
-     For[0m[2m `Payment[0m[2mGateway`:[0m[2m
-     - Need[0m[2m to add[0m[2m idempot[0m[2mency/d[0m[2meduplication[0m[2m per `[0m[2morder_id[0m[2m`. If[0m[2m the[0m[2m same `[0m[2morder_id[0m[2m` is[0m[2m charged again[0m[2m, return[0m[2m True[0m[2m but[0m[2m don't charge[0m[2m again ([0m[2mor return[0m[2m True with[0m[2m no[0m[2m additional[0m[2m charge).[0m[2m
+     Actually[0m[2m, I[0m[2m think I[0m[2m see[0m[2m it[0m[2m now.[0m[2m The requirement[0m[2m "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once"[0m[2m could[0m[2m be about[0m[2m making[0m[2m the system[0m[2m robust[0m[2m.[0m[2m But in[0m[2m the current[0m[2m code,[0m[2m there's[0m[2m no obvious[0m[2m way[0m[2m for[0m[2m an[0m[2m order to[0m[2m be charged[0m[2m twice.[0m[2m Unless[0m[2m... the[0m[2m simulation[0m[2m in[0m[2m main.py[0m[2m calls[0m[2m `[0m[2mcheckout`[0m[2m multiple times[0m[2m with the[0m[2m same parameters[0m[2m? No[0m[2m, `[0m[2morder_id[0m[2m` is[0m[2m `[0m[2morder[0m[2m_[0m[2m0`,[0m[2m `order[0m[2m_1[0m[2m`, etc[0m[2m.
      
-     Wait,[0m[2m let me[0m[2m reconsider[0m[2m the ghost[0m[2m charge issue[0m[2m. In[0m[2m the current[0m[2m code:[0m[2m
-     1[0m[2m. Check[0m[2m stock[0m[2m
-     2.[0m[2m Charge[0m[2m
-     3.[0m[2m Decrement[0m[2m
+     Hmm[0m[2m, wait[0m[2m. Let[0m[2m me re[0m[2m-read the[0m[2m problem[0m[2m statement[0m[2m. It[0m[2m says "[0m[2mCustomers[0m[2m are occasionally[0m[2m charged but[0m[2m receive no[0m[2m item,[0m[2m with no[0m[2m record of[0m[2m a successful[0m[2m order."[0m[2m This is[0m[2m the ghost[0m[2m charge issue[0m[2m.[0m[2m
      
-     If[0m[2m charge[0m[2m succeeds but[0m[2m decrement fails[0m[2m (race[0m[2m condition where[0m[2m another task[0m[2m decremented[0m[2m the[0m[2m stock[0m[2m to[0m[2m 0 between[0m[2m check and[0m[2m decrement[0m[2m), then[0m[2m we have[0m[2m a ghost[0m[2m charge.[0m[2m 
+     And "[0m[2mItems[0m[2m are sometimes[0m[2m sold even[0m[2m when out[0m[2m of stock[0m[2m. Inventory[0m[2m goes negative[0m[2m." This[0m[2m is the[0m[2m overselling[0m[2m issue.[0m[2m
      
-     Actually[0m[2m, the[0m[2m most[0m[2m robust[0m[2m flow[0m[2m is:[0m[2m
-     1.[0m[2m Atom[0m[2mically reserve[0m[2m/de[0m[2mcrement inventory[0m[2m
-     2[0m[2m. If[0m[2m successful[0m[2m, charge[0m[2m
-     3[0m[2m. If[0m[2m charge fails[0m[2m, refund[0m[2m/in[0m[2mcrement inventory[0m[2m back[0m[2m
+     The fix[0m[2m needs to[0m[2m ensure:[0m[2m
+     1.[0m[2m Inventory never[0m[2m goes below[0m[2m zero[0m[2m
+     2.[0m[2m Every successful[0m[2m charge corresponds[0m[2m to exactly[0m[2m one item[0m[2m delivered[0m[2m
+     3.[0m[2m No order[0m[2m is charged[0m[2m more than[0m[2m once[0m[2m
      
-     This way[0m[2m,[0m[2m inventory is[0m[2m guaranteed[0m[2m to[0m[2m be[0m[2m available before[0m[2m charging[0m[2m. No[0m[2m ghost charges[0m[2m because we[0m[2m only charge[0m[2m when[0m[2m we have[0m[2m the[0m[2m item reserved[0m[2m.
+     For #[0m[2m3[0m[2m, maybe[0m[2m the issue[0m[2m is that[0m[2m in[0m[2m a[0m[2m real system[0m[2m, you[0m[2m might retry[0m[2m the whole[0m[2m checkout if[0m[2m it[0m[2m fails,[0m[2m but[0m[2m that's[0m[2m not[0m[2m shown[0m[2m in[0m[2m the simulation[0m[2m. However[0m[2m, to[0m[2m truly[0m[2m ensure[0m[2m "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once",[0m[2m we should[0m[2m make `[0m[2mPaymentGateway[0m[2m.charge[0m[2m` id[0m[2mempotent -[0m[2m if[0m[2m the same[0m[2m order[0m[2m_id is[0m[2m charged[0m[2m again,[0m[2m it[0m[2m should return[0m[2m the same[0m[2m result without[0m[2m charging[0m[2m again.[0m[2m This[0m[2m is a[0m[2m common[0m[2m requirement[0m[2m in payment[0m[2m systems.[0m[2m
      
-     Wait[0m[2m, but[0m[2m what if[0m[2m decrement[0m[2m succeeds,[0m[2m then[0m[2m charge fails[0m[2m? Then[0m[2m we need[0m[2m to increment[0m[2m the inventory[0m[2m back.[0m[2m That[0m[2m creates[0m[2m a temporary[0m[2m hold[0m[2m but ensures[0m[2m inventory[0m[2m correctness[0m[2m.
+     Let me[0m[2m think about[0m[2m the correct[0m[2m fix:[0m[2m
      
-     Actually[0m[2m, looking[0m[2m at the[0m[2m requirements[0m[2m again:[0m[2m
-     - "[0m[2mInventory never[0m[2m goes below[0m[2m zero"[0m[2m → atomic[0m[2m reservation[0m[2m/de[0m[2mcrement[0m[2m
-     - "[0m[2mEvery successful[0m[2m charge corresponds[0m[2m to exactly[0m[2m one item[0m[2m delivered"[0m[2m → if[0m[2m charge succeeds[0m[2m, order[0m[2m succeeds[0m[2m;[0m[2m if order[0m[2m fails after[0m[2m charge,[0m[2m we need[0m[2m to refund[0m[2m
-     -[0m[2m "No[0m[2m order is[0m[2m charged more[0m[2m than once[0m[2m" →[0m[2m idempotent[0m[2m charging[0m[2m per[0m[2m order_id[0m[2m
+     The core[0m[2m problem[0m[2m is that[0m[2m `check[0m[2m_stock`[0m[2m and `[0m[2mdecrement[0m[2m` are[0m[2m not[0m[2m atomic.[0m[2m Between[0m[2m checking stock[0m[2m and decrement[0m[2ming,[0m[2m other[0m[2m cor[0m[2moutines can[0m[2m charge[0m[2m and decrement[0m[2m.
      
-     So[0m[2m the ideal[0m[2m flow:[0m[2m
-     1.[0m[2m Try[0m[2m to atom[0m[2mically reserve[0m[2m inventory ([0m[2mdecrement[0m[2m)
-     2[0m[2m. If[0m[2m fails[0m[2m →[0m[2m out of[0m[2m stock,[0m[2m return False[0m[2m
-     3[0m[2m. If[0m[2m succeeds[0m[2m → charge[0m[2m
-     4[0m[2m. If[0m[2m charge fails[0m[2m → increment[0m[2m inventory back[0m[2m (release[0m[2m reservation[0m[2m), return[0m[2m False[0m[2m
-     5.[0m[2m If charge[0m[2m succeeds →[0m[2m return[0m[2m True[0m[2m
+     The[0m[2m fix should[0m[2m be[0m[2m to[0m[2m make the[0m[2m inventory operation[0m[2m atomic.[0m[2m We need[0m[2m to reserve[0m[2m/de[0m[2mcrement stock[0m[2m BEFORE charging[0m[2m, and[0m[2m if charging[0m[2m fails,[0m[2m restore[0m[2m the stock[0m[2m. Or[0m[2m we could[0m[2m make[0m[2m a[0m[2m method[0m[2m that does[0m[2m check[0m[2m-and-de[0m[2mcrement atom[0m[2mically,[0m[2m and only[0m[2m charge if[0m[2m that[0m[2m succeeds.[0m[2m
      
-     But wait[0m[2m, there's[0m[2m a subtle[0m[2mty[0m[2m: if[0m[2m decrement[0m[2m succeeds and[0m[2m then[0m[2m charge[0m[2m fails,[0m[2m we increment[0m[2m back[0m[2m. But[0m[2m what if[0m[2m between[0m[2m decrement[0m[2m and increment[0m[2m, another[0m[2m task[0m[2m charges[0m[2m? That[0m[2m should[0m[2m be fine[0m[2m because inventory[0m[2m is correctly[0m[2m tracking[0m[2m actual[0m[2m committed[0m[2m items.[0m[2m
+     But wait[0m[2m - there's[0m[2m a subtle[0m[2mty[0m[2m. If[0m[2m we decrement[0m[2m first,[0m[2m then charge[0m[2m, and[0m[2m charge[0m[2m fails,[0m[2m we need[0m[2m to increment[0m[2m back[0m[2m. But[0m[2m between[0m[2m decrement[0m[2m and increment[0m[2m, another[0m[2m order[0m[2m might[0m[2m fail[0m[2m the[0m[2m stock[0m[2m check even[0m[2m though we're[0m[2m going[0m[2m to restore[0m[2m it.[0m[2m That's a[0m[2m l[0m[2miveness[0m[2m issue but[0m[2m not a[0m[2m safety issue[0m[2m.
      
-     What[0m[2m about duplicate[0m[2m charges?[0m[2m We[0m[2m need to[0m[2m make `[0m[2mPaymentGateway[0m[2m.charge[0m[2m` id[0m[2mempotent per[0m[2m `order[0m[2m_id`.[0m[2m But[0m[2m the[0m[2m existing[0m[2m `charge[0m[2m` method[0m[2m signature is[0m[2m `charge[0m[2m(self[0m[2m, order[0m[2m_id:[0m[2m str,[0m[2m amount:[0m[2m float)[0m[2m -> bool[0m[2m`. We[0m[2m can add[0m[2m a `_[0m[2mprocessed[0m[2m_order[0m[2m_ids`[0m[2m set.[0m[2m But[0m[2m what[0m[2m if the[0m[2m same `[0m[2morder_id[0m[2m` is[0m[2m charged[0m[2m with a[0m[2m different `[0m[2mamount`[0m[2m? We[0m[2m should probably[0m[2m treat[0m[2m that[0m[2m as an[0m[2m error or[0m[2m just[0m[2m return True[0m[2m for[0m[2m the original[0m[2m amount.[0m[2m I'll[0m[2m make[0m[2m it so[0m[2m that[0m[2m if the[0m[2m same `[0m[2morder_id[0m[2m` was[0m[2m already successfully[0m[2m charged,[0m[2m return True[0m[2m but[0m[2m don't add[0m[2m a[0m[2m new charge[0m[2m entry[0m[2m.
+     Actually[0m[2m, the[0m[2m safest[0m[2m approach is[0m[2m:
+     1[0m[2m. Make[0m[2m inventory operations[0m[2m atomic with[0m[2m respect[0m[2m to each[0m[2m other[0m[2m
+     2.[0m[2m Decrement[0m[2m stock[0m[2m FIRST[0m[2m
+     3.[0m[2m Then[0m[2m charge[0m[2m
+     4.[0m[2m If charge[0m[2m fails,[0m[2m increment stock[0m[2m back[0m[2m
+     5.[0m[2m Make payment[0m[2m idempotent[0m[2m by[0m[2m tracking[0m[2m charged[0m[2m order[0m[2m_ids[0m[2m
      
-     Actually[0m[2m, looking[0m[2m more[0m[2m carefully at[0m[2m `[0m[2mPayment[0m[2mGateway`,[0m[2m there's no[0m[2m ded[0m[2mup[0m[2m logic[0m[2m at[0m[2m all.[0m[2m The requirement[0m[2m says "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once".[0m[2m I'll[0m[2m add a[0m[2m `[0m[2mset`[0m[2m of processed[0m[2m order IDs[0m[2m.[0m[2m If `[0m[2morder_id[0m[2m` is[0m[2m already in[0m[2m the[0m[2m set,[0m[2m return True[0m[2m without[0m[2m charging[0m[2m again.[0m[2m
+     Wait[0m[2m, but[0m[2m step[0m[2m 4[0m[2m introduces[0m[2m a window[0m[2m where stock[0m[2m is temporarily[0m[2m reduced[0m[2m. However[0m[2m, this[0m[2m prevents[0m[2m overselling[0m[2m.[0m[2m And if[0m[2m charge[0m[2m fails,[0m[2m we restore[0m[2m.[0m[2m
      
-     But[0m[2m wait,[0m[2m there's[0m[2m a potential[0m[2m issue:[0m[2m what[0m[2m if `[0m[2mcheckout`[0m[2m retries[0m[2m the charge[0m[2m for[0m[2m the same[0m[2m order after[0m[2m a[0m[2m network[0m[2m failure?[0m[2m The current[0m[2m mock[0m[2m doesn't simulate[0m[2m this[0m[2m.[0m[2m But for[0m[2m robust[0m[2mness,[0m[2m making[0m[2m `[0m[2mcharge`[0m[2m idempotent[0m[2m is good[0m[2m.
+     But there's[0m[2m another issue[0m[2m: what[0m[2m if the[0m[2m same[0m[2m order_id[0m[2m somehow[0m[2m gets processed[0m[2m twice?[0m[2m We should[0m[2m make `[0m[2mcharge[0m[2m` id[0m[2mempotent.[0m[2m
      
-     Let[0m[2m me also[0m[2m think[0m[2m about `[0m[2mInventory`:[0m[2m
-     - I'll[0m[2m add an[0m[2m `async[0m[2mio.Lock[0m[2m` to[0m[2m the `[0m[2mInventory`[0m[2m class.[0m[2m
-     - I'll[0m[2m add a[0m[2m `[0m[2mreserve`[0m[2m method ([0m[2mor similar[0m[2m) that[0m[2m atomically[0m[2m checks and[0m[2m decrements[0m[2m.
-     -[0m[2m The[0m[2m existing `[0m[2mde[0m[2mcrement`[0m[2m and `[0m[2mcheck_stock[0m[2m` methods[0m[2m should[0m[2m remain with[0m[2m their current[0m[2m signatures,[0m[2m but I'll[0m[2m make[0m[2m them use[0m[2m the lock[0m[2m too[0m[2m for thread[0m[2m-s[0m[2mafety.[0m[2m
+     Actually[0m[2m, looking[0m[2m at the[0m[2m requirements again[0m[2m: "[0m[2mDo not[0m[2m change the[0m[2m public interfaces[0m[2m of `[0m[2mInventory`[0m[2m or `[0m[2mPaymentGateway[0m[2m`. You[0m[2m may add[0m[2m methods to[0m[2m them."[0m[2m
      
-     Actually,[0m[2m to[0m[2m minimize[0m[2m changes,[0m[2m I can[0m[2m:
-     1[0m[2m. Add[0m[2m `async[0m[2mio.Lock[0m[2m` to[0m[2m `Inventory[0m[2m.__[0m[2minit__[0m[2m`
-     2[0m[2m. Keep[0m[2m existing methods[0m[2m but wrap[0m[2m the[0m[2m critical[0m[2m sections[0m[2m with[0m[2m the lock[0m[2m
-     3[0m[2m. Add[0m[2m a new[0m[2m atomic[0m[2m method if[0m[2m needed[0m[2m
+     So I[0m[2m can add[0m[2m methods to[0m[2m both[0m[2m classes[0m[2m, but[0m[2m cannot[0m[2m change existing[0m[2m method[0m[2m signatures.[0m[2m
      
-     Wait[0m[2m, I[0m[2m should[0m[2m be[0m[2m careful.[0m[2m If[0m[2m I wrap[0m[2m `check[0m[2m_stock`[0m[2m and `[0m[2mdecrement[0m[2m` individually[0m[2m with the[0m[2m lock,[0m[2m the[0m[2m TO[0m[2mCTOU[0m[2m race[0m[2m between them[0m[2m still exists[0m[2m in `[0m[2mcheckout.py[0m[2m`[0m[2m because the[0m[2m lock is[0m[2m released between[0m[2m `check[0m[2m_stock`[0m[2m and `[0m[2mdecrement[0m[2m`. So[0m[2m the fix[0m[2m really[0m[2m needs to[0m[2m be in[0m[2m `checkout[0m[2m.py`[0m[2m —[0m[2m it[0m[2m needs[0m[2m to call[0m[2m a[0m[2m single atomic[0m[2m operation,[0m[2m or acquire[0m[2m the lock[0m[2m across[0m[2m both[0m[2m operations[0m[2m.
+     Let me[0m[2m think about[0m[2m the clean[0m[2mest fix[0m[2m:
      
-     But[0m[2m `[0m[2mcheckout.py[0m[2m` doesn't[0m[2m have access[0m[2m to the[0m[2m lock.[0m[2m So[0m[2m I should[0m[2m add[0m[2m a method[0m[2m to `[0m[2mInventory`[0m[2m that does[0m[2m the[0m[2m atomic check[0m[2m-and-de[0m[2mcrement.[0m[2m
+     For[0m[2m Inventory[0m[2m:
+     -[0m[2m Add a[0m[2m method like[0m[2m `reserve[0m[2m_and[0m[2m_decrement[0m[2m` or[0m[2m just[0m[2m make the[0m[2m check[0m[2m+[0m[2mdecrement[0m[2m atomic[0m[2m
+     - Actually[0m[2m, `[0m[2mde[0m[2mcrement`[0m[2m already does[0m[2m a[0m[2m check internally[0m[2m, but[0m[2m the problem[0m[2m is that[0m[2m `check[0m[2m_stock`[0m[2m is called[0m[2m separately before[0m[2m `[0m[2mcharge`[0m[2m
+     - The[0m[2m simplest[0m[2m fix in[0m[2m `checkout[0m[2m.py`[0m[2m is[0m[2m to NOT[0m[2m call `[0m[2mcheck_stock[0m[2m` first[0m[2m, just[0m[2m call `[0m[2mdecrement[0m[2m` first[0m[2m. But[0m[2m if[0m[2m `de[0m[2mcrement`[0m[2m is[0m[2m called by[0m[2m multiple cor[0m[2moutines concurrently[0m[2m...[0m[2m in[0m[2m asyncio,[0m[2m since `[0m[2mdecrement[0m[2m` has[0m[2m no await[0m[2m between the[0m[2m check and[0m[2m the decrement[0m[2m, it[0m[2m IS[0m[2m atomic[0m[2m in[0m[2m a[0m[2m single-thread[0m[2med asyncio[0m[2m context[0m[2m. But[0m[2m wait,[0m[2m it[0m[2m has[0m[2m `await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.02[0m[2m)` BEFORE[0m[2m the check[0m[2m. So[0m[2m if[0m[2m two[0m[2m coroutines[0m[2m are[0m[2m in[0m[2m `de[0m[2mcrement`[0m[2m concurrently[0m[2m:[0m[2m
+       - Both[0m[2m hit `[0m[2mawait asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)`[0m[2m
+       -[0m[2m After[0m[2m the[0m[2m sleep,[0m[2m they resume[0m[2m one[0m[2m at[0m[2m a time[0m[2m
+       - The[0m[2m first one[0m[2m checks `[0m[2mself._[0m[2mstock >=[0m[2m quantity`[0m[2m and decre[0m[2mments[0m[2m
+       -[0m[2m The second[0m[2m one checks[0m[2m `self[0m[2m._stock[0m[2m >= quantity[0m[2m` and[0m[2m...[0m[2m since[0m[2m there's[0m[2m no await[0m[2m between check[0m[2m and decrement[0m[2m, it[0m[2m sees the[0m[2m updated value[0m[2m ([0m[2mor[0m[2m not[0m[2m?[0m[2m)
      
-     Let me[0m[2m design:[0m[2m
+     Wait[0m[2m, I[0m[2m need to[0m[2m think about[0m[2m this[0m[2m more carefully[0m[2m. In[0m[2m C[0m[2mPython with[0m[2m asyncio,[0m[2m when[0m[2m a[0m[2m coroutine[0m[2m awaits,[0m[2m it yields[0m[2m control back[0m[2m to the[0m[2m event loop[0m[2m. When[0m[2m it[0m[2m resumes,[0m[2m it continues[0m[2m execution[0m[2m until[0m[2m the next[0m[2m await.[0m[2m So[0m[2m in[0m[2m `de[0m[2mcrement`:[0m[2m
      
-     In[0m[2m `inventory[0m[2m.py`:[0m[2m
-     -[0m[2m Add `[0m[2mself._[0m[2mlock =[0m[2m asyncio.Lock[0m[2m()`[0m[2m in `[0m[2m__init[0m[2m__`[0m[2m
-     - Keep[0m[2m `check[0m[2m_stock`,[0m[2m `de[0m[2mcrement`,[0m[2m `increment[0m[2m` with[0m[2m same[0m[2m signatures[0m[2m
-     - Add[0m[2m `[0m[2masync def[0m[2m reserve(self[0m[2m, quantity[0m[2m: int[0m[2m) ->[0m[2m bool:`[0m[2m that acquire[0m[2ms the[0m[2m lock,[0m[2m checks stock[0m[2m, decre[0m[2mments if[0m[2m possible[0m[2m, and[0m[2m returns True[0m[2m/False[0m[2m
+     ```python[0m[2m
+     async[0m[2m def decrement[0m[2m(self,[0m[2m quantity:[0m[2m int)[0m[2m -> bool[0m[2m:[0m[2m
+         await asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)[0m[2m  #[0m[2m yields[0m[2m control[0m[2m
+         if[0m[2m self._[0m[2mstock >=[0m[2m quantity:[0m[2m  #[0m[2m resumes here[0m[2m
+             self._[0m[2mstock -=[0m[2m quantity[0m[2m
+             return[0m[2m True[0m[2m
+         return[0m[2m False[0m[2m
+     ```
      
-     In[0m[2m `checkout[0m[2m.py`:[0m[2m
-     - Replace[0m[2m the[0m[2m three[0m[2m-step[0m[2m flow with[0m[2m:[0m[2m
-       1[0m[2m. `[0m[2mreserved[0m[2m = await[0m[2m inventory.reserve[0m[2m(quantity[0m[2m)`[0m[2m
-       2[0m[2m. If[0m[2m not reserved[0m[2m, return[0m[2m False[0m[2m
-       3.[0m[2m `charged[0m[2m = await[0m[2m gateway.ch[0m[2marge(order[0m[2m_id,[0m[2m quantity *[0m[2m price)`[0m[2m
-       4.[0m[2m If not[0m[2m charged:[0m[2m
-          - `[0m[2mawait inventory[0m[2m.increment([0m[2mquantity)`[0m[2m ([0m[2mrelease the[0m[2m reservation)[0m[2m
-          -[0m[2m return False[0m[2m
-       5[0m[2m. Return[0m[2m True[0m[2m
+     If[0m[2m cor[0m[2moutine A[0m[2m and B[0m[2m both call[0m[2m `de[0m[2mcrement`:[0m[2m
+     1.[0m[2m A enters[0m[2m,[0m[2m hits `[0m[2mawait asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)`,[0m[2m suspends[0m[2m
+     2[0m[2m. B[0m[2m enters,[0m[2m hits `[0m[2mawait asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)`,[0m[2m suspends[0m[2m  
+     3.[0m[2m Sleep[0m[2m finishes[0m[2m for A[0m[2m,[0m[2m event[0m[2m loop resumes[0m[2m A[0m[2m
+     4.[0m[2m A executes[0m[2m `if[0m[2m self._[0m[2mstock >=[0m[2m quantity:`[0m[2m ([0m[2mTrue),[0m[2m `self[0m[2m._stock[0m[2m -= quantity[0m[2m`, `[0m[2mreturn True[0m[2m` -[0m[2m all without[0m[2m yielding[0m[2m
+     5[0m[2m. A[0m[2m completes[0m[2m, now[0m[2m B is[0m[2m resumed[0m[2m
+     6[0m[2m. B[0m[2m executes `[0m[2mif self[0m[2m._stock[0m[2m >= quantity[0m[2m:` -[0m[2m now it[0m[2m sees the[0m[2m updated stock[0m[2m![0m[2m
      
-     In `[0m[2mpayments.py[0m[2m`:
-     -[0m[2m Add `[0m[2mself._[0m[2mcharged[0m[2m_order[0m[2m_ids:[0m[2m set =[0m[2m set[0m[2m()`[0m[2m in `[0m[2m__init[0m[2m__`[0m[2m
-     - In[0m[2m `charge[0m[2m`, before[0m[2m processing[0m[2m,[0m[2m check if[0m[2m `order[0m[2m_id`[0m[2m in `[0m[2mself._[0m[2mcharged_order[0m[2m_ids`.[0m[2m If yes[0m[2m, return[0m[2m True ([0m[2mid[0m[2mempotent success[0m[2m).
-     -[0m[2m If charge[0m[2m is[0m[2m successful[0m[2m ([0m[2mnew),[0m[2m add to[0m[2m the[0m[2m set and[0m[2m process[0m[2m normally[0m[2m.[0m[2m
-     - Need[0m[2m to be[0m[2m thread[0m[2m-safe with[0m[2m async[0m[2m?[0m[2m Since `[0m[2mPaymentGateway[0m[2m` might[0m[2m be[0m[2m accessed concurrently[0m[2m, should[0m[2m I use[0m[2m a lock[0m[2m? Yes[0m[2m, the[0m[2m `charges[0m[2m` list[0m[2m and `[0m[2mtotal_ch[0m[2marged`[0m[2m and[0m[2m the[0m[2m set should[0m[2m be protected[0m[2m.[0m[2m
-     - Add[0m[2m `async[0m[2mio.Lock[0m[2m()`[0m[2m to `[0m[2mPaymentGateway[0m[2m`.[0m[2m
+     So in[0m[2m pure asyncio[0m[2m with[0m[2m a single[0m[2m thread[0m[2m, `[0m[2mdecrement[0m[2m` is[0m[2m actually safe[0m[2m! The[0m[2m check and[0m[2m decrement happen[0m[2m atom[0m[2mically relative[0m[2m to other[0m[2m coroutines[0m[2m because there[0m[2m are no[0m[2m await points[0m[2m between them[0m[2m.
      
-     Let[0m[2m me verify[0m[2m the requirements[0m[2m:
-     -[0m[2m "Do[0m[2m not change[0m[2m the public[0m[2m interfaces of[0m[2m `Inventory[0m[2m` or[0m[2m `Payment[0m[2mGateway`.[0m[2m You[0m[2m may add[0m[2m methods to[0m[2m them."[0m[2m →[0m[2m I'm[0m[2m adding methods[0m[2m and internal[0m[2m locking[0m[2m, not[0m[2m changing existing[0m[2m method[0m[2m signatures.[0m[2m ✓[0m[2m
+     But[0m[2m the[0m[2m problem[0m[2m is in[0m[2m `checkout[0m[2m.py`:[0m[2m
+     ```python[0m[2m
+     available[0m[2m = await[0m[2m inventory.check[0m[2m_stock([0m[2mquantity)[0m[2m
+     #[0m[2m ... await[0m[2m gateway.ch[0m[2marge(...)[0m[2m ...
+     de[0m[2mcremented[0m[2m = await[0m[2m inventory.de[0m[2mcrement([0m[2mquantity)[0m[2m
+     ```
      
-     Let me[0m[2m also think[0m[2m about a[0m[2m subtle[0m[2m issue with[0m[2m `Payment[0m[2mGateway`:[0m[2m the[0m[2m `charge[0m[2m` method[0m[2m sleeps[0m[2m 0.[0m[2m03s[0m[2m,[0m[2m and with[0m[2m async[0m[2m,[0m[2m if[0m[2m two tasks[0m[2m call `[0m[2mcharge`[0m[2m with the[0m[2m same `[0m[2morder_id[0m[2m` concurrently[0m[2m, both[0m[2m might[0m[2m pass[0m[2m the duplicate[0m[2m check simultaneously[0m[2m before[0m[2m either[0m[2m adds[0m[2m to the[0m[2m set.[0m[2m So I[0m[2m need a[0m[2m lock around[0m[2m the[0m[2m charge[0m[2m logic[0m[2m.
+     Between[0m[2m `check[0m[2m_stock`[0m[2m and `[0m[2mdecrement[0m[2m`, there's[0m[2m `gateway[0m[2m.charge[0m[2m`[0m[2m which is[0m[2m an await[0m[2m. So[0m[2m:[0m[2m
+     1.[0m[2m A checks[0m[2m stock ([0m[2mTrue)[0m[2m
+     2.[0m[2m B checks[0m[2m stock ([0m[2mTrue)[0m[2m
+     3.[0m[2m A charges[0m[2m and[0m[2m decrements[0m[2m ([0m[2mstock goes[0m[2m from[0m[2m 1 to[0m[2m 0[0m[2m)
+     4[0m[2m. B[0m[2m charges and[0m[2m tries[0m[2m to decrement[0m[2m...[0m[2m 
      
-     Let[0m[2m me write[0m[2m the code[0m[2m:
+     Wait,[0m[2m step[0m[2m 4[0m[2m: B[0m[2m's[0m[2m `[0m[2mdecrement[0m[2m` would[0m[2m see stock[0m[2m=0[0m[2m and[0m[2m return False[0m[2m.[0m[2m So B[0m[2m wouldn't[0m[2m decrement[0m[2m.[0m[2m But B[0m[2m was already[0m[2m charged![0m[2m That's[0m[2m the[0m[2m ghost charge[0m[2m.[0m[2m
      
-     ```[0m[2mpython[0m[2m
-     #[0m[2m inventory[0m[2m.py[0m[2m
-     import asyncio[0m[2m
+     And[0m[2m if[0m[2m stock started[0m[2m at[0m[2m 2:[0m[2m
+     1.[0m[2m A checks[0m[2m stock ([0m[2mTrue)[0m[2m
+     2.[0m[2m B checks[0m[2m stock ([0m[2mTrue)[0m[2m
+     3.[0m[2m A charges[0m[2m,[0m[2m decrements[0m[2m (stock[0m[2m 2[0m[2m ->[0m[2m 1[0m[2m)
+     4[0m[2m. B[0m[2m charges,[0m[2m decrements[0m[2m (stock[0m[2m 1[0m[2m ->[0m[2m 0)[0m[2m
+     Result[0m[2m: Both[0m[2m succeed[0m[2m, which[0m[2m is correct[0m[2m since[0m[2m stock[0m[2m was[0m[2m 2.[0m[2m
      
-     class[0m[2m Inventory:[0m[2m
-         def[0m[2m __init[0m[2m__(self[0m[2m, stock[0m[2m: int[0m[2m):[0m[2m
-             self._[0m[2mstock =[0m[2m stock[0m[2m
-             self[0m[2m._lock[0m[2m = asyncio[0m[2m.Lock()[0m[2m
+     If[0m[2m stock started[0m[2m at[0m[2m 1:[0m[2m
+     1.[0m[2m A checks[0m[2m stock ([0m[2mTrue)[0m[2m
+     2.[0m[2m B checks[0m[2m stock ([0m[2mTrue)[0m[2m
+     3.[0m[2m A charges[0m[2m, decre[0m[2mments ([0m[2mstock[0m[2m 1 ->[0m[2m 0[0m[2m)
+     4[0m[2m. B[0m[2m charges,[0m[2m tries to[0m[2m decrement ([0m[2mstock[0m[2m 0 ->[0m[2m fails[0m[2m)
+     Result[0m[2m: B[0m[2m is[0m[2m charged but[0m[2m no item[0m[2m delivered[0m[2m =[0m[2m ghost charge[0m[2m.[0m[2m
      
-         async[0m[2m def check[0m[2m_stock(self[0m[2m, quantity[0m[2m: int[0m[2m) ->[0m[2m bool:[0m[2m
-             async[0m[2m with self[0m[2m._lock[0m[2m:[0m[2m
-                 await asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)[0m[2m
-                 return[0m[2m self._[0m[2mstock >=[0m[2m quantity[0m[2m
+     But[0m[2m wait,[0m[2m what about[0m[2m negative inventory[0m[2m? Let[0m[2m me think[0m[2m.[0m[2m If we[0m[2m have[0m[2m:[0m[2m
+     - Stock[0m[2m =[0m[2m 1[0m[2m
+     -[0m[2m 10 orders[0m[2m check stock[0m[2m concurrently[0m[2m,[0m[2m all see[0m[2m True[0m[2m
+     - They[0m[2m charge[0m[2m sequentially[0m[2m
+     -[0m[2m First[0m[2m one[0m[2m decrements[0m[2m (1[0m[2m ->[0m[2m 0)[0m[2m
+     - The[0m[2m rest try[0m[2m to decrement[0m[2m, all[0m[2m fail[0m[2m
+     - Result[0m[2m:[0m[2m 1 item[0m[2m delivered[0m[2m,[0m[2m 9 ghost[0m[2m charges,[0m[2m stock =[0m[2m 0[0m[2m. No[0m[2m negative stock[0m[2m.
+     
+     But[0m[2m the user[0m[2m says[0m[2m inventory[0m[2m goes negative[0m[2m. How[0m[2m?[0m[2m
+     
+     Oh![0m[2m I see[0m[2m.[0m[2m If[0m[2m `check[0m[2m_stock`[0m[2m and[0m[2m `de[0m[2mcrement`[0m[2m are replaced[0m[2m with[0m[2m a[0m[2m naive[0m[2m implementation[0m[2m, or[0m[2m if there's[0m[2m a bug[0m[2m I'm[0m[2m missing.[0m[2m Wait[0m[2m, let[0m[2m me re[0m[2m-read `[0m[2minventory.de[0m[2mcrement`:[0m[2m
+     
+     ```python[0m[2m
+     async[0m[2m def decrement[0m[2m(self,[0m[2m quantity:[0m[2m int)[0m[2m -> bool[0m[2m:[0m[2m
+         await asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)[0m[2m
+         if[0m[2m self._[0m[2mstock >=[0m[2m quantity:[0m[2m
+             self[0m[2m._stock[0m[2m -= quantity[0m[2m
+             return True[0m[2m
+         return False[0m[2m
+     ```[0m[2m
+     
+     In[0m[2m asyncio[0m[2m, as[0m[2m I reason[0m[2med,[0m[2m this is[0m[2m actually[0m[2m safe[0m[2m from[0m[2m the[0m[2m perspective[0m[2m of not[0m[2m going[0m[2m negative[0m[2m because there's[0m[2m no await[0m[2m between the[0m[2m check and[0m[2m decrement[0m[2m. BUT[0m[2m what[0m[2m if there's[0m[2m actual[0m[2m threading?[0m[2m The[0m[2m simulation[0m[2m uses[0m[2m `async[0m[2mio.g[0m[2mather`,[0m[2m which[0m[2m is all[0m[2m in[0m[2m one[0m[2m thread[0m[2m with[0m[2m the[0m[2m default[0m[2m event loop[0m[2m policy[0m[2m. So[0m[2m it[0m[2m should be[0m[2m safe.[0m[2m
+     
+     Hmm[0m[2m, but[0m[2m the problem[0m[2m says inventory[0m[2m goes negative[0m[2m. Maybe[0m[2m I'm[0m[2m wrong[0m[2m about asyncio[0m[2m atomic[0m[2mity,[0m[2m or maybe[0m[2m there's something[0m[2m else.[0m[2m Let me[0m[2m just[0m[2m run the[0m[2m simulation to[0m[2m see what[0m[2m actually[0m[2m happens.[0m[2m
+     
+     Actually wait[0m[2m - I[0m[2m just[0m[2m realized something[0m[2m. In[0m[2m C[0m[2mPython,[0m[2m `async[0m[2mio[0m[2m.sleep([0m[2m0.[0m[2m02)`[0m[2m might not[0m[2m be the[0m[2m only[0m[2m yield point[0m[2m. But[0m[2m more[0m[2m importantly,[0m[2m the[0m[2m code[0m[2m in[0m[2m `checkout[0m[2m.py`[0m[2m has[0m[2m a[0m[2m vulnerability[0m[2m that[0m[2m could cause[0m[2m negative inventory[0m[2m if we[0m[2m refactor[0m[2m it incorrectly[0m[2m.[0m[2m
+     
+     Let[0m[2m me reconsider[0m[2m.[0m[2m Maybe the[0m[2m issue is[0m[2m that `[0m[2mdecrement[0m[2m` is[0m[2m NOT safe[0m[2m because[0m[2m when[0m[2m using[0m[2m `async[0m[2mio.g[0m[2mather`,[0m[2m all[0m[2m the[0m[2m tasks[0m[2m are scheduled[0m[2m,[0m[2m and the[0m[2m sleeps[0m[2m happen[0m[2m,[0m[2m and[0m[2m when they[0m[2m return[0m[2m, the[0m[2m event[0m[2m loop might[0m[2m inter[0m[2mleave[0m[2m them[0m[2m in unexpected[0m[2m ways.[0m[2m But no[0m[2m, in[0m[2m asyncio[0m[2m, a[0m[2m coroutine[0m[2m runs until[0m[2m it[0m[2m hits[0m[2m an await[0m[2m, and[0m[2m then[0m[2m other[0m[2m coroutines[0m[2m can run[0m[2m. Once[0m[2m resumed[0m[2m, it[0m[2m runs to[0m[2m completion[0m[2m ([0m[2mor the[0m[2m next await[0m[2m).[0m[2m Since[0m[2m `if[0m[2m self._[0m[2mstock >=[0m[2m quantity:[0m[2m self._[0m[2mstock -=[0m[2m quantity`[0m[2m has no[0m[2m await,[0m[2m it runs[0m[2m atom[0m[2mically.[0m[2m
+     
+     Unless[0m[2m... there's[0m[2m a `[0m[2m__[0m[2mget[0m[2mattribute[0m[2m__`[0m[2m or descriptor[0m[2m on[0m[2m `_[0m[2mstock`[0m[2m that yields[0m[2m? No[0m[2m, it's[0m[2m just a[0m[2m simple integer[0m[2m attribute.[0m[2m
+     
+     OK[0m[2m let[0m[2m me just[0m[2m run the[0m[2m code[0m[2m to see[0m[2m what[0m[2m happens.[0m[2m Maybe my[0m[2m understanding[0m[2m is wrong[0m[2m,[0m[2m or maybe[0m[2m the negative[0m[2m inventory[0m[2m happens through[0m[2m some[0m[2m other mechanism[0m[2m.
+     
+     Actually[0m[2m, I[0m[2m just realized[0m[2m:[0m[2m if[0m[2m `de[0m[2mcrement`[0m[2m itself[0m[2m is safe[0m[2m, then[0m[2m the only[0m[2m way to[0m[2m get negative[0m[2m inventory is[0m[2m if `[0m[2mcheckout[0m[2m.py[0m[2m` modifies[0m[2m `[0m[2minventory[0m[2m._stock[0m[2m` directly[0m[2m or[0m[2m if there's[0m[2m another[0m[2m path[0m[2m. Looking[0m[2m at `[0m[2mcheckout.py[0m[2m`, it[0m[2m doesn't[0m[2m. So[0m[2m how[0m[2m does[0m[2m inventory go[0m[2m negative?[0m[2m
+     
+     Oh![0m[2m Maybe[0m[2m I'm[0m[2m wrong[0m[2m about asyncio[0m[2m.[0m[2m Let me[0m[2m think again[0m[2m. When[0m[2m `await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.02[0m[2m)` completes[0m[2m, the[0m[2m cor[0m[2moutine is[0m[2m resumed[0m[2m. But[0m[2m what[0m[2m if multiple[0m[2m coroutines[0m[2m' sleeps[0m[2m complete at[0m[2m roughly[0m[2m the same[0m[2m time?[0m[2m They are[0m[2m all added[0m[2m to the[0m[2m event loop[0m[2m's ready[0m[2m queue[0m[2m. Then[0m[2m the event[0m[2m loop picks[0m[2m them one[0m[2m by one[0m[2m. Each[0m[2m one[0m[2m runs until[0m[2m completion[0m[2m ([0m[2mor next[0m[2m await).[0m[2m So they[0m[2m run[0m[2m sequentially,[0m[2m not inter[0m[2mleaved.[0m[2m The[0m[2m first[0m[2m one decre[0m[2mments,[0m[2m the second[0m[2m one[0m[2m sees the[0m[2m new[0m[2m value.[0m[2m So no[0m[2m negative inventory[0m[2m from[0m[2m `de[0m[2mcrement`[0m[2m alone.[0m[2m
+     
+     But the[0m[2m issue[0m[2m in[0m[2m `checkout[0m[2m.py`[0m[2m is that[0m[2m `check[0m[2m_stock`[0m[2m and `[0m[2mdecrement[0m[2m` are[0m[2m separated by[0m[2m `charge[0m[2m`. Multiple[0m[2m cor[0m[2moutines can[0m[2m pass `[0m[2mcheck_stock[0m[2m`, then[0m[2m charge,[0m[2m then call[0m[2m `de[0m[2mcrement`.[0m[2m But[0m[2m `de[0m[2mcrement`[0m[2m will[0m[2m only[0m[2m allow[0m[2m as[0m[2m many as[0m[2m there[0m[2m is[0m[2m stock.[0m[2m So if[0m[2m stock=[0m[2m5 and[0m[2m 12[0m[2m orders[0m[2m come[0m[2m in,[0m[2m 5[0m[2m will decrement[0m[2m successfully[0m[2m,[0m[2m 7[0m[2m will fail[0m[2m. But[0m[2m all[0m[2m 12[0m[2m might have[0m[2m been[0m[2m charged.[0m[2m No[0m[2m negative stock[0m[2m though[0m[2m.
+     
+     Unless[0m[2m... the[0m[2m `[0m[2mcheck[0m[2m_stock`[0m[2m method[0m[2m also[0m[2m has a[0m[2m race?[0m[2m If[0m[2m two[0m[2m cor[0m[2moutines call[0m[2m `check[0m[2m_stock`[0m[2m when[0m[2m stock[0m[2m=1[0m[2m,[0m[2m both return[0m[2m True.[0m[2m Then both[0m[2m charge.[0m[2m Then the[0m[2m first decre[0m[2mments to[0m[2m 0[0m[2m, the[0m[2m second fails[0m[2m to[0m[2m decrement.[0m[2m Stock[0m[2m stays at[0m[2m 0[0m[2m. Still[0m[2m not[0m[2m negative.[0m[2m
+     
+     I[0m[2m think the[0m[2m issue[0m[2m might be[0m[2m that `[0m[2mde[0m[2mcrement`[0m[2m is actually[0m[2m NOT[0m[2m thread[0m[2m-safe in[0m[2m the way[0m[2m I[0m[2m thought[0m[2m, or[0m[2m the[0m[2m simulation[0m[2m is run[0m[2m with actual[0m[2m threads[0m[2m. Let[0m[2m me check[0m[2m `main[0m[2m.py`[0m[2m -[0m[2m it uses[0m[2m `async[0m[2mio.g[0m[2mather`,[0m[2m so it's[0m[2m asyncio[0m[2m.
+     
+     Wait[0m[2m, maybe[0m[2m the problem[0m[2m description[0m[2m is just[0m[2m describing the[0m[2m symptoms[0m[2m in[0m[2m a general[0m[2m way,[0m[2m and the[0m[2m actual issue[0m[2m is[0m[2m the[0m[2m race[0m[2m condition I've[0m[2m identified[0m[2m. The[0m[2m "inventory[0m[2m goes negative[0m[2m" might[0m[2m be[0m[2m because[0m[2m in the[0m[2m current[0m[2m code,[0m[2m after[0m[2m the payment[0m[2m fails in[0m[2m `de[0m[2mcrement`,[0m[2m the checkout[0m[2m might[0m[2m retry[0m[2m or something[0m[2m?[0m[2m No,[0m[2m there's no[0m[2m retry.[0m[2m
+     
+     Let[0m[2m me just[0m[2m run the[0m[2m simulation to[0m[2m see.[0m[2m
+     
+     Actually,[0m[2m another[0m[2m thought:[0m[2m maybe the[0m[2m issue[0m[2m is that[0m[2m `inventory[0m[2m.decrement[0m[2m`[0m[2m is not[0m[2m safe[0m[2m because multiple[0m[2m coroutines[0m[2m can be[0m[2m "[0m[2minside[0m[2m" the[0m[2m method[0m[2m at the[0m[2m same time[0m[2m, all[0m[2m having[0m[2m passed[0m[2m the `[0m[2mif`[0m[2m check before[0m[2m any[0m[2m of them[0m[2m executes[0m[2m `[0m[2mself._[0m[2mstock -=[0m[2m quantity`.[0m[2m But I[0m[2m keep[0m[2m going[0m[2m back and[0m[2m forth[0m[2m on[0m[2m this.[0m[2m In Python[0m[2m asyncio[0m[2m, a[0m[2m coroutine[0m[2m is[0m[2m just[0m[2m a generator[0m[2m-like[0m[2m object[0m[2m. The[0m[2m event loop[0m[2m drives[0m[2m it.[0m[2m When `[0m[2mawait asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)`[0m[2m returns[0m[2m, the[0m[2m coroutine[0m[2m resumes at[0m[2m the next[0m[2m line[0m[2m and[0m[2m continues until[0m[2m it yields[0m[2m again[0m[2m. Other[0m[2m coroutines[0m[2m don't run[0m[2m in[0m[2m between[0m[2m. So[0m[2m it[0m[2m IS[0m[2m atomic.[0m[2m
+     
+     Let[0m[2m me just[0m[2m run it[0m[2m and[0m[2m see.[0m[2m Maybe[0m[2m there[0m[2m are actual[0m[2m threads being[0m[2m used[0m[2m somewhere.[0m[2m
+     
+     Oh[0m[2m wait,[0m[2m I should[0m[2m look[0m[2m at the[0m[2m actual[0m[2m output[0m[2m. Let[0m[2m me run[0m[2m the simulation[0m[2m.[0m[2m
+     
+     Actually,[0m[2m maybe[0m[2m I should[0m[2m think[0m[2m about this[0m[2m differently.[0m[2m The problem[0m[2m statement[0m[2m says two[0m[2m issues exist[0m[2m. The[0m[2m code[0m[2m as[0m[2m written has[0m[2m clear[0m[2m race[0m[2m conditions.[0m[2m Whether[0m[2m or[0m[2m not[0m[2m inventory actually[0m[2m goes negative[0m[2m in this[0m[2m specific asyncio[0m[2m simulation,[0m[2m the fix[0m[2m is the[0m[2m same:[0m[2m make the[0m[2m stock[0m[2m check and[0m[2m decrement[0m[2m atomic,[0m[2m and handle[0m[2m the[0m[2m charge[0m[2m appropriately[0m[2m.
+     
+     The[0m[2m correct[0m[2m fix is[0m[2m:
+     1[0m[2m. In[0m[2m `Inventory[0m[2m`, add[0m[2m a method[0m[2m that atom[0m[2mically checks[0m[2m and decre[0m[2mments stock[0m[2m.[0m[2m Or[0m[2m just[0m[2m rely[0m[2m on `[0m[2mdecrement[0m[2m` being[0m[2m atomic,[0m[2m but skip[0m[2m the[0m[2m separate[0m[2m `check[0m[2m_stock`[0m[2m call[0m[2m.[0m[2m
+     2.[0m[2m In `[0m[2mcheckout.py[0m[2m`, call[0m[2m `inventory[0m[2m.decrement[0m[2m`[0m[2m FIRST before[0m[2m charging.[0m[2m If decrement[0m[2m succeeds[0m[2m, then[0m[2m charge.[0m[2m If charge[0m[2m fails,[0m[2m increment the[0m[2m stock back[0m[2m.
+     3[0m[2m. Make[0m[2m `Payment[0m[2mGateway.ch[0m[2marge`[0m[2m idempotent[0m[2m so[0m[2m the[0m[2m same order[0m[2m_id can't[0m[2m be charged[0m[2m twice.[0m[2m
+     
+     Wait,[0m[2m but if[0m[2m we decrement[0m[2m first and[0m[2m then[0m[2m charge,[0m[2m we[0m[2m might[0m[2m have a[0m[2m different[0m[2m issue[0m[2m: what[0m[2m if charge[0m[2m fails and[0m[2m we need[0m[2m to increment[0m[2m back[0m[2m? That's[0m[2m fine,[0m[2m we just[0m[2m need[0m[2m to make[0m[2m sure we[0m[2m increment back[0m[2m.
+     
+     Actually[0m[2m, let[0m[2m me reconsider[0m[2m.[0m[2m The requirement[0m[2m says:[0m[2m
+     - "[0m[2mEvery successful[0m[2m charge corresponds[0m[2m to exactly[0m[2m one item[0m[2m delivered"[0m[2m - if[0m[2m charge succeeds[0m[2m, item[0m[2m must be[0m[2m delivered.[0m[2m
+     - "[0m[2mInventory[0m[2m never goes[0m[2m below zero[0m[2m" -[0m[2m no[0m[2m overs[0m[2melling.[0m[2m
+     
+     So the[0m[2m correct[0m[2m flow is[0m[2m:
+     1[0m[2m. Try[0m[2m to decrement[0m[2m ([0m[2mreserve)[0m[2m inventory[0m[2m
+     2.[0m[2m If successful[0m[2m, charge[0m[2m
+     3[0m[2m. If[0m[2m charge fails[0m[2m, restore[0m[2m inventory[0m[2m
+     
+     This[0m[2m ensures:[0m[2m
+     - We[0m[2m never[0m[2m charge[0m[2m without[0m[2m having[0m[2m reserved[0m[2m inventory first[0m[2m
+     -[0m[2m Inventory[0m[2m is[0m[2m only[0m[2m decre[0m[2mmented if[0m[2m it[0m[2m was available[0m[2m
+     -[0m[2m If charge[0m[2m fails[0m[2m, we[0m[2m don't[0m[2m lose inventory[0m[2m
+     
+     But[0m[2m wait,[0m[2m what[0m[2m about[0m[2m "[0m[2mEvery[0m[2m successful charge[0m[2m corresponds to[0m[2m exactly one[0m[2m item delivered[0m[2m"? If[0m[2m we charge[0m[2m after[0m[2m decrement[0m[2ming,[0m[2m and the[0m[2m charge succeeds[0m[2m, the[0m[2m item is[0m[2m already decre[0m[2mmented so[0m[2m it's[0m[2m "[0m[2mdelivered[0m[2m"[0m[2m in the[0m[2m sense[0m[2m that[0m[2m inventory is[0m[2m reduced[0m[2m. But[0m[2m what if[0m[2m there's[0m[2m a crash[0m[2m between[0m[2m charge[0m[2m success[0m[2m and the[0m[2m return from[0m[2m checkout?[0m[2m The inventory[0m[2m is already[0m[2m decremented[0m[2m, so[0m[2m the[0m[2m item is[0m[2m accounted for[0m[2m. That's[0m[2m fine.[0m[2m
+     
+     Actually[0m[2m, there's[0m[2m another[0m[2m interpretation[0m[2m: maybe[0m[2m we should[0m[2m charge FIRST[0m[2m, then[0m[2m decrement.[0m[2m But if[0m[2m decrement[0m[2m fails after[0m[2m charge[0m[2m, we[0m[2m have a[0m[2m ghost charge[0m[2m. That's[0m[2m the[0m[2m current bug[0m[2m.
+     
+     So[0m[2m definitely[0m[2m: decrement[0m[2m first,[0m[2m then charge[0m[2m. If[0m[2m charge fails[0m[2m, increment[0m[2m back[0m[2m.
+     
+     For[0m[2m id[0m[2mempotency[0m[2m: we[0m[2m should make[0m[2m `Payment[0m[2mGateway.ch[0m[2marge`[0m[2m idempotent[0m[2m by[0m[2m tracking which[0m[2m order_ids[0m[2m have been[0m[2m charged.[0m[2m If the[0m[2m same order[0m[2m_id comes[0m[2m in[0m[2m again,[0m[2m return the[0m[2m same result[0m[2m ([0m[2mTrue[0m[2m if[0m[2m already charged[0m[2m successfully[0m[2m).[0m[2m This[0m[2m handles[0m[2m retries[0m[2m and ensures[0m[2m "No[0m[2m order is[0m[2m charged more[0m[2m than once[0m[2m".
+     
+     And[0m[2m for inventory[0m[2m, we[0m[2m should make[0m[2m it[0m[2m more[0m[2m robust by[0m[2m adding proper[0m[2m locking or[0m[2m atomic[0m[2m operations[0m[2m. But[0m[2m in[0m[2m asyncio,[0m[2m we can[0m[2m use an[0m[2m `async[0m[2mio.Lock[0m[2m` to[0m[2m ensure operations[0m[2m are[0m[2m atomic.[0m[2m
+     
+     Wait[0m[2m, if[0m[2m I[0m[2m use `[0m[2masyncio[0m[2m.Lock`[0m[2m in `[0m[2mInventory`,[0m[2m then[0m[2m `[0m[2mdecrement[0m[2m` would[0m[2m be:[0m[2m
+     ```python[0m[2m
+     async[0m[2m def decrement[0m[2m(self,[0m[2m quantity:[0m[2m int)[0m[2m -> bool[0m[2m:[0m[2m
+         async with[0m[2m self._[0m[2mlock:[0m[2m
+             await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.02[0m[2m)[0m[2m
+             if self[0m[2m._stock[0m[2m >= quantity[0m[2m:[0m[2m
+                 self._[0m[2mstock -=[0m[2m quantity[0m[2m
+                 return[0m[2m True[0m[2m
+             return[0m[2m False[0m[2m
+     ```
+     
+     But[0m[2m do[0m[2m we need[0m[2m the lock[0m[2m? As[0m[2m I reason[0m[2med,[0m[2m in single[0m[2m-threaded[0m[2m asyncio,[0m[2m `de[0m[2mcrement`[0m[2m is already[0m[2m atomic because[0m[2m there's no[0m[2m await between[0m[2m check[0m[2m and decrement[0m[2m. However[0m[2m, if[0m[2m we want[0m[2m to be[0m[2m safe[0m[2m and make[0m[2m the intent[0m[2m clear[0m[2m, or[0m[2m if there's[0m[2m any[0m[2m concern[0m[2m about the[0m[2m implementation[0m[2m,[0m[2m adding a[0m[2m lock is[0m[2m better[0m[2m.
+     
+     Actually[0m[2m, wait[0m[2m. I[0m[2m just realized[0m[2m something.[0m[2m If[0m[2m we[0m[2m call[0m[2m `de[0m[2mcrement`[0m[2m without[0m[2m `[0m[2mcheck_stock[0m[2m` first[0m[2m, and[0m[2m `[0m[2mdecrement[0m[2m` has[0m[2m an[0m[2m `await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.02[0m[2m)` before[0m[2m the check[0m[2m, then[0m[2m multiple cor[0m[2moutines can[0m[2m enter `[0m[2mdecrement[0m[2m`. They[0m[2m all sleep[0m[2m,[0m[2m then one[0m[2m by one[0m[2m they check[0m[2m and potentially[0m[2m decrement.[0m[2m Since[0m[2m there's[0m[2m no await[0m[2m between check[0m[2m and decrement[0m[2m, each[0m[2m one atom[0m[2mically checks[0m[2m and decre[0m[2mments.[0m[2m So stock[0m[2m never[0m[2m goes negative[0m[2m.[0m[2m 
+     
+     But what[0m[2m if we[0m[2m want[0m[2m to also[0m[2m ensure[0m[2m that[0m[2m `check[0m[2m_stock`[0m[2m + `[0m[2mdecrement[0m[2m` sequences[0m[2m from[0m[2m external[0m[2m code are[0m[2m safe[0m[2m? We[0m[2m can't[0m[2m control[0m[2m external[0m[2m code,[0m[2m but we[0m[2m can make[0m[2m `checkout[0m[2m.py[0m[2m` use[0m[2m the methods[0m[2m correctly.[0m[2m
+     
+     Actually,[0m[2m the simplest[0m[2m and[0m[2m most robust[0m[2m fix:[0m[2m
+     
+     1.[0m[2m **[0m[2mInventory[0m[2m**: Add[0m[2m an `[0m[2masyncio[0m[2m.Lock`[0m[2m and[0m[2m a[0m[2m method `[0m[2mreserve([0m[2mquantity)`[0m[2m that atom[0m[2mically checks[0m[2m and decre[0m[2mments.[0m[2m Or[0m[2m just protect[0m[2m `[0m[2mdecrement[0m[2m` with[0m[2m a lock[0m[2m. Actually[0m[2m, `[0m[2mdecrement[0m[2m` is[0m[2m already safe[0m[2m in asyncio[0m[2m terms[0m[2m, but[0m[2m adding[0m[2m a lock[0m[2m makes it[0m[2m explicit and[0m[2m thread[0m[2m-safe too[0m[2m.
+     
+     2[0m[2m. **[0m[2mPayment[0m[2mGateway**:[0m[2m Add id[0m[2mempotency[0m[2m by[0m[2m tracking processed[0m[2m order_ids[0m[2m.[0m[2m
+     
+     3.[0m[2m **Checkout[0m[2m**: Change[0m[2m the flow[0m[2m to:[0m[2m
+        -[0m[2m First[0m[2m,[0m[2m try to[0m[2m decrement inventory[0m[2m
+        - If[0m[2m successful,[0m[2m charge[0m[2m
+        -[0m[2m If charge[0m[2m fails,[0m[2m increment inventory[0m[2m back[0m[2m
+        -[0m[2m Return[0m[2m True only[0m[2m if both[0m[2m decrement[0m[2m and charge[0m[2m succeed[0m[2m
+     
+     Let[0m[2m me also[0m[2m think about[0m[2m whether `[0m[2mincrement[0m[2m` needs[0m[2m protection[0m[2m. If[0m[2m charge[0m[2m fails and[0m[2m we increment[0m[2m back[0m[2m, and[0m[2m another cor[0m[2moutine is[0m[2m waiting to[0m[2m decrement,[0m[2m it should[0m[2m see the[0m[2m incremented[0m[2m value[0m[2m. In[0m[2m single[0m[2m-threaded[0m[2m asyncio,[0m[2m `increment[0m[2m` also[0m[2m has no[0m[2m await between[0m[2m the[0m[2m addition[0m[2m and return[0m[2m, so[0m[2m it's fine[0m[2m. But[0m[2m to[0m[2m be consistent[0m[2m, we[0m[2m could protect[0m[2m it too[0m[2m.
+     
+     Actually[0m[2m, let[0m[2m me re[0m[2m-read the[0m[2m problem[0m[2m:[0m[2m "Do[0m[2m not change[0m[2m the public[0m[2m interfaces of[0m[2m `Inventory[0m[2m` or[0m[2m `Payment[0m[2mGateway`.[0m[2m You may[0m[2m add methods[0m[2m to them[0m[2m."
+     
+     So[0m[2m I need[0m[2m to keep[0m[2m the signatures[0m[2m of existing[0m[2m methods but[0m[2m can[0m[2m add new[0m[2m methods.[0m[2m
+     
+     Here's[0m[2m my plan[0m[2m:
+     
+     **[0m[2mInventory[0m[2m**[0m[2m:
+     -[0m[2m Keep[0m[2m `check[0m[2m_stock`,[0m[2m `de[0m[2mcrement`,[0m[2m `increment[0m[2m` as[0m[2m they[0m[2m are ([0m[2mor protect[0m[2m with[0m[2m lock if[0m[2m needed[0m[2m)
+     -[0m[2m Add a[0m[2m new[0m[2m method like[0m[2m `reserve[0m[2m([0m[2mquantity)`[0m[2m that checks[0m[2m and decre[0m[2mments atom[0m[2mically,[0m[2m maybe[0m[2m returning[0m[2m a[0m[2m reservation[0m[2m object[0m[2m or just[0m[2m bool.[0m[2m But actually[0m[2m, we[0m[2m can just[0m[2m use `[0m[2mdecrement[0m[2m` directly[0m[2m since it[0m[2m already checks[0m[2m and decre[0m[2mments.[0m[2m
+     
+     Wait[0m[2m, `[0m[2mdecrement[0m[2m` already[0m[2m does what[0m[2m we need[0m[2m for[0m[2m the[0m[2m first[0m[2m step[0m[2m![0m[2m It checks[0m[2m if[0m[2m stock >=[0m[2m quantity,[0m[2m and if[0m[2m so,[0m[2m decrements[0m[2m and[0m[2m returns True[0m[2m. The[0m[2m problem[0m[2m is that[0m[2m `checkout[0m[2m.py`[0m[2m calls `[0m[2mcheck_stock[0m[2m` first[0m[2m, creating[0m[2m the[0m[2m race condition[0m[2m.[0m[2m
+     
+     If[0m[2m we change[0m[2m `checkout[0m[2m.py`[0m[2m to just[0m[2m call `[0m[2mdecrement[0m[2m` first[0m[2m:[0m[2m
+     ```python[0m[2m
+     de[0m[2mcremented[0m[2m = await[0m[2m inventory.de[0m[2mcrement([0m[2mquantity)[0m[2m
+     if not[0m[2m decremented[0m[2m:[0m[2m
+         return False[0m[2m
+     
+     charged[0m[2m = await[0m[2m gateway.ch[0m[2marge(order[0m[2m_id,[0m[2m quantity *[0m[2m price)[0m[2m
+     if not[0m[2m charged:[0m[2m
+         await[0m[2m inventory.increment[0m[2m(quantity[0m[2m)[0m[2m
+         return False[0m[2m
+     ```[0m[2m
+     
+     But[0m[2m is[0m[2m `[0m[2mdecrement[0m[2m` truly[0m[2m safe[0m[2m from[0m[2m negative[0m[2m stock[0m[2m? In[0m[2m asyncio[0m[2m, yes[0m[2m,[0m[2m because no[0m[2m await between[0m[2m check and[0m[2m decrement.[0m[2m But let[0m[2m me double[0m[2m check by[0m[2m running the[0m[2m simulation.[0m[2m Actually,[0m[2m if[0m[2m I just[0m[2m change[0m[2m `checkout[0m[2m.py`[0m[2m to[0m[2m this,[0m[2m what[0m[2m happens?[0m[2m
+     
+     -[0m[2m Stock[0m[2m=[0m[2m5,[0m[2m 12[0m[2m orders[0m[2m
+     - All[0m[2m 12[0m[2m call `[0m[2mdecrement[0m[2m` concurrently[0m[2m
+     -[0m[2m They all[0m[2m hit[0m[2m `await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.02[0m[2m)`[0m[2m and suspend[0m[2m
+     -[0m[2m Event[0m[2m loop resumes[0m[2m them one[0m[2m by one[0m[2m
+     -[0m[2m First[0m[2m 5 succeed[0m[2m in[0m[2m decrementing[0m[2m (5[0m[2m,[0m[2m 4[0m[2m,[0m[2m 3,[0m[2m 2[0m[2m,[0m[2m 1,[0m[2m 0[0m[2m)
+     -[0m[2m Next[0m[2m 7[0m[2m fail ([0m[2mstock[0m[2m < 1[0m[2m)
+     -[0m[2m 5 orders[0m[2m proceed[0m[2m to charge[0m[2m,[0m[2m the[0m[2m rest return[0m[2m False[0m[2m
+     
+     This would[0m[2m work[0m[2m![0m[2m No[0m[2m negative stock[0m[2m,[0m[2m no ghost[0m[2m charges.[0m[2m
+     
+     But wait[0m[2m, what[0m[2m if there's[0m[2m some[0m[2m weird[0m[2m asyncio[0m[2m behavior I'm[0m[2m not aware[0m[2m of?[0m[2m Let me[0m[2m run[0m[2m the simulation[0m[2m first[0m[2m to[0m[2m see the[0m[2m actual behavior[0m[2m.
+     
+     Actually[0m[2m, I[0m[2m realize[0m[2m there's[0m[2m another issue[0m[2m. The[0m[2m `await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.02[0m[2m)` inside[0m[2m `de[0m[2mcrement`[0m[2m is[0m[2m an[0m[2m artificial[0m[2m delay[0m[2m. If[0m[2m all[0m[2m 12 cor[0m[2moutines call[0m[2m `[0m[2mdecrement[0m[2m` and[0m[2m hit[0m[2m the[0m[2m sleep,[0m[2m when[0m[2m the[0m[2m sleep completes[0m[2m, the[0m[2m event loop[0m[2m resumes[0m[2m them.[0m[2m In[0m[2m what[0m[2m order[0m[2m? It[0m[2m depends on[0m[2m the event[0m[2m loop implementation[0m[2m, but[0m[2m typically in[0m[2m order[0m[2m of completion[0m[2m ([0m[2mwhich is[0m[2m roughly the[0m[2m order they[0m[2m were[0m[2m scheduled[0m[2m,[0m[2m since they[0m[2m all sleep[0m[2m for the[0m[2m same time[0m[2m).[0m[2m
+     
+     But here's[0m[2m the[0m[2m thing[0m[2m: in[0m[2m C[0m[2mPython's[0m[2m asyncio,[0m[2m `[0m[2masyncio[0m[2m.sleep([0m[2m0.[0m[2m02)`[0m[2m uses[0m[2m a future[0m[2m that[0m[2m completes[0m[2m after[0m[2m 0[0m[2m.02[0m[2m seconds.[0m[2m All[0m[2m 12[0m[2m futures are[0m[2m scheduled.[0m[2m When the[0m[2m time comes[0m[2m, they[0m[2m are all[0m[2m marked[0m[2m as done[0m[2m and added[0m[2m to the[0m[2m ready queue[0m[2m. The[0m[2m event loop[0m[2m then[0m[2m processes them[0m[2m in order[0m[2m. Each[0m[2m one[0m[2m runs to[0m[2m completion[0m[2m (or[0m[2m next await[0m[2m). So[0m[2m yes,[0m[2m they process[0m[2m sequentially.[0m[2m
+     
+     However[0m[2m, I'm[0m[2m now[0m[2m thinking[0m[2m:[0m[2m what if[0m[2m `[0m[2minventory.de[0m[2mcrement`[0m[2m is called[0m[2m from[0m[2m multiple[0m[2m threads?[0m[2m The problem[0m[2m doesn't mention[0m[2m threading,[0m[2m just[0m[2m "[0m[2mconcurrent[0m[2m simulation"[0m[2m using[0m[2m `async[0m[2mio.g[0m[2mather`.[0m[2m So single[0m[2m-threaded[0m[2m asyncio.[0m[2m
+     
+     OK[0m[2m, but[0m[2m wait[0m[2m. I[0m[2m want to[0m[2m be absolutely[0m[2m sure.[0m[2m Let me[0m[2m run the[0m[2m simulation to[0m[2m see if[0m[2m inventory[0m[2m goes[0m[2m negative.[0m[2m If it[0m[2m does[0m[2m, then[0m[2m my understanding[0m[2m of[0m[2m asyncio is[0m[2m wrong in[0m[2m this context[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 functions.Shell:4 | Shell {'command': 'cd /Users/gofrendigunawan/l...', 'description': 'Run simulation to reproduce...'}
+[0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_0: payment failed
+[0m  [2mOrder order_4: payment failed
+[0m  [2mOrder order_5: payment failed
+[0m  [2mOrder order_8: payment failed
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_6: SUCCESS
+[0m  [2mOrder order_7: SUCCESS
+[0m  [2mOrder order_9: inventory error after payment — item not delivered
+[0m  [2mOrder order_10: inventory error after payment — item not delivered
+[0m  [2mOrder order_11: inventory error after payment — item not delivered
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  5
+[0m  [2mItems sold:         5  (initial stock: 5)
+[0m  [2mRemaining stock:    0
+[0m  [2mTotal charged:      $800.00
+[0m  [2mExpected charge:    $500.00
+[0m  [2mDuplicate charges:  0
+[0m  [2mERROR: Charge amount does not match successful orders!
+[0m[2m
+  🔠 functions.Shell:4 Executed
+[0m[2m
+  🧠 Interesting[0m[2m! The[0m[2m output[0m[2m shows:[0m[2m
+     - Successful[0m[2m orders:[0m[2m 5[0m[2m
+     -[0m[2m Items sold[0m[2m:[0m[2m 5 ([0m[2mcorrect)[0m[2m
+     - Rem[0m[2maining stock[0m[2m:[0m[2m 0 ([0m[2mcorrect)[0m[2m
+     - Total[0m[2m charged:[0m[2m $800[0m[2m.00[0m[2m (but[0m[2m expected is[0m[2m $500[0m[2m.00[0m[2m)[0m[2m
+     
+     So inventory[0m[2m didn't[0m[2m go negative[0m[2m in this[0m[2m run,[0m[2m but there[0m[2m were ghost[0m[2m charges.[0m[2m Orders[0m[2m 9[0m[2m,[0m[2m 10,[0m[2m 11[0m[2m were charged[0m[2m but didn't[0m[2m get[0m[2m items[0m[2m (inventory[0m[2m error after[0m[2m payment).[0m[2m And orders[0m[2m 0[0m[2m,[0m[2m 4,[0m[2m 5[0m[2m,[0m[2m 8 had[0m[2m payment failures[0m[2m.
+     
+     Wait[0m[2m, total[0m[2m charged is[0m[2m $800[0m[2m for[0m[2m 5[0m[2m successful orders[0m[2m at[0m[2m $100[0m[2m each =[0m[2m $500[0m[2m expected.[0m[2m So[0m[2m $300[0m[2m extra[0m[2m was charged[0m[2m. That[0m[2m means[0m[2m 3[0m[2m ghost[0m[2m charges[0m[2m. The[0m[2m output[0m[2m shows[0m[2m 3 orders[0m[2m with[0m[2m "inventory[0m[2m error after[0m[2m payment"[0m[2m (orders[0m[2m 9[0m[2m,[0m[2m 10,[0m[2m 11[0m[2m),[0m[2m each[0m[2m charged[0m[2m $100[0m[2m = $[0m[2m300.[0m[2m That[0m[2m matches![0m[2m
+     
+     Also[0m[2m I[0m[2m notice "[0m[2mDuplicate charges[0m[2m:[0m[2m 0".[0m[2m The[0m[2m requirement[0m[2m says "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once"[0m[2m - this[0m[2m is about[0m[2m id[0m[2mempotency[0m[2m. In[0m[2m the current[0m[2m code[0m[2m, no[0m[2m duplicate charges[0m[2m happen[0m[2m because[0m[2m each[0m[2m order is[0m[2m only[0m[2m processed once[0m[2m. But[0m[2m maybe[0m[2m we should[0m[2m make[0m[2m the[0m[2m gateway[0m[2m idempotent[0m[2m anyway[0m[2m as[0m[2m a defensive[0m[2m measure.[0m[2m
+     
+     Wait[0m[2m, the[0m[2m problem[0m[2m says inventory[0m[2m goes[0m[2m negative.[0m[2m Let me[0m[2m run it[0m[2m a few[0m[2m more[0m[2m times to[0m[2m see if[0m[2m inventory[0m[2m does[0m[2m go[0m[2m negative.[0m[2m Maybe it's[0m[2m probabil[0m[2mistic.[0m[2m
+     
+     Actually,[0m[2m looking at[0m[2m the current[0m[2m code,[0m[2m inventory[0m[2m CAN[0m[2m'T[0m[2m go negative[0m[2m because `[0m[2mdecrement[0m[2m` has[0m[2m a check[0m[2m. The[0m[2m only way[0m[2m inventory[0m[2m goes negative[0m[2m is if[0m[2m `de[0m[2mcrement`[0m[2m is called[0m[2m without the[0m[2m check,[0m[2m or if[0m[2m there's a[0m[2m bug[0m[2m in my[0m[2m understanding[0m[2m.[0m[2m
+     
+     Let[0m[2m me run[0m[2m it a[0m[2m few more[0m[2m times.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 functions.Shell:5 | Shell {'command': 'cd /Users/gofrendigunawan/l...', 'description': 'Run simulation multiple times'}
+[0m  [2m--- Run 1 ---
+[0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_2: payment failed
+[0m  [2mOrder order_5: payment failed
+[0m  [2mOrder order_0: SUCCESS
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
+[0m  [2mOrder order_6: SUCCESS
+[0m  [2mOrder order_7: inventory error after payment — item not delivered
+[0m  [2mOrder order_8: inventory error after payment — item not delivered
+[0m  [2mOrder order_9: inventory error after payment — item not delivered
+[0m  [2mOrder order_10: inventory error after payment — item not delivered
+[0m  [2mOrder order_11: inventory error after payment — item not delivered
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  5
+[0m  [2mItems sold:         5  (initial stock: 5)
+[0m  [2mRemaining stock:    0
+[0m  [2mTotal charged:      $1000.00
+[0m  [2mExpected charge:    $500.00
+[0m  [2mDuplicate charges:  0
+[0m  [2mERROR: Charge amount does not match successful orders!
+[0m  [2m--- Run 2 ---
+[0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_4: payment failed
+[0m  [2mOrder order_8: payment failed
+[0m  [2mOrder order_10: payment failed
+[0m  [2mOrder order_0: SUCCESS
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_5: SUCCESS
+[0m  [2mOrder order_6: inventory error after payment — item not delivered
+[0m  [2mOrder order_7: inventory error after payment — item not delivered
+[0m  [2mOrder order_9: inventory error after payment — item not delivered
+[0m  [2mOrder order_11: inventory error after payment — item not delivered
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  5
+[0m  [2mItems sold:         5  (initial stock: 5)
+[0m  [2mRemaining stock:    0
+[0m  [2mTotal charged:      $900.00
+[0m  [2mExpected charge:    $500.00
+[0m  [2mDuplicate charges:  0
+[0m  [2mERROR: Charge amount does not match successful orders!
+[0m  [2m--- Run 3 ---
+[0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_6: payment failed
+[0m  [2mOrder order_11: payment failed
+[0m  [2mOrder order_0: SUCCESS
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
+[0m  [2mOrder order_5: inventory error after payment — item not delivered
+[0m  [2mOrder order_7: inventory error after payment — item not delivered
+[0m  [2mOrder order_8: inventory error after payment — item not delivered
+[0m  [2mOrder order_9: inventory error after payment — item not delivered
+[0m  [2mOrder order_10: inventory error after payment — item not delivered
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  5
+[0m  [2mItems sold:         5  (initial stock: 5)
+[0m  [2mRemaining stock:    0
+[0m  [2mTotal charged:      $1000.00
+[0m  [2mExpected charge:    $500.00
+[0m  [2mDuplicate charges:  0
+[0m  [2mERROR: Charge amount does not match successful orders!
+[0m  [2m--- Run 4 ---
+[0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_7: payment failed
+[0m  [2mOrder order_8: payment failed
+[0m  [2mOrder order_9: payment failed
+[0m  [2mOrder order_11: payment failed
+[0m  [2mOrder order_0: SUCCESS
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
+[0m  [2mOrder order_5: inventory error after payment — item not delivered
+[0m  [2mOrder order_6: inventory error after payment — item not delivered
+[0m  [2mOrder order_10: inventory error after payment — item not delivered
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  5
+[0m  [2mItems sold:         5  (initial stock: 5)
+[0m  [2mRemaining stock:    0
+[0m  [2mTotal charged:      $800.00
+[0m  [2mExpected charge:    $500.00
+[0m  [2mDuplicate charges:  0
+[0m  [2mERROR: Charge amount does not match successful orders!
+[0m  [2m--- Run 5 ---
+[0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_1: payment failed
+[0m  [2mOrder order_3: payment failed
+[0m  [2mOrder order_0: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
+[0m  [2mOrder order_5: SUCCESS
+[0m  [2mOrder order_6: SUCCESS
+[0m  [2mOrder order_7: inventory error after payment — item not delivered
+[0m  [2mOrder order_8: inventory error after payment — item not delivered
+[0m  [2mOrder order_9: inventory error after payment — item not delivered
+[0m  [2mOrder order_10: inventory error after payment — item not delivered
+[0m  [2mOrder order_11: inventory error after payment — item not delivered
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  5
+[0m  [2mItems sold:         5  (initial stock: 5)
+[0m  [2mRemaining stock:    0
+[0m  [2mTotal charged:      $1000.00
+[0m  [2mExpected charge:    $500.00
+[0m  [2mDuplicate charges:  0
+[0m  [2mERROR: Charge amount does not match successful orders!
+[0m[2m
+  🔠 functions.Shell:5 Executed
+[0m[2m
+  🧠 In[0m[2m all[0m[2m 5 runs[0m[2m, inventory[0m[2m never went[0m[2m negative.[0m[2m The[0m[2m stock[0m[2m correctly[0m[2m stayed[0m[2m at[0m[2m 0.[0m[2m But ghost[0m[2m charges happen[0m[2m consistently -[0m[2m some orders[0m[2m get[0m[2m charged but[0m[2m fail[0m[2m to decrement[0m[2m inventory.[0m[2m
+     
+     Wait[0m[2m, the[0m[2m problem[0m[2m statement[0m[2m says "[0m[2mItems[0m[2m are sometimes[0m[2m sold even[0m[2m when out[0m[2m of stock[0m[2m. Inventory[0m[2m goes negative[0m[2m." But[0m[2m in the[0m[2m current simulation[0m[2m, inventory[0m[2m never[0m[2m goes negative[0m[2m because[0m[2m `de[0m[2mcrement`[0m[2m has a[0m[2m guard[0m[2m. Maybe[0m[2m the overs[0m[2melling/[0m[2mnegative inventory[0m[2m happens in[0m[2m a different[0m[2m scenario[0m[2m,[0m[2m or maybe[0m[2m it[0m[2m would[0m[2m happen if[0m[2m `[0m[2mdecrement[0m[2m` didn't[0m[2m have the[0m[2m guard.[0m[2m But `[0m[2mdecrement[0m[2m` does[0m[2m have the[0m[2m guard.[0m[2m
+     
+     Actually[0m[2m, maybe[0m[2m the[0m[2m negative[0m[2m inventory issue[0m[2m is because[0m[2m someone[0m[2m could[0m[2m modify the[0m[2m code or[0m[2m because[0m[2m the[0m[2m problem[0m[2m describes[0m[2m a[0m[2m broader[0m[2m symptom[0m[2m. But[0m[2m the main[0m[2m visible[0m[2m issue[0m[2m in the[0m[2m simulation is[0m[2m ghost charges[0m[2m.
+     
+     However[0m[2m, looking[0m[2m more carefully[0m[2m at the[0m[2m requirements[0m[2m:[0m[2m
+     - "[0m[2mInventory never[0m[2m goes below[0m[2m zero"[0m[2m - this[0m[2m suggests[0m[2m we need[0m[2m to ensure[0m[2m it[0m[2m truly[0m[2m can't[0m[2m happen[0m[2m
+     - "[0m[2mEvery successful[0m[2m charge corresponds[0m[2m to exactly[0m[2m one item[0m[2m delivered"[0m[2m - no[0m[2m ghost[0m[2m charges[0m[2m
+     - "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once"[0m[2m - id[0m[2mempotency[0m[2m
+     
+     For[0m[2m robust[0m[2mness,[0m[2m I should[0m[2m still[0m[2m make[0m[2m Inventory[0m[2m thread[0m[2m-safe with[0m[2m a[0m[2m lock,[0m[2m even[0m[2m if the[0m[2m current asyncio[0m[2m simulation[0m[2m doesn't show[0m[2m negative inventory[0m[2m. Because[0m[2m in a[0m[2m real application[0m[2m with threading[0m[2m or if[0m[2m the implementation[0m[2m changes[0m[2m, it[0m[2m could happen[0m[2m.[0m[2m And the[0m[2m problem explicitly[0m[2m mentions it[0m[2m.[0m[2m
+     
+     Actually[0m[2m, let[0m[2m me think[0m[2m about how[0m[2m inventory[0m[2m CO[0m[2mULD go[0m[2m negative.[0m[2m If we[0m[2m have[0m[2m actual[0m[2m threads[0m[2m instead[0m[2m of asyncio[0m[2m cor[0m[2moutines,[0m[2m then `[0m[2mdecrement[0m[2m` is[0m[2m definitely not[0m[2m thread[0m[2m-safe:[0m[2m
+     ```python[0m[2m
+     if[0m[2m self._[0m[2mstock >=[0m[2m quantity:[0m[2m  #[0m[2m Thread A[0m[2m reads[0m[2m 1[0m[2m
+         #[0m[2m Thread B[0m[2m reads[0m[2m 1 here[0m[2m
+         self._[0m[2mstock -=[0m[2m quantity[0m[2m  # Thread[0m[2m A writes[0m[2m 0[0m[2m
+         # Thread[0m[2m B writes[0m[2m -1[0m[2m here[0m[2m
+     ```[0m[2m
+     
+     So the[0m[2m code[0m[2m is clearly[0m[2m intended[0m[2m to be[0m[2m fixed for[0m[2m thread[0m[2m-s[0m[2mafety as[0m[2m well.[0m[2m We[0m[2m should add[0m[2m locks[0m[2m.
+     
+     Let[0m[2m me also[0m[2m think about[0m[2m whether[0m[2m I[0m[2m need[0m[2m to make[0m[2m `Payment[0m[2mGateway.ch[0m[2marge`[0m[2m idempotent[0m[2m. The[0m[2m current[0m[2m simulation[0m[2m doesn't show[0m[2m duplicate charges[0m[2m because[0m[2m each order[0m[2m_id is[0m[2m unique and[0m[2m only[0m[2m used[0m[2m once.[0m[2m But the[0m[2m requirement explicitly[0m[2m says "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once".[0m[2m In[0m[2m a real[0m[2m system,[0m[2m retries could[0m[2m cause[0m[2m duplicate[0m[2m charges.[0m[2m So I[0m[2m should add[0m[2m idempot[0m[2mency to[0m[2m `[0m[2mcharge[0m[2m`.
+     
+     Here's[0m[2m my plan[0m[2m:
+     
+     1[0m[2m. **[0m[2mInventory[0m[2m**:[0m[2m Add an[0m[2m `async[0m[2mio.Lock[0m[2m` ([0m[2mor `[0m[2mthreading[0m[2m.Lock`[0m[2m?[0m[2m Since this[0m[2m is asyncio[0m[2m, `[0m[2masyncio[0m[2m.Lock`[0m[2m is more[0m[2m appropriate).[0m[2m Protect[0m[2m the[0m[2m stock[0m[2m operations with[0m[2m the[0m[2m lock to[0m[2m ensure true[0m[2m atomicity[0m[2m.[0m[2m
+     
+     2.[0m[2m **Payment[0m[2mGateway**:[0m[2m Add a[0m[2m set/d[0m[2mict to[0m[2m track which[0m[2m order_ids[0m[2m have been[0m[2m charged.[0m[2m If `[0m[2mcharge`[0m[2m is called[0m[2m with an[0m[2m already-ch[0m[2marged order[0m[2m_id,[0m[2m return True[0m[2m without[0m[2m charging[0m[2m again ([0m[2mor return[0m[2m the[0m[2m previous[0m[2m result).[0m[2m Actually,[0m[2m for[0m[2m id[0m[2mempotency[0m[2m, we[0m[2m should return[0m[2m the same[0m[2m result.[0m[2m If it[0m[2m previously[0m[2m succeeded,[0m[2m return True[0m[2m. If[0m[2m it previously[0m[2m failed...[0m[2m hmm[0m[2m, that's[0m[2m tricky[0m[2m. Usually[0m[2m id[0m[2mempotency[0m[2m means that[0m[2m calling[0m[2m it[0m[2m again[0m[2m with the[0m[2m same id[0m[2mempotent[0m[2m key[0m[2m should have[0m[2m no[0m[2m side[0m[2m effects[0m[2m and[0m[2m return the[0m[2m same result[0m[2m. But[0m[2m if it[0m[2m failed before[0m[2m, maybe[0m[2m we want[0m[2m to allow[0m[2m retrying[0m[2m.[0m[2m I[0m[2m think the[0m[2m safest approach[0m[2m is:[0m[2m if the[0m[2m order_id[0m[2m was successfully[0m[2m charged,[0m[2m return True[0m[2m and[0m[2m don't charge[0m[2m again.[0m[2m If it[0m[2m was not[0m[2m successfully[0m[2m charged before[0m[2m, allow[0m[2m it[0m[2m to proceed[0m[2m.[0m[2m
+     
+     3.[0m[2m **Checkout[0m[2m**:[0m[2m Change the[0m[2m flow to[0m[2m:[0m[2m
+        - Call[0m[2m `inventory[0m[2m.decrement[0m[2m(quantity[0m[2m)` FIRST[0m[2m
+        - If[0m[2m it[0m[2m returns[0m[2m False,[0m[2m return[0m[2m False ([0m[2mout of[0m[2m stock)[0m[2m
+        -[0m[2m Call `[0m[2mgateway.ch[0m[2marge(order[0m[2m_id,[0m[2m amount[0m[2m)`[0m[2m
+        -[0m[2m If charge[0m[2m returns False[0m[2m, call[0m[2m `inventory[0m[2m.increment[0m[2m(quantity[0m[2m)` to[0m[2m restore stock[0m[2m, and[0m[2m return False[0m[2m
+        - Return[0m[2m True[0m[2m
+     
+     This[0m[2m ensures[0m[2m:
+     -[0m[2m We only[0m[2m charge[0m[2m after[0m[2m successfully[0m[2m reserving inventory[0m[2m
+     -[0m[2m If charge[0m[2m fails,[0m[2m we release[0m[2m the[0m[2m inventory back[0m[2m
+     -[0m[2m No ghost[0m[2m charges[0m[2m
+     - Inventory[0m[2m never goes[0m[2m negative ([0m[2mwith[0m[2m locking[0m[2m)[0m[2m
+     - No[0m[2m duplicate[0m[2m charges ([0m[2mwith id[0m[2mempotency[0m[2m)
+     
+     Wait[0m[2m, there's[0m[2m still[0m[2m a potential[0m[2m issue.[0m[2m If[0m[2m `inventory[0m[2m.decrement[0m[2m` succeeds[0m[2m and then[0m[2m `gateway[0m[2m.charge[0m[2m` succeeds[0m[2m, but[0m[2m then[0m[2m the process[0m[2m crashes before[0m[2m returning[0m[2m True[0m[2m, that's[0m[2m a durability[0m[2m issue,[0m[2m not a[0m[2m consistency issue[0m[2m. The[0m[2m requirements don't[0m[2m mention[0m[2m durability,[0m[2m only[0m[2m that[0m[2m successful[0m[2m charges[0m[2m correspond to[0m[2m items[0m[2m delivered.[0m[2m
+     
+     Also[0m[2m, what[0m[2m about[0m[2m the id[0m[2mempotency[0m[2m requirement[0m[2m?[0m[2m If[0m[2m the[0m[2m same order[0m[2m_id is[0m[2m somehow[0m[2m submitted[0m[2m twice to[0m[2m `[0m[2mcheckout`,[0m[2m we[0m[2m want[0m[2m the[0m[2m second one[0m[2m to be[0m[2m rejected[0m[2m or[0m[2m to[0m[2m return the[0m[2m same result[0m[2m. With[0m[2m `[0m[2mPaymentGateway[0m[2m.ch[0m[2marge`[0m[2m being id[0m[2mempotent,[0m[2m the[0m[2m second charge[0m[2m would return[0m[2m True.[0m[2m But then[0m[2m `inventory[0m[2m.decrement[0m[2m` would[0m[2m also be[0m[2m called again[0m[2m, decrement[0m[2ming stock[0m[2m twice for[0m[2m the same[0m[2m order![0m[2m That's bad[0m[2m.
+     
+     So[0m[2m if[0m[2m we want[0m[2m to[0m[2m truly[0m[2m prevent[0m[2m duplicate orders[0m[2m,[0m[2m we need[0m[2m id[0m[2mempotency[0m[2m at the[0m[2m checkout level[0m[2m or[0m[2m in[0m[2m inventory[0m[2m. But[0m[2m the requirement[0m[2m says "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once",[0m[2m which is[0m[2m specifically about[0m[2m charging[0m[2m. It[0m[2m doesn't say[0m[2m "No[0m[2m order[0m[2m decre[0m[2mments inventory[0m[2m more than[0m[2m once".[0m[2m
+     
+     To[0m[2m be[0m[2m fully[0m[2m safe against[0m[2m duplicate order[0m[2m_ids[0m[2m, we[0m[2m could also[0m[2m track processed[0m[2m order[0m[2m_ids in[0m[2m `checkout[0m[2m`.[0m[2m But `[0m[2mcheckout`[0m[2m is a[0m[2m state[0m[2mless[0m[2m function.[0m[2m We could[0m[2m track[0m[2m it[0m[2m in `[0m[2mPaymentGateway[0m[2m` and[0m[2m also[0m[2m check before[0m[2m decrement[0m[2ming inventory[0m[2m.[0m[2m
+     
+     Actually,[0m[2m a better[0m[2m approach:[0m[2m make[0m[2m `checkout[0m[2m` itself[0m[2m check[0m[2m if[0m[2m the order[0m[2m was already[0m[2m processed[0m[2m. But[0m[2m `[0m[2mcheckout`[0m[2m has[0m[2m no state[0m[2m.[0m[2m We could[0m[2m use[0m[2m `Payment[0m[2mGateway`[0m[2m to track[0m[2m this[0m[2m.[0m[2m
+     
+     Let me[0m[2m think about[0m[2m this differently[0m[2m. The[0m[2m requirement is[0m[2m "No[0m[2m order is[0m[2m charged more[0m[2m than once[0m[2m". So[0m[2m if[0m[2m we[0m[2m make `[0m[2mPaymentGateway[0m[2m.charge[0m[2m` id[0m[2mempotent,[0m[2m that satisfies[0m[2m this[0m[2m requirement.[0m[2m If[0m[2m someone[0m[2m calls `[0m[2mcheckout`[0m[2m twice with[0m[2m the same[0m[2m order_id[0m[2m, the[0m[2m second call[0m[2m would:[0m[2m
+     1.[0m[2m Decrement[0m[2m inventory again[0m[2m (assuming[0m[2m stock[0m[2m is[0m[2m available)[0m[2m
+     2.[0m[2m Try[0m[2m to charge[0m[2m, but[0m[2m `[0m[2mPaymentGateway[0m[2m`[0m[2m returns[0m[2m True without[0m[2m charging[0m[2m
+     3.[0m[2m Return True[0m[2m
+     
+     This[0m[2m would decrement[0m[2m inventory twice[0m[2m for one[0m[2m order.[0m[2m But[0m[2m the[0m[2m requirement doesn't[0m[2m explicitly[0m[2m say[0m[2m this[0m[2m must[0m[2m be[0m[2m prevented.[0m[2m It[0m[2m says "[0m[2mEvery[0m[2m successful charge[0m[2m corresponds to[0m[2m exactly one[0m[2m item delivered[0m[2m" and[0m[2m "No[0m[2m order is[0m[2m charged more[0m[2m than once[0m[2m". If[0m[2m the second[0m[2m checkout[0m[2m decre[0m[2mments inventory[0m[2m but doesn't[0m[2m charge,[0m[2m that's actually[0m[2m fine[0m[2m from[0m[2m the charge[0m[2m perspective.[0m[2m But it's[0m[2m wast[0m[2meful.[0m[2m
+     
+     I[0m[2m think for[0m[2m this[0m[2m problem[0m[2m, the[0m[2m main[0m[2m focus[0m[2m is on[0m[2m the race[0m[2m conditions.[0m[2m Adding[0m[2m idempot[0m[2mency to[0m[2m `Payment[0m[2mGateway.ch[0m[2marge`[0m[2m is a[0m[2m good defensive[0m[2m measure.[0m[2m
+     
+     Actually[0m[2m, I[0m[2m just realized[0m[2m:[0m[2m the `[0m[2mmain.py[0m[2m` simulation[0m[2m explicitly[0m[2m checks `[0m[2mduplicates[0m[2m = len[0m[2m(charge[0m[2m_ids)[0m[2m - len[0m[2m(set(ch[0m[2marge_ids[0m[2m))`.[0m[2m This means[0m[2m the[0m[2m test expects[0m[2m that[0m[2m there[0m[2m might[0m[2m be duplicate[0m[2m charges in[0m[2m some[0m[2m scenarios.[0m[2m How[0m[2m could[0m[2m duplicates happen[0m[2m in the[0m[2m current code[0m[2m?
+     
+     Wait[0m[2m...[0m[2m if[0m[2m we[0m[2m run[0m[2m the current[0m[2m code[0m[2m,[0m[2m duplicates[0m[2m is[0m[2m always[0m[2m 0[0m[2m. So[0m[2m why does[0m[2m `[0m[2mmain.py[0m[2m` check[0m[2m for it[0m[2m? Maybe[0m[2m because in[0m[2m some[0m[2m other[0m[2m version[0m[2m of[0m[2m the code[0m[2m or with[0m[2m retries[0m[2m, duplicates[0m[2m could happen[0m[2m. Or[0m[2m maybe it's[0m[2m a forward[0m[2m-looking check[0m[2m -[0m[2m after[0m[2m we[0m[2m fix the[0m[2m code,[0m[2m we should[0m[2m still ensure[0m[2m there[0m[2m are no[0m[2m duplicates.[0m[2m
+     
+     Hmm[0m[2m, actually[0m[2m, looking[0m[2m at the[0m[2m simulation[0m[2m again[0m[2m:[0m[2m there's[0m[2m no retry[0m[2m logic[0m[2m. Each[0m[2m order is[0m[2m processed exactly[0m[2m once.[0m[2m So duplicates[0m[2m can[0m[2m only happen[0m[2m if `[0m[2mcharge[0m[2m` is[0m[2m called twice[0m[2m for[0m[2m the same[0m[2m order_id[0m[2m within[0m[2m one[0m[2m `checkout[0m[2m` call[0m[2m,[0m[2m which doesn't[0m[2m happen.[0m[2m
+     
+     OK[0m[2m, I[0m[2m think the[0m[2m duplicate[0m[2m charge[0m[2m check is[0m[2m just there[0m[2m as[0m[2m part[0m[2m of the[0m[2m correctness[0m[2m requirements.[0m[2m Let[0m[2m me focus[0m[2m on fixing[0m[2m the race[0m[2m conditions and[0m[2m adding id[0m[2mempotency[0m[2m.
+     
+     Let[0m[2m me write[0m[2m the fix[0m[2m:
+     
+     **[0m[2minventory.py[0m[2m**:[0m[2m
+     Add[0m[2m `[0m[2masyncio[0m[2m.Lock`[0m[2m to protect[0m[2m `_[0m[2mstock`:[0m[2m
+     ```python[0m[2m
+     import[0m[2m asyncio[0m[2m
+     
+     class Inventory[0m[2m:[0m[2m
+         def __[0m[2minit__([0m[2mself,[0m[2m stock:[0m[2m int):[0m[2m
+             self[0m[2m._stock[0m[2m = stock[0m[2m
+             self._[0m[2mlock =[0m[2m asyncio.Lock[0m[2m()[0m[2m
+     
+         async def[0m[2m check_stock[0m[2m(self,[0m[2m quantity:[0m[2m int)[0m[2m -> bool[0m[2m:[0m[2m
+             await asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)[0m[2m
+             return[0m[2m self._[0m[2mstock >=[0m[2m quantity[0m[2m
      
          async[0m[2m def decrement[0m[2m(self,[0m[2m quantity:[0m[2m int)[0m[2m -> bool[0m[2m:[0m[2m
              async with[0m[2m self._[0m[2mlock:[0m[2m
@@ -168,52 +606,258 @@
          @[0m[2mproperty[0m[2m
          def[0m[2m stock(self[0m[2m) ->[0m[2m int:[0m[2m
              return[0m[2m self._[0m[2mstock[0m[2m
+     ```[0m[2m
      
-         async[0m[2m def reserve[0m[2m(self,[0m[2m quantity:[0m[2m int)[0m[2m -> bool[0m[2m:[0m[2m
-             async with[0m[2m self._[0m[2mlock:[0m[2m
-                 await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.02[0m[2m)[0m[2m
-                 if self[0m[2m._stock[0m[2m >= quantity[0m[2m:[0m[2m
-                     self._[0m[2mstock -=[0m[2m quantity[0m[2m
-                     return[0m[2m True[0m[2m
-                 return[0m[2m False[0m[2m
+     Wait,[0m[2m `stock[0m[2m` property[0m[2m should[0m[2m also be[0m[2m protected[0m[2m? It's[0m[2m read[0m[2m-only.[0m[2m In[0m[2m asyncio[0m[2m, reading[0m[2m an[0m[2m integer[0m[2m is atomic[0m[2m. But[0m[2m if[0m[2m we're[0m[2m being[0m[2m paran[0m[2moid about[0m[2m threading[0m[2m, we[0m[2m might[0m[2m want to[0m[2m protect[0m[2m it.[0m[2m However,[0m[2m the simulation[0m[2m only[0m[2m reads[0m[2m it[0m[2m after all[0m[2m tasks[0m[2m complete[0m[2m,[0m[2m so it's[0m[2m fine.[0m[2m
+     
+     **payments[0m[2m.py**[0m[2m:
+     Add[0m[2m idempot[0m[2mency:[0m[2m
+     ```python[0m[2m
+     import[0m[2m asyncio[0m[2m
+     import random[0m[2m
+     from[0m[2m typing import[0m[2m List,[0m[2m Set[0m[2m
+     
+     
+     class Payment[0m[2mGateway:[0m[2m
+         def[0m[2m __init[0m[2m__(self[0m[2m, failure[0m[2m_rate:[0m[2m float =[0m[2m 0[0m[2m.25[0m[2m):[0m[2m
+             self._[0m[2mfailure_rate[0m[2m = failure[0m[2m_rate[0m[2m
+             self[0m[2m.total_ch[0m[2marged:[0m[2m float =[0m[2m 0[0m[2m.0[0m[2m
+             self.ch[0m[2marges:[0m[2m List[[0m[2mdict][0m[2m = [][0m[2m
+             self[0m[2m._charged[0m[2m_order[0m[2m_ids:[0m[2m Set[str[0m[2m] =[0m[2m set()[0m[2m
+     
+         async[0m[2m def charge[0m[2m(self,[0m[2m order_id[0m[2m: str[0m[2m, amount[0m[2m: float[0m[2m) ->[0m[2m bool:[0m[2m
+             await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.03[0m[2m)[0m[2m
+             if order[0m[2m_id in[0m[2m self._[0m[2mcharged_order[0m[2m_ids:[0m[2m
+                 return[0m[2m True[0m[2m
+             if[0m[2m random.random[0m[2m()[0m[2m < self._[0m[2mfailure_rate[0m[2m:[0m[2m
+                 return False[0m[2m
+             self._[0m[2mcharged_order[0m[2m_ids.add[0m[2m(order_id[0m[2m)[0m[2m
+             self.total[0m[2m_charged[0m[2m += amount[0m[2m
+             self.ch[0m[2marges.append[0m[2m({"order[0m[2m_id":[0m[2m order_id[0m[2m, "[0m[2mamount":[0m[2m amount})[0m[2m
+             return[0m[2m True[0m[2m
      ```
      
-     Wait[0m[2m, I[0m[2m should also[0m[2m make `[0m[2mstock[0m[2m` property[0m[2m thread[0m[2m-safe?[0m[2m No[0m[2m, properties[0m[2m can't be[0m[2m async,[0m[2m and in[0m[2m Python[0m[2m with[0m[2m asyncio[0m[2m, reading[0m[2m `_[0m[2mstock`[0m[2m without a[0m[2m lock can[0m[2m give[0m[2m stale[0m[2m values but[0m[2m won't[0m[2m corrupt[0m[2m data[0m[2m. For[0m[2m the simulation[0m[2m, it's[0m[2m fine.[0m[2m But actually[0m[2m, if[0m[2m I want[0m[2m `[0m[2mstock`[0m[2m to be[0m[2m accurate during[0m[2m concurrent reads[0m[2m, I'd[0m[2m need a[0m[2m lock there[0m[2m too,[0m[2m but properties[0m[2m don't[0m[2m support async[0m[2m. Since[0m[2m the[0m[2m requirement[0m[2m doesn't[0m[2m mention[0m[2m anything[0m[2m about the[0m[2m stock[0m[2m property,[0m[2m I'll leave[0m[2m it.[0m[2m
+     Hmm[0m[2m, but[0m[2m if[0m[2m the[0m[2m same[0m[2m order_id[0m[2m comes[0m[2m in again[0m[2m after[0m[2m a[0m[2m previous[0m[2m failure,[0m[2m it[0m[2m should be[0m[2m allowed to[0m[2m retry.[0m[2m So the[0m[2m idempot[0m[2mency should[0m[2m only apply[0m[2m to successful[0m[2m charges.[0m[2m That's[0m[2m what I[0m[2m have[0m[2m above.[0m[2m
      
-     Now[0m[2m `[0m[2mpayments.py[0m[2m`:
+     **checkout[0m[2m.py**[0m[2m:
+     Change[0m[2m the order[0m[2m of[0m[2m operations:[0m[2m
+     ```python[0m[2m
+     import[0m[2m asyncio[0m[2m
+     from inventory[0m[2m import Inventory[0m[2m
+     from[0m[2m payments import[0m[2m PaymentGateway[0m[2m
+     
+     
+     async def[0m[2m checkout([0m[2m
+         order[0m[2m_id:[0m[2m str,[0m[2m
+         quantity[0m[2m: int[0m[2m,[0m[2m
+         price:[0m[2m float,[0m[2m
+         inventory[0m[2m: Inventory[0m[2m,[0m[2m
+         gateway:[0m[2m PaymentGateway[0m[2m,
+     )[0m[2m -> bool[0m[2m:[0m[2m
+         decre[0m[2mmented =[0m[2m await inventory[0m[2m.decrement[0m[2m(quantity[0m[2m)[0m[2m
+         if not[0m[2m decremented[0m[2m:[0m[2m
+             print(f[0m[2m"Order[0m[2m {order[0m[2m_id}:[0m[2m out of[0m[2m stock")[0m[2m
+             return[0m[2m False[0m[2m
+     
+         charged[0m[2m = await[0m[2m gateway.ch[0m[2marge(order[0m[2m_id,[0m[2m quantity *[0m[2m price)[0m[2m
+         if[0m[2m not charged[0m[2m:[0m[2m
+             await inventory[0m[2m.increment([0m[2mquantity)[0m[2m
+             print[0m[2m(f"[0m[2mOrder {[0m[2morder_id[0m[2m}: payment[0m[2m failed")[0m[2m
+             return[0m[2m False[0m[2m
+     
+         print[0m[2m(f"[0m[2mOrder {[0m[2morder_id[0m[2m}: SUCCESS[0m[2m")[0m[2m
+         return True[0m[2m
+     ```[0m[2m
+     
+     Wait[0m[2m, should[0m[2m we[0m[2m add[0m[2m idempot[0m[2mency to[0m[2m checkout[0m[2m as[0m[2m well?[0m[2m If `[0m[2mcheckout`[0m[2m is called[0m[2m twice with[0m[2m the same[0m[2m order_id[0m[2m:[0m[2m
+     1[0m[2m. First[0m[2m call:[0m[2m decrement[0m[2m succeeds,[0m[2m charge succeeds[0m[2m, return[0m[2m True[0m[2m
+     2.[0m[2m Second call[0m[2m: decrement[0m[2m succeeds ([0m[2mif stock[0m[2m available[0m[2m), charge[0m[2m returns True[0m[2m (id[0m[2mempotent),[0m[2m return[0m[2m True[0m[2m
+     
+     This would[0m[2m decrement inventory[0m[2m twice.[0m[2m But again[0m[2m, the[0m[2m requirement[0m[2m is[0m[2m specifically[0m[2m about charging[0m[2m.[0m[2m
+     
+     However[0m[2m, there's[0m[2m another concern[0m[2m. What[0m[2m if the[0m[2m first call[0m[2m fails[0m[2m at[0m[2m charge[0m[2m,[0m[2m so[0m[2m it[0m[2m increments back[0m[2m. Then[0m[2m the second[0m[2m call comes[0m[2m in.[0m[2m It[0m[2m decre[0m[2mments,[0m[2m charges,[0m[2m succeeds[0m[2m. That's[0m[2m fine.[0m[2m
+     
+     Actually[0m[2m, I[0m[2m realize[0m[2m that[0m[2m if we[0m[2m want[0m[2m to be[0m[2m truly robust[0m[2m, we[0m[2m could[0m[2m add[0m[2m a `[0m[2mded[0m[2mu[0m[2mplicate`[0m[2m or `[0m[2mwas[0m[2m_ch[0m[2marged`[0m[2m check at[0m[2m the beginning[0m[2m of checkout[0m[2m. But[0m[2m since[0m[2m checkout is[0m[2m stateless[0m[2m and the[0m[2m requirement[0m[2m says[0m[2m "Do[0m[2m not change[0m[2m the public[0m[2m interfaces",[0m[2m we can[0m[2m use[0m[2m the gateway[0m[2m to check[0m[2m.
+     
+     Hmm[0m[2m, but[0m[2m `[0m[2mPaymentGateway[0m[2m` doesn't[0m[2m expose[0m[2m `_[0m[2mcharged_order[0m[2m_ids`.[0m[2m We could[0m[2m add a[0m[2m method `[0m[2mis[0m[2m_charged[0m[2m(order_id[0m[2m)`[0m[2m or[0m[2m similar[0m[2m. But[0m[2m then[0m[2m again[0m[2m, in[0m[2m the current[0m[2m simulation,[0m[2m there's[0m[2m no retry[0m[2m,[0m[2m so it's[0m[2m not needed[0m[2m.
+     
+     Let[0m[2m me think[0m[2m about whether[0m[2m there are[0m[2m any other[0m[2m edge[0m[2m cases.[0m[2m
+     
+     What if[0m[2m `inventory[0m[2m.increment[0m[2m` fails[0m[2m?[0m[2m It[0m[2m can't[0m[2m really[0m[2m fail in[0m[2m the[0m[2m current implementation[0m[2m.[0m[2m It just[0m[2m adds[0m[2m to[0m[2m stock.[0m[2m
+     
+     What about[0m[2m the[0m[2m `print[0m[2m` statements[0m[2m in[0m[2m checkout[0m[2m? The[0m[2m problem[0m[2m doesn't[0m[2m mention[0m[2m removing[0m[2m them,[0m[2m so I'll[0m[2m keep them[0m[2m.[0m[2m
+     
+     One more[0m[2m thing:[0m[2m in[0m[2m the[0m[2m current `[0m[2mcheckout.py[0m[2m`, if[0m[2m `inventory[0m[2m.decrement[0m[2m` fails[0m[2m AFTER[0m[2m payment,[0m[2m it prints[0m[2m "inventory[0m[2m error after[0m[2m payment —[0m[2m item not[0m[2m delivered".[0m[2m In my[0m[2m new[0m[2m version,[0m[2m we don't[0m[2m have this[0m[2m case[0m[2m because we[0m[2m decrement first[0m[2m.[0m[2m
+     
+     Actually[0m[2m, wait[0m[2m. I[0m[2m need[0m[2m to re[0m[2m-read the[0m[2m current[0m[2m `[0m[2mcheckout.py[0m[2m` again[0m[2m:
+     ```[0m[2mpython[0m[2m
+     available[0m[2m = await[0m[2m inventory.check[0m[2m_stock([0m[2mquantity)[0m[2m
+     if not[0m[2m available:[0m[2m
+         print[0m[2m(f"[0m[2mOrder {[0m[2morder_id[0m[2m}: out[0m[2m of stock[0m[2m")[0m[2m
+         return False[0m[2m
+     
+     charged[0m[2m = await[0m[2m gateway.ch[0m[2marge(order[0m[2m_id,[0m[2m quantity *[0m[2m price)[0m[2m
+     if not[0m[2m charged:[0m[2m
+         print[0m[2m(f"[0m[2mOrder {[0m[2morder_id[0m[2m}: payment[0m[2m failed")[0m[2m
+         return[0m[2m False[0m[2m
+     
+     decrement[0m[2med =[0m[2m await inventory[0m[2m.decrement[0m[2m(quantity[0m[2m)
+     if[0m[2m not decre[0m[2mmented:[0m[2m
+         print[0m[2m(f"[0m[2mOrder {[0m[2morder_id[0m[2m}: inventory[0m[2m error after[0m[2m payment —[0m[2m item not[0m[2m delivered")[0m[2m
+         return[0m[2m False[0m[2m
+     ```
+     
+     In[0m[2m my fix[0m[2m, the[0m[2m flow[0m[2m is:[0m[2m
+     ```[0m[2mpython[0m[2m
+     decrement[0m[2med =[0m[2m await inventory[0m[2m.decrement[0m[2m(quantity[0m[2m)
+     if[0m[2m not decre[0m[2mmented:[0m[2m
+         print[0m[2m(f"[0m[2mOrder {[0m[2morder_id[0m[2m}: out[0m[2m of stock[0m[2m")[0m[2m
+         return False[0m[2m
+     
+     charged[0m[2m = await[0m[2m gateway.ch[0m[2marge(order[0m[2m_id,[0m[2m quantity *[0m[2m price)[0m[2m
+     if not[0m[2m charged:[0m[2m
+         await[0m[2m inventory.increment[0m[2m(quantity[0m[2m)[0m[2m
+         print(f[0m[2m"Order[0m[2m {order[0m[2m_id}:[0m[2m payment failed[0m[2m")[0m[2m
+         return False[0m[2m
+     ```[0m[2m
+     
+     This is[0m[2m much[0m[2m better[0m[2m.[0m[2m
+     
+     Now let[0m[2m me think[0m[2m about whether[0m[2m I[0m[2m need[0m[2m to add[0m[2m a[0m[2m `[0m[2mcheckout`[0m[2m idempot[0m[2mency layer[0m[2m. The[0m[2m problem[0m[2m says "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once".[0m[2m If we[0m[2m make `[0m[2mPaymentGateway[0m[2m.charge[0m[2m` id[0m[2mempotent,[0m[2m we[0m[2m satisfy this[0m[2m. But[0m[2m what about[0m[2m inventory[0m[2m?[0m[2m The[0m[2m requirement[0m[2m says[0m[2m "Every[0m[2m successful charge[0m[2m corresponds to[0m[2m exactly one[0m[2m item delivered[0m[2m". If[0m[2m the same[0m[2m order_id[0m[2m is processed[0m[2m twice,[0m[2m and the[0m[2m second[0m[2m time[0m[2m charge[0m[2m returns[0m[2m True ([0m[2midempotent[0m[2m)[0m[2m but inventory[0m[2m is[0m[2m decremented[0m[2m again,[0m[2m then we[0m[2m have a[0m[2m successful charge[0m[2m (the[0m[2m original[0m[2m one[0m[2m) that[0m[2m now[0m[2m corresponds to[0m[2m TWO items[0m[2m delivered.[0m[2m This[0m[2m violates the[0m[2m requirement[0m[2m!
+     
+     So[0m[2m we DO[0m[2m need to[0m[2m prevent[0m[2m duplicate order[0m[2m processing.[0m[2m We[0m[2m need either[0m[2m:
+     1[0m[2m. Id[0m[2mempotency[0m[2m at the[0m[2m checkout level[0m[2m ([0m[2mstate[0m[2mless[0m[2m function[0m[2m,[0m[2m so we[0m[2m need state[0m[2m somewhere[0m[2m)
+     2[0m[2m. Or[0m[2m track[0m[2m processed[0m[2m order[0m[2m_ids in[0m[2m inventory[0m[2m/g[0m[2mateway[0m[2m and[0m[2m check before[0m[2m decrementing[0m[2m
+     
+     Since[0m[2m we can't[0m[2m change[0m[2m the public[0m[2m interfaces[0m[2m of `[0m[2mInventory`[0m[2m or `[0m[2mPaymentGateway[0m[2m`, but[0m[2m we CAN[0m[2m add methods[0m[2m, let's[0m[2m add a[0m[2m method to[0m[2m `Payment[0m[2mGateway`[0m[2m to[0m[2m check if[0m[2m an order[0m[2m was already[0m[2m processed[0m[2m.[0m[2m And add[0m[2m a method[0m[2m to `[0m[2mInventory`[0m[2m to reserve[0m[2m stock[0m[2m id[0m[2mempotently[0m[2m.[0m[2m
+     
+     Actually,[0m[2m a cleaner[0m[2m approach:[0m[2m add a[0m[2m `processed[0m[2m_orders[0m[2m`[0m[2m set to[0m[2m `Payment[0m[2mGateway`[0m[2m and[0m[2m expose[0m[2m it via[0m[2m a method[0m[2m, or[0m[2m just[0m[2m add a[0m[2m `was[0m[2m_charged[0m[2m(order_id[0m[2m: str[0m[2m) ->[0m[2m bool`[0m[2m method.[0m[2m
+     
+     Then[0m[2m in `[0m[2mcheckout.py[0m[2m`:
+     ```[0m[2mpython[0m[2m
+     if[0m[2m gateway.w[0m[2mas_ch[0m[2marged(order[0m[2m_id):[0m[2m
+         #[0m[2m Already processed[0m[2m
+         return[0m[2m True[0m[2m  # or[0m[2m maybe[0m[2m check[0m[2m if inventory[0m[2m was already[0m[2m decremented[0m[2m
+     
+     de[0m[2mcremented[0m[2m = await[0m[2m inventory.de[0m[2mcrement([0m[2mquantity)[0m[2m
+     ...[0m[2m
+     ```
+     
+     Wait[0m[2m, but[0m[2m if the[0m[2m first checkout[0m[2m call[0m[2m decremented[0m[2m inventory[0m[2m and[0m[2m then crashed[0m[2m before charging[0m[2m, the[0m[2m second call[0m[2m would see[0m[2m `was[0m[2m_charged[0m[2m`[0m[2m is False[0m[2m,[0m[2m decrement again[0m[2m, and[0m[2m charge.[0m[2m That's fine[0m[2m.
+     
+     If[0m[2m the first[0m[2m call[0m[2m decremented[0m[2m, charged[0m[2m,[0m[2m and succeeded[0m[2m, the[0m[2m second call[0m[2m would see[0m[2m `was[0m[2m_charged[0m[2m` is[0m[2m True and[0m[2m return True[0m[2m without touching[0m[2m inventory.[0m[2m That's what[0m[2m we want[0m[2m.
+     
+     But[0m[2m we[0m[2m need[0m[2m a[0m[2m method on[0m[2m `Payment[0m[2mGateway`[0m[2m to check[0m[2m this.[0m[2m We[0m[2m can add[0m[2m `was[0m[2m_charged[0m[2m`[0m[2m or `[0m[2mis_ch[0m[2marged`.[0m[2m Since[0m[2m we're[0m[2m allowed[0m[2m to add[0m[2m methods,[0m[2m this is[0m[2m fine.[0m[2m
+     
+     Actually[0m[2m, let[0m[2m me reconsider[0m[2m. In[0m[2m the simulation[0m[2m, there's[0m[2m no retry[0m[2m mechanism[0m[2m. Each[0m[2m order is[0m[2m created[0m[2m once[0m[2m and awaited[0m[2m once.[0m[2m So duplicate[0m[2m order processing[0m[2m isn't[0m[2m actually[0m[2m happening.[0m[2m The `[0m[2mdu[0m[2mplicates`[0m[2m check in[0m[2m `main[0m[2m.py`[0m[2m is always[0m[2m 0[0m[2m in the[0m[2m current code[0m[2m. But[0m[2m the requirement[0m[2m says[0m[2m "No[0m[2m order is[0m[2m charged more[0m[2m than once[0m[2m" as[0m[2m a safety[0m[2m property[0m[2m.
+     
+     I[0m[2m think adding[0m[2m idempot[0m[2mency to[0m[2m `Payment[0m[2mGateway.ch[0m[2marge`[0m[2m is sufficient[0m[2m and good[0m[2m practice[0m[2m. For[0m[2m the inventory[0m[2m side[0m[2m, if[0m[2m we want[0m[2m to be[0m[2m extra[0m[2m safe,[0m[2m we can[0m[2m also add[0m[2m a[0m[2m "[0m[2mreserve[0m[2m" method[0m[2m that tracks[0m[2m order_ids[0m[2m.[0m[2m But that[0m[2m seems[0m[2m like[0m[2m over-engine[0m[2mering[0m[2m for this[0m[2m specific problem[0m[2m.
+     
+     Actually[0m[2m, wait[0m[2m. Let[0m[2m me re[0m[2m-read the[0m[2m problem:[0m[2m "No[0m[2m order is[0m[2m charged more[0m[2m than once[0m[2m". This[0m[2m is specifically[0m[2m about charging[0m[2m. It[0m[2m doesn't say[0m[2m "no[0m[2m order decre[0m[2mments inventory[0m[2m more than[0m[2m once".[0m[2m The[0m[2m requirement "[0m[2mEvery successful[0m[2m charge corresponds[0m[2m to exactly[0m[2m one item[0m[2m delivered"[0m[2m means[0m[2m if[0m[2m we look[0m[2m at all[0m[2m successful charges[0m[2m, each[0m[2m one matches[0m[2m exactly one[0m[2m delivered[0m[2m item.[0m[2m If[0m[2m there's[0m[2m a[0m[2m duplicate order[0m[2m processing that[0m[2m doesn't result[0m[2m in a[0m[2m charge ([0m[2mbecause charge[0m[2m is id[0m[2mempotent),[0m[2m there's[0m[2m no additional[0m[2m charge[0m[2m, so[0m[2m the[0m[2m requirement is[0m[2m still satisfied[0m[2m.
+     
+     Hmm[0m[2m, but[0m[2m what[0m[2m if the[0m[2m first processing[0m[2m fails[0m[2m before[0m[2m charging[0m[2m, and[0m[2m the second[0m[2m processing[0m[2m succeeds?[0m[2m Then there's[0m[2m one charge[0m[2m and one[0m[2m item delivered[0m[2m. That's[0m[2m fine.[0m[2m
+     
+     What if[0m[2m both[0m[2m process[0m[2mings somehow[0m[2m charge?[0m[2m With[0m[2m idempotent[0m[2m gateway,[0m[2m only the[0m[2m first charges[0m[2m. The[0m[2m second gets[0m[2m True[0m[2m without charging[0m[2m. Then[0m[2m inventory is[0m[2m decremented[0m[2m twice.[0m[2m There's[0m[2m still[0m[2m only[0m[2m one charge[0m[2m.[0m[2m Does[0m[2m "[0m[2mEvery successful[0m[2m charge corresponds[0m[2m to exactly[0m[2m one item[0m[2m delivered"[0m[2m hold?[0m[2m Yes,[0m[2m the one[0m[2m charge corresponds[0m[2m to the[0m[2m one[0m[2m item from[0m[2m the first[0m[2m processing.[0m[2m But now[0m[2m there's[0m[2m an extra[0m[2m item decre[0m[2mmented with[0m[2m no corresponding[0m[2m charge.[0m[2m That's a[0m[2m different[0m[2m issue[0m[2m -[0m[2m we'd[0m[2m be[0m[2m losing[0m[2m inventory.[0m[2m
+     
+     To[0m[2m prevent[0m[2m this,[0m[2m we'd[0m[2m need to[0m[2m track order[0m[2m processing[0m[2m end[0m[2m-to-end[0m[2m. But[0m[2m again[0m[2m, in[0m[2m the current[0m[2m simulation,[0m[2m this can't[0m[2m happen because[0m[2m there's no[0m[2m retry.[0m[2m
+     
+     Let[0m[2m me keep[0m[2m it simple[0m[2m and just[0m[2m fix the[0m[2m obvious race[0m[2m conditions:[0m[2m
+     1.[0m[2m Inventory[0m[2m with[0m[2m locks[0m[2m
+     2[0m[2m. Payment[0m[2m gateway[0m[2m with[0m[2m idempot[0m[2mency[0m[2m
+     3.[0m[2m Checkout with[0m[2m decrement[0m[2m-before[0m[2m-charge[0m[2m
+     
+     This[0m[2m should satisfy[0m[2m all three[0m[2m requirements for[0m[2m the given[0m[2m simulation and[0m[2m be[0m[2m robust[0m[2m.
+     
+     Actually[0m[2m, I[0m[2m want to[0m[2m verify[0m[2m one more[0m[2m thing.[0m[2m Let[0m[2m me look[0m[2m at whether[0m[2m `inventory[0m[2m.decrement[0m[2m` could[0m[2m go[0m[2m negative without[0m[2m a[0m[2m lock.[0m[2m In asyncio[0m[2m, as[0m[2m I discussed[0m[2m, the[0m[2m check and[0m[2m decrement happen[0m[2m atom[0m[2mically because[0m[2m there[0m[2m are no[0m[2m await points[0m[2m between them[0m[2m. BUT[0m[2m what[0m[2m if we[0m[2m run[0m[2m with[0m[2m actual[0m[2m threads?[0m[2m The code[0m[2m doesn't use[0m[2m threads[0m[2m explicitly[0m[2m,[0m[2m but `[0m[2masyncio[0m[2m` uses[0m[2m a thread[0m[2m for[0m[2m the[0m[2m event loop[0m[2m and[0m[2m all[0m[2m coroutines[0m[2m run in[0m[2m that thread[0m[2m.[0m[2m
+     
+     Wait[0m[2m, I[0m[2m just realized[0m[2m something.[0m[2m `[0m[2masyncio[0m[2m.sleep`[0m[2m returns[0m[2m a future[0m[2m.[0m[2m When[0m[2m the future[0m[2m completes[0m[2m, the[0m[2m event[0m[2m loop resumes[0m[2m the cor[0m[2moutine.[0m[2m BUT[0m[2m there's[0m[2m a subtle[0m[2m issue[0m[2m: `[0m[2masyncio[0m[2m.sleep([0m[2m0.[0m[2m02)`[0m[2m might not[0m[2m be[0m[2m exactly[0m[2m 0.[0m[2m02 seconds[0m[2m.[0m[2m And[0m[2m multiple[0m[2m coroutines[0m[2m sleeping[0m[2m for[0m[2m 0[0m[2m.02[0m[2m might complete[0m[2m at slightly[0m[2m different times[0m[2m. The[0m[2m event loop[0m[2m handles[0m[2m them as[0m[2m they complete[0m[2m. But[0m[2m the[0m[2m key point[0m[2m is that[0m[2m each cor[0m[2moutine runs[0m[2m to[0m[2m completion[0m[2m (or[0m[2m next await[0m[2m) before[0m[2m another[0m[2m is[0m[2m resumed[0m[2m.
+     
+     So[0m[2m yes[0m[2m, `[0m[2mdecrement[0m[2m` is[0m[2m safe in[0m[2m asyncio.[0m[2m But let[0m[2m me add[0m[2m the[0m[2m lock anyway[0m[2m for[0m[2m correctness[0m[2m and clarity[0m[2m.
+     
+     Wait[0m[2m, actually[0m[2m,[0m[2m I[0m[2m just[0m[2m thought of[0m[2m another scenario[0m[2m. What[0m[2m if someone[0m[2m modifies `[0m[2minventory.py[0m[2m` to[0m[2m remove the[0m[2m `[0m[2mif self[0m[2m._stock[0m[2m >= quantity[0m[2m` check[0m[2m? Then[0m[2m inventory[0m[2m would definitely[0m[2m go negative[0m[2m. By[0m[2m adding a[0m[2m lock to[0m[2m `de[0m[2mcrement`,[0m[2m we make[0m[2m it robust[0m[2m.[0m[2m
+     
+     Also[0m[2m, what[0m[2m about[0m[2m `increment[0m[2m`?[0m[2m If two[0m[2m failed[0m[2m charges[0m[2m try[0m[2m to increment[0m[2m back[0m[2m at the[0m[2m same time[0m[2m, they[0m[2m might[0m[2m interfere[0m[2m?[0m[2m No,[0m[2m addition[0m[2m is commutative[0m[2m and[0m[2m there's[0m[2m no check[0m[2m in `[0m[2mincrement`.[0m[2m But for[0m[2m consistency,[0m[2m I'll[0m[2m add[0m[2m the[0m[2m lock there[0m[2m too.[0m[2m
+     
+     And for[0m[2m `check[0m[2m_stock`,[0m[2m should[0m[2m I[0m[2m add[0m[2m the lock[0m[2m? If[0m[2m `[0m[2mcheck_stock[0m[2m` is[0m[2m called[0m[2m while `[0m[2mdecrement[0m[2m` is[0m[2m running ([0m[2mduring[0m[2m the sleep[0m[2m),[0m[2m it[0m[2m might[0m[2m return stale[0m[2m data.[0m[2m But that's[0m[2m always[0m[2m a[0m[2m possibility[0m[2m with[0m[2m reads[0m[2m. In[0m[2m the context[0m[2m of `[0m[2mcheckout.py[0m[2m`, we[0m[2m won't be[0m[2m calling `[0m[2mcheck_stock[0m[2m` anymore[0m[2m,[0m[2m so it[0m[2m doesn't matter[0m[2m.[0m[2m But for[0m[2m completeness[0m[2m, we[0m[2m could add[0m[2m the lock[0m[2m there too[0m[2m.
+     
+     Actually[0m[2m, I[0m[2m think the[0m[2m most[0m[2m important[0m[2m thing[0m[2m is to[0m[2m make `[0m[2mdecrement[0m[2m` and[0m[2m `increment[0m[2m` atomic[0m[2m. `[0m[2mcheck_stock[0m[2m` can[0m[2m stay[0m[2m as is[0m[2m since[0m[2m we're not[0m[2m using it[0m[2m in the[0m[2m critical path[0m[2m anymore[0m[2m.
+     
+     Let[0m[2m me now[0m[2m write the[0m[2m code.[0m[2m
+     
+     One more[0m[2m consideration[0m[2m: should[0m[2m `[0m[2mPayment[0m[2mGateway.ch[0m[2marge`[0m[2m use[0m[2m a lock[0m[2m too[0m[2m? In[0m[2m single[0m[2m-thread[0m[2med asyncio[0m[2m, adding[0m[2m to a[0m[2m list and[0m[2m increment[0m[2ming a[0m[2m float are[0m[2m not[0m[2m atomic operations[0m[2m at[0m[2m the bytecode[0m[2m level.[0m[2m Wait[0m[2m, are[0m[2m they?[0m[2m
+     
+     In C[0m[2mPython,[0m[2m list.append[0m[2m is atomic[0m[2m because[0m[2m it's a[0m[2m single bytecode[0m[2m operation.[0m[2m `self[0m[2m.total_ch[0m[2marged +=[0m[2m amount`[0m[2m is NOT[0m[2m atomic -[0m[2m it reads[0m[2m,[0m[2m adds,[0m[2m and[0m[2m writes.[0m[2m But in[0m[2m single[0m[2m-threaded[0m[2m asyncio,[0m[2m no other[0m[2m coroutine[0m[2m can run[0m[2m between these[0m[2m byte[0m[2mcodes[0m[2m because there's[0m[2m no await[0m[2m. So[0m[2m it's fine[0m[2m.
+     
+     If[0m[2m we had[0m[2m actual[0m[2m threads,[0m[2m we'd need[0m[2m a lock[0m[2m. But[0m[2m we[0m[2m don't.[0m[2m So `[0m[2mPaymentGateway[0m[2m.ch[0m[2marge`[0m[2m doesn't need[0m[2m an asyncio[0m[2m lock.[0m[2m
+     
+     But adding[0m[2m idempot[0m[2mency is[0m[2m still[0m[2m important[0m[2m.
+     
+     Let[0m[2m me write[0m[2m the final[0m[2m code:[0m[2m
+     
+     **inventory[0m[2m.py**[0m[2m:
+     ```[0m[2mpython[0m[2m
+     import asyncio[0m[2m
+     
+     
+     class[0m[2m Inventory:[0m[2m
+         def[0m[2m __init[0m[2m__(self[0m[2m, stock[0m[2m: int[0m[2m):[0m[2m
+             self._[0m[2mstock =[0m[2m stock[0m[2m
+             self[0m[2m._lock[0m[2m = asyncio[0m[2m.Lock()[0m[2m
+     
+         async[0m[2m def check[0m[2m_stock(self[0m[2m, quantity[0m[2m: int[0m[2m) ->[0m[2m bool:[0m[2m
+             await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.02[0m[2m)[0m[2m
+             return self[0m[2m._stock[0m[2m >= quantity[0m[2m
+     
+         async def[0m[2m decrement(self[0m[2m, quantity[0m[2m: int[0m[2m) ->[0m[2m bool:[0m[2m
+             async[0m[2m with self[0m[2m._lock[0m[2m:[0m[2m
+                 await asyncio[0m[2m.sleep([0m[2m0.[0m[2m02)[0m[2m
+                 if[0m[2m self._[0m[2mstock >=[0m[2m quantity:[0m[2m
+                     self[0m[2m._stock[0m[2m -= quantity[0m[2m
+                     return True[0m[2m
+                 return False[0m[2m
+     
+         async def[0m[2m increment(self[0m[2m, quantity[0m[2m: int[0m[2m) ->[0m[2m None:[0m[2m
+             async[0m[2m with self[0m[2m._lock[0m[2m:[0m[2m
+                 await asyncio[0m[2m.sleep([0m[2m0.[0m[2m01)[0m[2m
+                 self[0m[2m._stock[0m[2m += quantity[0m[2m
+     
+         @property[0m[2m
+         def stock[0m[2m(self)[0m[2m -> int[0m[2m:[0m[2m
+             return self[0m[2m._stock[0m[2m
+     ```[0m[2m
+     
+     **payments[0m[2m.py**[0m[2m:
      ```[0m[2mpython[0m[2m
      import asyncio[0m[2m
      import[0m[2m random[0m[2m
      from typing[0m[2m import List[0m[2m, Set[0m[2m
      
+     
      class[0m[2m PaymentGateway[0m[2m:[0m[2m
          def __[0m[2minit__([0m[2mself,[0m[2m failure_rate[0m[2m: float[0m[2m =[0m[2m 0.[0m[2m25):[0m[2m
              self[0m[2m._failure[0m[2m_rate =[0m[2m failure_rate[0m[2m
              self.total[0m[2m_charged[0m[2m: float[0m[2m =[0m[2m 0.[0m[2m0[0m[2m
-             self[0m[2m.ch[0m[2marges:[0m[2m List[[0m[2mdict][0m[2m = [][0m[2m
-             self[0m[2m._charged[0m[2m_order_ids[0m[2m: Set[0m[2m[str][0m[2m = set[0m[2m()[0m[2m
-             self._[0m[2mlock =[0m[2m asyncio.Lock[0m[2m()[0m[2m
+             self[0m[2m.charges[0m[2m: List[0m[2m[dict[0m[2m] =[0m[2m [][0m[2m
+             self._[0m[2mcharged_order[0m[2m_ids:[0m[2m Set[str[0m[2m] =[0m[2m set()[0m[2m
      
-         async def[0m[2m charge(self[0m[2m, order[0m[2m_id:[0m[2m str,[0m[2m amount:[0m[2m float)[0m[2m -> bool[0m[2m:[0m[2m
-             async with[0m[2m self._[0m[2mlock:[0m[2m
-                 await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.03[0m[2m)[0m[2m
-                 if order[0m[2m_id in[0m[2m self._[0m[2mcharged_order[0m[2m_ids:[0m[2m
-                     return[0m[2m True[0m[2m
-                 if[0m[2m random.random[0m[2m()[0m[2m < self._[0m[2mfailure_rate[0m[2m:[0m[2m
-                     return False[0m[2m
-                 self.total[0m[2m_charged[0m[2m += amount[0m[2m
-                 self.ch[0m[2marges.append[0m[2m({"order[0m[2m_id":[0m[2m order_id[0m[2m, "[0m[2mamount":[0m[2m amount})[0m[2m
-                 self[0m[2m._charged[0m[2m_order_ids[0m[2m.add(order[0m[2m_id)[0m[2m
+         async[0m[2m def charge[0m[2m(self,[0m[2m order_id[0m[2m: str[0m[2m, amount[0m[2m: float[0m[2m) ->[0m[2m bool:[0m[2m
+             await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.03[0m[2m)[0m[2m
+             if order[0m[2m_id in[0m[2m self._[0m[2mcharged_order[0m[2m_ids:[0m[2m
                  return[0m[2m True[0m[2m
+             if[0m[2m random.random[0m[2m()[0m[2m < self._[0m[2mfailure_rate[0m[2m:[0m[2m
+                 return False[0m[2m
+             self._[0m[2mcharged_order[0m[2m_ids.add[0m[2m(order_id[0m[2m)[0m[2m
+             self.total[0m[2m_charged[0m[2m += amount[0m[2m
+             self.ch[0m[2marges.append[0m[2m({"order[0m[2m_id":[0m[2m order_id[0m[2m, "[0m[2mamount":[0m[2m amount})[0m[2m
+             return[0m[2m True[0m[2m
      ```
      
-     Wait[0m[2m, but[0m[2m `await[0m[2m asyncio.sleep[0m[2m(0[0m[2m.03[0m[2m)` inside[0m[2m the lock[0m[2m means the[0m[2m lock is[0m[2m held during[0m[2m the sleep[0m[2m. That's[0m[2m actually[0m[2m desirable[0m[2m here[0m[2m because[0m[2m it[0m[2m prevents inter[0m[2mleaving[0m[2m of charge[0m[2m operations for[0m[2m the same[0m[2m order_id[0m[2m. But[0m[2m it also[0m[2m serializes[0m[2m all payments[0m[2m. That's[0m[2m acceptable[0m[2m for this[0m[2m exercise[0m[2m.
-     
-     Now[0m[2m `checkout[0m[2m.py`:[0m[2m
+     **[0m[2mcheckout.py[0m[2m**:[0m[2m
      ```python[0m[2m
      import[0m[2m asyncio[0m[2m
      from inventory[0m[2m import Inventory[0m[2m
      from[0m[2m payments import[0m[2m PaymentGateway[0m[2m
+     
      
      async[0m[2m def checkout[0m[2m([0m[2m
          order_id[0m[2m: str[0m[2m,[0m[2m
@@ -222,73 +866,149 @@
          inventory:[0m[2m Inventory,[0m[2m
          gateway[0m[2m: Payment[0m[2mGateway,[0m[2m
      ) ->[0m[2m bool:[0m[2m
-         reserved[0m[2m = await[0m[2m inventory.reserve[0m[2m(quantity[0m[2m)[0m[2m
-         if not[0m[2m reserved:[0m[2m
-             print[0m[2m(f"[0m[2mOrder {[0m[2morder_id[0m[2m}: out[0m[2m of stock[0m[2m")[0m[2m
-             return False[0m[2m
+         decre[0m[2mmented =[0m[2m await inventory[0m[2m.decrement[0m[2m(quantity[0m[2m)[0m[2m
+         if not[0m[2m decremented[0m[2m:[0m[2m
+             print(f[0m[2m"Order[0m[2m {order[0m[2m_id}:[0m[2m out of[0m[2m stock")[0m[2m
+             return[0m[2m False[0m[2m
      
-         charged =[0m[2m await gateway[0m[2m.charge[0m[2m(order_id[0m[2m, quantity[0m[2m * price[0m[2m)[0m[2m
-         if not[0m[2m charged:[0m[2m
-             await[0m[2m inventory.increment[0m[2m(quantity[0m[2m)[0m[2m
-             print(f[0m[2m"Order[0m[2m {order[0m[2m_id}:[0m[2m payment failed[0m[2m")[0m[2m
+         charged[0m[2m = await[0m[2m gateway.ch[0m[2marge(order[0m[2m_id,[0m[2m quantity *[0m[2m price)[0m[2m
+         if[0m[2m not charged[0m[2m:[0m[2m
+             await inventory[0m[2m.increment([0m[2mquantity)[0m[2m
+             print[0m[2m(f"[0m[2mOrder {[0m[2morder_id[0m[2m}: payment[0m[2m failed")[0m[2m
              return[0m[2m False[0m[2m
      
          print[0m[2m(f"[0m[2mOrder {[0m[2morder_id[0m[2m}: SUCCESS[0m[2m")[0m[2m
          return True[0m[2m
      ```[0m[2m
      
-     This looks[0m[2m correct.[0m[2m Let me[0m[2m verify against[0m[2m all[0m[2m requirements:[0m[2m
-     -[0m[2m Inventory never[0m[2m goes below[0m[2m zero:[0m[2m `reserve[0m[2m` is[0m[2m atomic with[0m[2m a[0m[2m lock,[0m[2m checks[0m[2m before[0m[2m decrementing[0m[2m. ✓[0m[2m
-     - Every[0m[2m successful charge[0m[2m corresponds to[0m[2m exactly one[0m[2m item delivered[0m[2m: We[0m[2m reserve before[0m[2m charging[0m[2m. If[0m[2m charge succeeds[0m[2m, we[0m[2m have already[0m[2m decre[0m[2mmented inventory[0m[2m,[0m[2m so the[0m[2m item is[0m[2m "del[0m[2mivered"[0m[2m (committed[0m[2m). If[0m[2m charge fails[0m[2m, we[0m[2m increment inventory[0m[2m back.[0m[2m ✓[0m[2m
-     -[0m[2m No order[0m[2m is charged[0m[2m more than[0m[2m once:[0m[2m `Payment[0m[2mGateway.ch[0m[2marge`[0m[2m now[0m[2m checks[0m[2m `_[0m[2mcharged[0m[2m_order_ids[0m[2m` and[0m[2m returns True[0m[2m without[0m[2m double[0m[2m-ch[0m[2marging if[0m[2m already[0m[2m charged[0m[2m. ✓[0m[2m
+     Wait,[0m[2m I should[0m[2m also think[0m[2m about whether[0m[2m `checkout[0m[2m` itself[0m[2m needs to[0m[2m be[0m[2m idempotent[0m[2m. If[0m[2m the same[0m[2m `[0m[2morder_id[0m[2m` is[0m[2m passed twice[0m[2m, what[0m[2m happens?[0m[2m
+     1.[0m[2m First call[0m[2m: `[0m[2minventory[0m[2m.decrement[0m[2m`[0m[2m succeeds,[0m[2m `gateway[0m[2m.charge[0m[2m` succeeds[0m[2m,[0m[2m returns True[0m[2m
+     2[0m[2m. Second[0m[2m call:[0m[2m `inventory[0m[2m.decrement[0m[2m` might[0m[2m succeed ([0m[2mif stock[0m[2m available[0m[2m),[0m[2m `gateway[0m[2m.charge[0m[2m` returns[0m[2m True ([0m[2midempotent[0m[2m), returns[0m[2m True[0m[2m
      
-     Wait,[0m[2m I should[0m[2m think[0m[2m about whether[0m[2m `increment[0m[2m` could[0m[2m fail[0m[2m and[0m[2m leave[0m[2m us[0m[2m with[0m[2m a ghost[0m[2m charge.[0m[2m In the[0m[2m current code[0m[2m, `[0m[2mincrement`[0m[2m doesn't[0m[2m return[0m[2m anything[0m[2m meaningful[0m[2m (returns[0m[2m None)[0m[2m and just[0m[2m adds[0m[2m to stock[0m[2m. It[0m[2m could theoretically[0m[2m fail with[0m[2m an exception[0m[2m, but[0m[2m in[0m[2m this[0m[2m mock implementation[0m[2m, it[0m[2m won't[0m[2m. The[0m[2m requirement says[0m[2m "Every[0m[2m successful charge[0m[2m corresponds to[0m[2m exactly one[0m[2m item delivered[0m[2m" —[0m[2m meaning[0m[2m if charge[0m[2m succeeds,[0m[2m order must[0m[2m succeed.[0m[2m In[0m[2m our implementation[0m[2m, if[0m[2m charge succeeds[0m[2m, we[0m[2m already[0m[2m decre[0m[2mmented inventory[0m[2m, so[0m[2m the[0m[2m order succeeds[0m[2m. We[0m[2m don't need[0m[2m to do[0m[2m anything else[0m[2m.[0m[2m
+     Result[0m[2m: inventory[0m[2m decre[0m[2mmented twice[0m[2m, one[0m[2m charge.[0m[2m This violates[0m[2m "[0m[2mEvery successful[0m[2m charge corresponds[0m[2m to exactly[0m[2m one item[0m[2m delivered"[0m[2m because[0m[2m now[0m[2m there[0m[2m are[0m[2m two decre[0m[2mments for[0m[2m one charge[0m[2m.[0m[2m Actually[0m[2m wait[0m[2m, the[0m[2m requirement says[0m[2m "Every[0m[2m successful charge[0m[2m corresponds to[0m[2m exactly one[0m[2m item delivered[0m[2m". It[0m[2m doesn't say[0m[2m "Every[0m[2m item delivered[0m[2m corresponds to[0m[2m exactly one[0m[2m successful charge[0m[2m". So[0m[2m technically[0m[2m, having[0m[2m extra[0m[2m inventory decre[0m[2mments without[0m[2m charges[0m[2m might[0m[2m be[0m[2m acceptable[0m[2m.[0m[2m But it's[0m[2m bad[0m[2m business[0m[2m logic[0m[2m.
      
-     What[0m[2m about the[0m[2m case where[0m[2m `[0m[2mreserve[0m[2m` succeeds[0m[2m, charge[0m[2m succeeds,[0m[2m but then[0m[2m some[0m[2m exception[0m[2m happens[0m[2m before returning[0m[2m True?[0m[2m The[0m[2m user[0m[2m asked[0m[2m us[0m[2m to fix[0m[2m the checkout[0m[2m logic,[0m[2m and the[0m[2m current `[0m[2mcheckout.py[0m[2m` doesn't[0m[2m handle[0m[2m exceptions.[0m[2m I'll[0m[2m keep it[0m[2m simple.[0m[2m
+     To[0m[2m fix[0m[2m this,[0m[2m we could[0m[2m add a[0m[2m method to[0m[2m `Inventory[0m[2m` that[0m[2m reserves[0m[2m stock by[0m[2m order[0m[2m_id.[0m[2m But that[0m[2m changes the[0m[2m semantics.[0m[2m Or we[0m[2m could track[0m[2m order[0m[2m_ids[0m[2m in `[0m[2mcheckout`[0m[2m via[0m[2m `[0m[2mPaymentGateway[0m[2m`.[0m[2m
      
-     Let[0m[2m me also[0m[2m think[0m[2m about the[0m[2m `increment[0m[2m` after[0m[2m failed[0m[2m charge.[0m[2m Is[0m[2m it[0m[2m possible that[0m[2m `increment[0m[2m` is[0m[2m called concurrently[0m[2m and[0m[2m creates[0m[2m a race[0m[2m?[0m[2m I[0m[2m added a[0m[2m lock to[0m[2m `increment[0m[2m`, so[0m[2m it's safe[0m[2m.
+     Let[0m[2m me add[0m[2m a `[0m[2mwas[0m[2m_charged[0m[2m(order_id[0m[2m: str[0m[2m) ->[0m[2m bool`[0m[2m method to[0m[2m `Payment[0m[2mGateway`,[0m[2m and check[0m[2m it[0m[2m at the[0m[2m start of[0m[2m `checkout[0m[2m`:
      
-     One[0m[2m more thing[0m[2m: the[0m[2m `main[0m[2m.py`[0m[2m simulation[0m[2m.[0m[2m It[0m[2m runs[0m[2m 12 concurrent[0m[2m orders on[0m[2m stock of[0m[2m 5[0m[2m. With[0m[2m 25%[0m[2m failure rate[0m[2m.[0m[2m Let[0m[2m me think[0m[2m about expected[0m[2m results[0m[2m:
-     -[0m[2m At[0m[2m most[0m[2m 5 items[0m[2m can be[0m[2m reserved[0m[2m
-     - Of[0m[2m those reserved[0m[2m, some[0m[2m will[0m[2m fail payment[0m[2m and[0m[2m be[0m[2m returned[0m[2m to[0m[2m stock[0m[2m
-     - Total[0m[2m successful[0m[2m orders[0m[2m should equal[0m[2m items[0m[2m sold[0m[2m
-     - Total[0m[2m charged should[0m[2m equal successful[0m[2m orders[0m[2m * price[0m[2m
-     - No[0m[2m duplicates[0m[2m
-     - Stock[0m[2m should never[0m[2m go negative[0m[2m
+     ```[0m[2mpython[0m[2m
+     async def[0m[2m checkout([0m[2m
+         order[0m[2m_id:[0m[2m str,[0m[2m
+         quantity[0m[2m: int[0m[2m,[0m[2m
+         price:[0m[2m float,[0m[2m
+         inventory[0m[2m: Inventory[0m[2m,[0m[2m
+         gateway:[0m[2m PaymentGateway[0m[2m,
+     )[0m[2m -> bool[0m[2m:[0m[2m
+         if gateway[0m[2m.was[0m[2m_charged[0m[2m(order_id[0m[2m):[0m[2m
+             print(f[0m[2m"Order[0m[2m {order[0m[2m_id}:[0m[2m already processed[0m[2m")[0m[2m
+             return True[0m[2m
      
-     Let[0m[2m me write[0m[2m the code[0m[2m and run[0m[2m it.[0m[2m
-  The[0m[2m bugs[0m[2m are classic[0m[2m race-condition[0m[2m and[0m[2m ordering[0m[2m issues[0m[2m:
+         decre[0m[2mmented =[0m[2m await inventory[0m[2m.decrement[0m[2m(quantity[0m[2m)[0m[2m
+         ...[0m[2m
+     ```
      
-     1[0m[2m. **[0m[2mOvers[0m[2melling**[0m[2m (`[0m[2minventory[0m[2m.py`):[0m[2m `check[0m[2m_stock`[0m[2m and `[0m[2mdecrement[0m[2m` are[0m[2m separate async[0m[2m calls with[0m[2m a simulated[0m[2m delay[0m[2m. Multiple[0m[2m tasks[0m[2m can inter[0m[2mleave between[0m[2m the[0m[2m check and[0m[2m the decrement[0m[2m, so[0m[2m stock[0m[2m drops[0m[2m below zero[0m[2m.[0m[2m The `[0m[2mdecrement[0m[2m` method[0m[2m itself also[0m[2m has a[0m[2m check-t[0m[2mhen-act[0m[2m race because[0m[2m the sleep[0m[2m yields[0m[2m control[0m[2m.[0m[2m
+     This[0m[2m prevents[0m[2m duplicate processing[0m[2m. But[0m[2m wait[0m[2m, if[0m[2m the first[0m[2m call decre[0m[2mmented inventory[0m[2m and[0m[2m then crashed[0m[2m before charging[0m[2m, the[0m[2m second call[0m[2m would see[0m[2m `was[0m[2m_charged[0m[2m` is[0m[2m False,[0m[2m decrement again[0m[2m, and[0m[2m charge.[0m[2m That's fine[0m[2m.[0m[2m But[0m[2m if the[0m[2m first call[0m[2m charged[0m[2m and[0m[2m then crashed[0m[2m before returning[0m[2m, the[0m[2m second call[0m[2m sees[0m[2m `was[0m[2m_charged[0m[2m` is[0m[2m True and[0m[2m returns True[0m[2m without decrement[0m[2ming.[0m[2m But[0m[2m wait[0m[2m, the[0m[2m inventory[0m[2m was already[0m[2m decremented[0m[2m by the[0m[2m first call[0m[2m,[0m[2m so that's[0m[2m correct![0m[2m
      
-     2.[0m[2m **Ghost[0m[2m charges**[0m[2m (`checkout[0m[2m.py`):[0m[2m Payment[0m[2m is[0m[2m charged *[0m[2mbefore*[0m[2m inventory is[0m[2m permanently[0m[2m decremented[0m[2m. If[0m[2m the[0m[2m decrement[0m[2m then[0m[2m fails ([0m[2mbecause[0m[2m another task[0m[2m stole the[0m[2m stock[0m[2m), the[0m[2m customer is[0m[2m charged for[0m[2m nothing.[0m[2m
+     Actually,[0m[2m no[0m[2m. If[0m[2m the first[0m[2m call:[0m[2m
+     1.[0m[2m Decre[0m[2mmented[0m[2m inventory[0m[2m
+     2.[0m[2m Charged[0m[2m successfully[0m[2m
+     3.[0m[2m Crashed[0m[2m before returning[0m[2m
      
-     3.[0m[2m **Duplicate[0m[2m charges**[0m[2m (`payments[0m[2m.py`):[0m[2m Nothing[0m[2m prevents[0m[2m the[0m[2m same `[0m[2morder_id[0m[2m` from[0m[2m being charged[0m[2m multiple times[0m[2m.
+     Then[0m[2m the inventory[0m[2m is[0m[2m decre[0m[2mmented and[0m[2m the charge[0m[2m is recorded[0m[2m. The[0m[2m second call[0m[2m:
+     1[0m[2m. Se[0m[2mes `[0m[2mwas_ch[0m[2marged`[0m[2m is True[0m[2m
+     2[0m[2m. Returns[0m[2m True without[0m[2m decrementing[0m[2m
      
-     The[0m[2m fix is[0m[2m to[0m[2m make[0m[2m inventory reservation[0m[2m atomic,[0m[2m reverse[0m[2m the charge[0m[2m/de[0m[2mcrement order[0m[2m, and[0m[2m add[0m[2m idempot[0m[2mency to[0m[2m payments[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Edit:4 | Edit {'path': 'inventory.py', 'old_text': 'import asyncio\n\n\nclass Inv ...', 'new_text': 'import asyncio\n\n\nclass Inv ...'}
+     This is[0m[2m correct![0m[2m The inventory[0m[2m was already[0m[2m decremented[0m[2m.[0m[2m
+     
+     What[0m[2m if the[0m[2m first call[0m[2m:
+     1[0m[2m. Dec[0m[2mremented[0m[2m inventory[0m[2m
+     2.[0m[2m Payment[0m[2m failed[0m[2m
+     3.[0m[2m Incremented[0m[2m inventory back[0m[2m
+     4[0m[2m. Cr[0m[2mashed[0m[2m
+     
+     Second[0m[2m call:[0m[2m
+     1.[0m[2m Sees[0m[2m `was[0m[2m_charged[0m[2m` is[0m[2m False[0m[2m
+     2.[0m[2m Decre[0m[2mments inventory[0m[2m
+     3[0m[2m. Charges[0m[2m
+     
+     Also[0m[2m correct.[0m[2m
+     
+     What if[0m[2m the first[0m[2m call:[0m[2m
+     1.[0m[2m Decre[0m[2mmented inventory[0m[2m
+     2[0m[2m. Cr[0m[2mashed before[0m[2m charging[0m[2m
+     
+     Second[0m[2m call:[0m[2m
+     1.[0m[2m Sees[0m[2m `was[0m[2m_charged[0m[2m` is[0m[2m False[0m[2m
+     2.[0m[2m Decre[0m[2mments inventory[0m[2m again[0m[2m
+     3.[0m[2m Charges[0m[2m
+     
+     O[0m[2mops![0m[2m Now[0m[2m inventory is[0m[2m decremented[0m[2m twice for[0m[2m one[0m[2m charge[0m[2m. This[0m[2m is the[0m[2m same issue[0m[2m as[0m[2m before,[0m[2m but in[0m[2m a different[0m[2m failure[0m[2m scenario.[0m[2m To[0m[2m be[0m[2m completely[0m[2m safe[0m[2m, we'd[0m[2m need a[0m[2m distributed[0m[2m transaction or[0m[2m a[0m[2m two-phase[0m[2m commit.[0m[2m But that's[0m[2m beyond[0m[2m the scope[0m[2m.[0m[2m
+     
+     For[0m[2m this problem[0m[2m, I[0m[2m think adding[0m[2m `[0m[2mwas_ch[0m[2marged`[0m[2m to[0m[2m `[0m[2mcheckout`[0m[2m is a[0m[2m reasonable[0m[2m improvement.[0m[2m Let[0m[2m me include[0m[2m it.[0m[2m
+     
+     Actually,[0m[2m on[0m[2m further[0m[2m thought[0m[2m, in[0m[2m the current[0m[2m simulation there[0m[2m are no[0m[2m retries and[0m[2m no duplicate[0m[2m order_ids[0m[2m. The[0m[2m `was[0m[2m_charged[0m[2m` check[0m[2m is defensive[0m[2m but[0m[2m not necessary[0m[2m to[0m[2m pass[0m[2m the simulation[0m[2m. However[0m[2m, the[0m[2m explicit[0m[2m requirement "[0m[2mNo order[0m[2m is charged[0m[2m more than[0m[2m once"[0m[2m is[0m[2m about[0m[2m the payment[0m[2m gateway,[0m[2m which[0m[2m we[0m[2m satisfy[0m[2m with[0m[2m idempot[0m[2mency.[0m[2m
+     
+     I[0m[2m think the[0m[2m simplest[0m[2m correct[0m[2m fix is[0m[2m:
+     1[0m[2m. Inventory[0m[2m with lock[0m[2m
+     2[0m[2m. Payment[0m[2mGateway[0m[2m with[0m[2m idempot[0m[2mency[0m[2m  
+     3.[0m[2m Checkout with[0m[2m decrement-before[0m[2m-charge[0m[2m
+     
+     Let[0m[2m me also[0m[2m add a[0m[2m `was[0m[2m_charged[0m[2m` check[0m[2m to `[0m[2mcheckout`[0m[2m because[0m[2m it's easy[0m[2m and makes[0m[2m it[0m[2m more robust[0m[2m.
+     
+     Actually[0m[2m, I[0m[2m realize I[0m[2m need[0m[2m to be[0m[2m more[0m[2m careful.[0m[2m The problem[0m[2m says "[0m[2mDo not[0m[2m change the[0m[2m public interfaces[0m[2m of Inventory[0m[2m or Payment[0m[2mGateway.[0m[2m You may[0m[2m add methods[0m[2m to them[0m[2m." Adding[0m[2m `[0m[2mwas_ch[0m[2marged`[0m[2m to[0m[2m `[0m[2mPaymentGateway[0m[2m` is[0m[2m fine because[0m[2m it's a[0m[2m new method[0m[2m, not[0m[2m a changed[0m[2m interface.[0m[2m
+     
+     Let me[0m[2m also[0m[2m think[0m[2m about whether[0m[2m there[0m[2m are[0m[2m any issues[0m[2m with adding[0m[2m an[0m[2m asyncio[0m[2m.Lock to[0m[2m Inventory.[0m[2m If[0m[2m `[0m[2mmain[0m[2m.py`[0m[2m creates one[0m[2m Inventory[0m[2m and passes[0m[2m it to[0m[2m multiple `[0m[2mcheckout`[0m[2m cor[0m[2moutines,[0m[2m the[0m[2m lock will[0m[2m be shared[0m[2m. That's[0m[2m correct[0m[2m.
+     
+     Let[0m[2m me also[0m[2m check[0m[2m if there[0m[2m are any[0m[2m type[0m[2m hints[0m[2m or imports[0m[2m I need[0m[2m to be[0m[2m careful about[0m[2m.[0m[2m `payments[0m[2m.py`[0m[2m uses[0m[2m `List[0m[2m` and[0m[2m I[0m[2m want[0m[2m to add[0m[2m `Set[0m[2m`. I[0m[2m need to[0m[2m import `[0m[2mSet`[0m[2m from `[0m[2mtyping`.[0m[2m
+     
+     OK[0m[2m, I[0m[2m think I'm[0m[2m ready to[0m[2m write the[0m[2m code.[0m[2m Let me[0m[2m also run[0m[2m the simulation[0m[2m after fixing[0m[2m to verify[0m[2m.
+     
+     Actually[0m[2m, one[0m[2m more thought[0m[2m.[0m[2m The problem[0m[2m says "[0m[2mInventory never[0m[2m goes below[0m[2m zero".[0m[2m Even[0m[2m with locks[0m[2m, `[0m[2minventory.de[0m[2mcrement`[0m[2m checks[0m[2m `self[0m[2m._stock[0m[2m >= quantity[0m[2m`.[0m[2m If[0m[2m stock[0m[2m is[0m[2m 0 and[0m[2m we[0m[2m try[0m[2m to decrement[0m[2m 1[0m[2m, it[0m[2m returns False[0m[2m. So[0m[2m inventory[0m[2m never goes[0m[2m below zero[0m[2m.[0m[2m
+     
+     But what[0m[2m if `[0m[2mquantity`[0m[2m is negative[0m[2m? Then[0m[2m `self[0m[2m._stock[0m[2m >= quantity[0m[2m` is[0m[2m always True[0m[2m,[0m[2m and we'd[0m[2m add[0m[2m to stock[0m[2m.[0m[2m The[0m[2m problem doesn't[0m[2m mention[0m[2m negative[0m[2m quantities,[0m[2m so I'll[0m[2m assume valid[0m[2m inputs.[0m[2m
+     
+     Let me[0m[2m write the[0m[2m code[0m[2m now.[0m[2m
+  🔄 Prepare tool parameters...[0m📋 Todo list updated (5 items)
+
+📋 Todo List (1/5, 20%, ✅ 1 completed  ▶️ 3 in progress  ☐ 1 pending)
+  ✅ [1] Analyze the race conditions in checkout flow
+  ▶️ [2] Fix Inventory with atomic decrement/increment (asyncio.Lock)
+  ▶️ [3] Fix PaymentGateway with idempotent charge
+  ▶️ [4] Fix checkout.py to decrement before charging
+     [5] Run simulation to verify fixes
+~DATA~{"total":5,"completed":1,"in_progress":3,"pending":1}
+[2m
+  🧰 functions.TodoWrite:6 | TodoWrite {'todos': [{'content': 'Analyze the race conditions in checkout flow', 'id': '1', 'status': 'completed'}, {'content': 'Fix Inventory with atomic decrement/increment (asyncio.Lock)', 'id': '2', 'status': 'in_progress'}, {'content': 'Fix PaymentGateway with idempotent charge', 'id': '3', 'status': 'in_progress'}, {'content': 'Fix checkout.py to decrement before charging', 'id': '4', 'status': 'in_progress'}, {'content': 'Run simulation to verify fixes', 'id': '5', 'status': 'pending'}]}
 [0m[2m
-  🧰 functions.Edit:5 | Edit {'path': 'payments.py', 'old_text': 'import asyncio\nimport rand ...', 'new_text': 'import asyncio\nimport rand ...'}
+  🔠 functions.TodoWrite:6 Executed
 [0m[2m
-  🧰 functions.Edit:6 | Edit {'path': 'checkout.py', 'old_text': 'import asyncio\nfrom invent ...', 'new_text': 'import asyncio\nfrom invent ...'}
+  🧠 Let[0m[2m me now[0m[2m apply[0m[2m the fixes[0m[2m to[0m[2m the three[0m[2m files.[0m[2m I'll batch[0m[2m the[0m[2m writes[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 functions.Write:7 | Write {'content': 'import asyncio\n\n\nclass Inve...', 'path': '/Users/gofrendigunawan/llm-...'}
+[0m[2m
+  🧰 functions.Write:8 | Write {'content': 'import asyncio\nimport rando...', 'path': '/Users/gofrendigunawan/llm-...'}
+[0m[2m
+  🧰 functions.Write:9 | Write {'content': 'import asyncio\nfrom invento...', 'path': '/Users/gofrendigunawan/llm-...'}
 [0m  ✓ LSP server 'pyright' started for /Users/gofrendigunawan/llm-challenges
 [2m
-  🔠 functions.Edit:5 Executed
+  🔠 functions.Write:7 Executed
 [0m[2m
-  🔠 functions.Edit:6 Executed
+  🔠 functions.Write:9 Executed
 [0m[2m
-  🔠 functions.Edit:4 Executed
+  🔠 functions.Write:8 Executed
 [0m[2m
-  🧠 The[0m[2m edits[0m[2m were[0m[2m successful[0m[2m. Now[0m[2m I need[0m[2m to run[0m[2m `[0m[2mmain.py[0m[2m` to[0m[2m verify the[0m[2m fix works[0m[2m. I'll[0m[2m run it[0m[2m multiple[0m[2m times to[0m[2m ensure[0m[2m it's[0m[2m consistently[0m[2m correct[0m[2m, since[0m[2m the[0m[2m payment[0m[2m failure[0m[2m is[0m[2m random.[0m[2m
+  🧠 Now[0m[2m let me[0m[2m run the[0m[2m simulation multiple[0m[2m times to[0m[2m verify the[0m[2m fixes.[0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Shell:7 | Shell {'command': 'python main.py', 'description': 'Run concurrent simulation once'}
+  🧰 functions.Shell:10 | Shell {'command': 'cd /Users/gofrendigunawan/l...', 'description': 'Run simulation 10 times to ...'}
+[0m  [2m--- Run 1 ---
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
 [0m  [2mOrder order_1: SUCCESS
 [0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
 [0m  [2mOrder order_5: out of stock
+[0m  [2mOrder order_4: SUCCESS
 [0m  [2mOrder order_6: out of stock
 [0m  [2mOrder order_7: out of stock
 [0m  [2mOrder order_8: out of stock
@@ -296,54 +1016,24 @@
 [0m  [2mOrder order_10: out of stock
 [0m  [2mOrder order_11: out of stock
 [0m  [2mOrder order_0: payment failed
-[0m  [2mOrder order_3: payment failed
-[0m  [2mOrder order_4: payment failed
 [0m  [2m
 [0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  2
-[0m  [2mItems sold:         2  (initial stock: 5)
-[0m  [2mRemaining stock:    3
-[0m  [2mTotal charged:      $200.00
-[0m  [2mExpected charge:    $200.00
-[0m  [2mDuplicate charges:  0
-[0m[2m
-  🔠 functions.Shell:7 Executed
-[0m[2m
-  🧠 Good[0m[2m, the[0m[2m first run[0m[2m passed[0m[2m with[0m[2m no errors[0m[2m. But[0m[2m since[0m[2m there's[0m[2m randomness[0m[2m in payment[0m[2m failures,[0m[2m I should[0m[2m run it[0m[2m multiple[0m[2m times to[0m[2m verify[0m[2m consistency[0m[2m. Let[0m[2m me run[0m[2m it[0m[2m a few[0m[2m more times[0m[2m,[0m[2m maybe[0m[2m in[0m[2m a loop[0m[2m.[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 functions.Shell:8 | Shell {'command': 'for i in {1..10}; do echo  ...', 'description': 'Run simulation 10 times to ...'}
-[0m  [2m--- Run 1 ---
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_0: SUCCESS
-[0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_3: SUCCESS
-[0m  [2mOrder order_6: out of stock
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_4: SUCCESS
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
-[0m  [2mOrder order_1: payment failed
-[0m  [2mOrder order_2: payment failed
-[0m  [2m
-[0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  3
-[0m  [2mItems sold:         3  (initial stock: 5)
-[0m  [2mRemaining stock:    2
-[0m  [2mTotal charged:      $300.00
-[0m  [2mExpected charge:    $300.00
+[0m  [2mSuccessful orders:  4
+[0m  [2mItems sold:         4  (initial stock: 5)
+[0m  [2mRemaining stock:    1
+[0m  [2mTotal charged:      $400.00
+[0m  [2mExpected charge:    $400.00
 [0m  [2mDuplicate charges:  0
 [0m  [2m--- Run 2 ---
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
 [0m  [2mOrder order_0: SUCCESS
 [0m  [2mOrder order_1: SUCCESS
 [0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_5: out of stock
 [0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_5: out of stock
+[0m  [2mOrder order_4: SUCCESS
 [0m  [2mOrder order_6: out of stock
 [0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_4: SUCCESS
 [0m  [2mOrder order_8: out of stock
 [0m  [2mOrder order_9: out of stock
 [0m  [2mOrder order_10: out of stock
@@ -359,13 +1049,35 @@
 [0m  [2m--- Run 3 ---
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
 [0m  [2mOrder order_0: SUCCESS
-[0m  [2mOrder order_1: SUCCESS
 [0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_5: out of stock
 [0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_5: out of stock
+[0m  [2mOrder order_4: SUCCESS
 [0m  [2mOrder order_6: out of stock
 [0m  [2mOrder order_7: out of stock
+[0m  [2mOrder order_8: out of stock
+[0m  [2mOrder order_9: out of stock
+[0m  [2mOrder order_10: out of stock
+[0m  [2mOrder order_11: out of stock
+[0m  [2mOrder order_1: payment failed
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  4
+[0m  [2mItems sold:         4  (initial stock: 5)
+[0m  [2mRemaining stock:    1
+[0m  [2mTotal charged:      $400.00
+[0m  [2mExpected charge:    $400.00
+[0m  [2mDuplicate charges:  0
+[0m  [2m--- Run 4 ---
+[0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_0: SUCCESS
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_5: out of stock
 [0m  [2mOrder order_4: SUCCESS
+[0m  [2mOrder order_6: out of stock
+[0m  [2mOrder order_7: out of stock
 [0m  [2mOrder order_8: out of stock
 [0m  [2mOrder order_9: out of stock
 [0m  [2mOrder order_10: out of stock
@@ -378,34 +1090,12 @@
 [0m  [2mTotal charged:      $500.00
 [0m  [2mExpected charge:    $500.00
 [0m  [2mDuplicate charges:  0
-[0m  [2m--- Run 4 ---
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_3: SUCCESS
-[0m  [2mOrder order_6: out of stock
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_4: SUCCESS
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
-[0m  [2mOrder order_0: payment failed
-[0m  [2mOrder order_1: payment failed
-[0m  [2mOrder order_2: payment failed
-[0m  [2m
-[0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  2
-[0m  [2mItems sold:         2  (initial stock: 5)
-[0m  [2mRemaining stock:    3
-[0m  [2mTotal charged:      $200.00
-[0m  [2mExpected charge:    $200.00
-[0m  [2mDuplicate charges:  0
 [0m  [2m--- Run 5 ---
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
 [0m  [2mOrder order_0: SUCCESS
 [0m  [2mOrder order_2: SUCCESS
 [0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_4: SUCCESS
 [0m  [2mOrder order_6: out of stock
 [0m  [2mOrder order_7: out of stock
 [0m  [2mOrder order_8: out of stock
@@ -413,7 +1103,7 @@
 [0m  [2mOrder order_10: out of stock
 [0m  [2mOrder order_11: out of stock
 [0m  [2mOrder order_1: payment failed
-[0m  [2mOrder order_4: payment failed
+[0m  [2mOrder order_3: payment failed
 [0m  [2m
 [0m  [2m=== Results ===
 [0m  [2mSuccessful orders:  3
@@ -426,9 +1116,31 @@
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
 [0m  [2mOrder order_0: SUCCESS
 [0m  [2mOrder order_1: SUCCESS
-[0m  [2mOrder order_2: SUCCESS
 [0m  [2mOrder order_5: out of stock
+[0m  [2mOrder order_6: out of stock
+[0m  [2mOrder order_7: out of stock
+[0m  [2mOrder order_8: out of stock
+[0m  [2mOrder order_9: out of stock
+[0m  [2mOrder order_10: out of stock
+[0m  [2mOrder order_11: out of stock
+[0m  [2mOrder order_2: payment failed
+[0m  [2mOrder order_3: payment failed
+[0m  [2mOrder order_4: payment failed
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  2
+[0m  [2mItems sold:         2  (initial stock: 5)
+[0m  [2mRemaining stock:    3
+[0m  [2mTotal charged:      $200.00
+[0m  [2mExpected charge:    $200.00
+[0m  [2mDuplicate charges:  0
+[0m  [2m--- Run 7 ---
+[0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_0: SUCCESS
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_2: SUCCESS
 [0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_5: out of stock
 [0m  [2mOrder order_6: out of stock
 [0m  [2mOrder order_7: out of stock
 [0m  [2mOrder order_8: out of stock
@@ -444,41 +1156,19 @@
 [0m  [2mTotal charged:      $400.00
 [0m  [2mExpected charge:    $400.00
 [0m  [2mDuplicate charges:  0
-[0m  [2m--- Run 7 ---
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_1: SUCCESS
-[0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_3: SUCCESS
-[0m  [2mOrder order_6: out of stock
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
-[0m  [2mOrder order_0: payment failed
-[0m  [2mOrder order_4: payment failed
-[0m  [2m
-[0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  3
-[0m  [2mItems sold:         3  (initial stock: 5)
-[0m  [2mRemaining stock:    2
-[0m  [2mTotal charged:      $300.00
-[0m  [2mExpected charge:    $300.00
-[0m  [2mDuplicate charges:  0
 [0m  [2m--- Run 8 ---
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_0: SUCCESS
 [0m  [2mOrder order_1: SUCCESS
 [0m  [2mOrder order_2: SUCCESS
 [0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_3: SUCCESS
 [0m  [2mOrder order_6: out of stock
 [0m  [2mOrder order_7: out of stock
 [0m  [2mOrder order_8: out of stock
 [0m  [2mOrder order_9: out of stock
 [0m  [2mOrder order_10: out of stock
 [0m  [2mOrder order_11: out of stock
-[0m  [2mOrder order_0: payment failed
+[0m  [2mOrder order_3: payment failed
 [0m  [2mOrder order_4: payment failed
 [0m  [2m
 [0m  [2m=== Results ===
@@ -490,74 +1180,108 @@
 [0m  [2mDuplicate charges:  0
 [0m  [2m--- Run 9 ---
 [0m  [2mStarting simulation: 12 concurrent orders, stock=5
-[0m  [2mOrder order_2: SUCCESS
-[0m  [2mOrder order_5: out of stock
-[0m  [2mOrder order_3: SUCCESS
-[0m  [2mOrder order_6: out of stock
-[0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_4: SUCCESS
-[0m  [2mOrder order_8: out of stock
-[0m  [2mOrder order_9: out of stock
-[0m  [2mOrder order_10: out of stock
-[0m  [2mOrder order_11: out of stock
-[0m  [2mOrder order_0: payment failed
-[0m  [2mOrder order_1: payment failed
-[0m  [2m
-[0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  3
-[0m  [2mItems sold:         3  (initial stock: 5)
-[0m  [2mRemaining stock:    2
-[0m  [2mTotal charged:      $300.00
-[0m  [2mExpected charge:    $300.00
-[0m  [2mDuplicate charges:  0
-[0m  [2m--- Run 10 ---
-[0m  [2mStarting simulation: 12 concurrent orders, stock=5
 [0m  [2mOrder order_0: SUCCESS
 [0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
 [0m  [2mOrder order_5: out of stock
+[0m  [2mOrder order_4: SUCCESS
 [0m  [2mOrder order_6: out of stock
 [0m  [2mOrder order_7: out of stock
-[0m  [2mOrder order_4: SUCCESS
 [0m  [2mOrder order_8: out of stock
 [0m  [2mOrder order_9: out of stock
 [0m  [2mOrder order_10: out of stock
 [0m  [2mOrder order_11: out of stock
 [0m  [2mOrder order_2: payment failed
-[0m  [2mOrder order_3: payment failed
 [0m  [2m
 [0m  [2m=== Results ===
-[0m  [2mSuccessful orders:  3
-[0m  [2mItems sold:         3  (initial stock: 5)
-[0m  [2mRemaining stock:    2
-[0m  [2mTotal charged:      $300.00
-[0m  [2mExpected charge:    $300.00
+[0m  [2mSuccessful orders:  4
+[0m  [2mItems sold:         4  (initial stock: 5)
+[0m  [2mRemaining stock:    1
+[0m  [2mTotal charged:      $400.00
+[0m  [2mExpected charge:    $400.00
+[0m  [2mDuplicate charges:  0
+[0m  [2m--- Run 10 ---
+[0m  [2mStarting simulation: 12 concurrent orders, stock=5
+[0m  [2mOrder order_0: SUCCESS
+[0m  [2mOrder order_1: SUCCESS
+[0m  [2mOrder order_3: SUCCESS
+[0m  [2mOrder order_5: out of stock
+[0m  [2mOrder order_4: SUCCESS
+[0m  [2mOrder order_6: out of stock
+[0m  [2mOrder order_7: out of stock
+[0m  [2mOrder order_8: out of stock
+[0m  [2mOrder order_9: out of stock
+[0m  [2mOrder order_10: out of stock
+[0m  [2mOrder order_11: out of stock
+[0m  [2mOrder order_2: payment failed
+[0m  [2m
+[0m  [2m=== Results ===
+[0m  [2mSuccessful orders:  4
+[0m  [2mItems sold:         4  (initial stock: 5)
+[0m  [2mRemaining stock:    1
+[0m  [2mTotal charged:      $400.00
+[0m  [2mExpected charge:    $400.00
 [0m  [2mDuplicate charges:  0
 [0m[2m
-  🔠 functions.Shell:8 Executed
+  🔠 functions.Shell:10 Executed
 [0m[2m
-  🧠 All[0m[2m 10[0m[2m runs passed[0m[2m with no[0m[2m errors.[0m[2m Inventory[0m[2m never went[0m[2m negative,[0m[2m charges[0m[2m always[0m[2m matched successful[0m[2m orders,[0m[2m and there[0m[2m were no[0m[2m duplicate charges[0m[2m. The[0m[2m fix is[0m[2m working[0m[2m correctly[0m[2m.
+  🧠 The[0m[2m simulation results[0m[2m look[0m[2m perfect across[0m[2m all[0m[2m 10 runs[0m[2m:
+     -[0m[2m No inventory[0m[2m went negative[0m[2m
+     -[0m[2m Total[0m[2m charged always[0m[2m matches[0m[2m expected charge[0m[2m
+     - No[0m[2m duplicate charges[0m[2m
+     -[0m[2m Items sold[0m[2m matches[0m[2m successful orders[0m[2m
+     - No[0m[2m more[0m[2m "inventory[0m[2m error after[0m[2m payment"[0m[2m messages[0m[2m
      
-     Let[0m[2m me summarize[0m[2m what was[0m[2m done:[0m[2m
-     1.[0m[2m `[0m[2minventory.py[0m[2m`: Added[0m[2m `async[0m[2mio.Lock[0m[2m()`[0m[2m and[0m[2m wrapped[0m[2m stock[0m[2m operations in[0m[2m it.[0m[2m Added a[0m[2m new `[0m[2mreserve()`[0m[2m method that[0m[2m atomically[0m[2m checks and[0m[2m decrements[0m[2m stock.[0m[2m
-     2.[0m[2m `payments[0m[2m.py`:[0m[2m Added `[0m[2masyncio[0m[2m.Lock()`[0m[2m and a[0m[2m `_charged[0m[2m_order_ids[0m[2m` set[0m[2m to make[0m[2m `charge[0m[2m()` id[0m[2mempotent per[0m[2m `[0m[2morder_id[0m[2m`.
-     3[0m[2m. `[0m[2mcheckout.py[0m[2m`: Re[0m[2mordered the[0m[2m flow to[0m[2m reserve inventory[0m[2m first,[0m[2m then charge[0m[2m. If[0m[2m charging[0m[2m fails,[0m[2m the reservation[0m[2m is released[0m[2m via[0m[2m `inventory[0m[2m.increment()[0m[2m`.
+     Let[0m[2m me update[0m[2m the todo[0m[2m list and[0m[2m provide[0m[2m a summary[0m[2m of[0m[2m the fixes[0m[2m.[0m[2m
+  🔄 Prepare tool parameters...[0m📋 Todo list updated (5 items)
+
+📋 Todo List (5/5, 100%, ✅ 5 completed)
+  ✅ [1] Analyze the race conditions in checkout flow
+  ✅ [2] Fix Inventory with atomic decrement/increment (asyncio.Lock)
+  ✅ [3] Fix PaymentGateway with idempotent charge
+  ✅ [4] Fix checkout.py to decrement before charging
+  ✅ [5] Run simulation to verify fixes
+~DATA~{"total":5,"completed":5,"in_progress":0,"pending":0}
+[2m
+  🧰 functions.TodoWrite:11 | TodoWrite {'todos': [{'content': 'Analyze the race conditions in checkout flow', 'id': '1', 'status': 'completed'}, {'content': 'Fix Inventory with atomic decrement/increment (asyncio.Lock)', 'id': '2', 'status': 'completed'}, {'content': 'Fix PaymentGateway with idempotent charge', 'id': '3', 'status': 'completed'}, {'content': 'Fix checkout.py to decrement before charging', 'id': '4', 'status': 'completed'}, {'content': 'Run simulation to verify fixes', 'id': '5', 'status': 'completed'}]}
+[0m[2m
+  🔠 functions.TodoWrite:11 Executed
+[0m[2m
+  🧠 The[0m[2m user asked[0m[2m me to[0m[2m fix the[0m[2m checkout logic[0m[2m. I've[0m[2m done that[0m[2m and verified[0m[2m it works[0m[2m. Let[0m[2m me provide[0m[2m a clear[0m[2m summary of[0m[2m what[0m[2m I found[0m[2m and fixed[0m[2m.[0m[2m
+  All[0m[2m three issues[0m[2m are fixed[0m[2m. Here's[0m[2m a summary[0m[2m of the[0m[2m root causes[0m[2m and the[0m[2m changes[0m[2m made[0m[2m:
      
-     This[0m[2m ensures[0m[2m:
-     -[0m[2m Inventory never[0m[2m goes below[0m[2m zero ([0m[2matomic reserve[0m[2m with[0m[2m lock)[0m[2m
-     - Every[0m[2m successful charge[0m[2m corresponds to[0m[2m exactly one[0m[2m item delivered[0m[2m (reserve[0m[2m before charge[0m[2m;[0m[2m charge[0m[2m success[0m[2m means item[0m[2m already committed[0m[2m)
-     -[0m[2m No order[0m[2m is charged[0m[2m more than[0m[2m once ([0m[2midempotent[0m[2m payment gateway[0m[2m)[0m[2m
-  The[0m[2m fix is[0m[2m verified[0m[2m across[0m[2m 10 runs[0m[2m with[0m[2m no[0m[2m errors.[0m[2m Here's[0m[2m what changed[0m[2m:[0m[2m
+     ###[0m[2m Root Ca[0m[2muses[0m[2m
      
-     **`[0m[2minventory.py[0m[2m`** —[0m[2m Added `[0m[2masyncio[0m[2m.Lock()`[0m[2m and an[0m[2m atomic[0m[2m `reserve[0m[2m()` method[0m[2m. Existing[0m[2m `[0m[2mcheck_stock[0m[2m`, `[0m[2mdecrement[0m[2m`, and[0m[2m `increment[0m[2m` are[0m[2m also[0m[2m protected by[0m[2m the lock[0m[2m so concurrent[0m[2m tasks[0m[2m cannot[0m[2m interleave[0m[2m between a[0m[2m check[0m[2m and a[0m[2m mutation.[0m[2m
+     1[0m[2m. **[0m[2mOvers[0m[2melling &[0m[2m Ghost Charges[0m[2m**: `[0m[2mcheckout.py[0m[2m` used[0m[2m a non[0m[2m-atomic[0m[2m two[0m[2m-step stock[0m[2m check (`[0m[2mcheck_stock[0m[2m` →[0m[2m `charge[0m[2m` →[0m[2m `de[0m[2mcrement`).[0m[2m In[0m[2m between[0m[2m checking[0m[2m stock[0m[2m and decrement[0m[2ming it[0m[2m, concurrent[0m[2m orders[0m[2m could pass[0m[2m the stock[0m[2m check,[0m[2m get[0m[2m charged,[0m[2m and then[0m[2m find[0m[2m inventory[0m[2m already[0m[2m gone —[0m[2m creating[0m[2m ghost[0m[2m charges.[0m[2m
+     2.[0m[2m **Duplicate[0m[2m Charges[0m[2m**: `[0m[2mPaymentGateway[0m[2m`[0m[2m had no[0m[2m idempot[0m[2mency tracking[0m[2m. Ret[0m[2mrying[0m[2m the same[0m[2m `order[0m[2m_id`[0m[2m would charge[0m[2m again[0m[2m.
      
-     **`[0m[2mpayments.py[0m[2m`** —[0m[2m Added `[0m[2masyncio[0m[2m.Lock()`[0m[2m and a[0m[2m `_charged[0m[2m_order_ids[0m[2m` set[0m[2m. The[0m[2m `charge[0m[2m` method[0m[2m is now[0m[2m idempotent[0m[2m:[0m[2m if an[0m[2m `order[0m[2m_id`[0m[2m was already[0m[2m successfully[0m[2m charged,[0m[2m it returns[0m[2m `True[0m[2m` without[0m[2m adding a[0m[2m duplicate[0m[2m entry[0m[2m.
+     ###[0m[2m Fixes Applied[0m[2m
      
-     **[0m[2m`checkout[0m[2m.py`**[0m[2m — Re[0m[2mordered the[0m[2m flow to[0m[2m reserve[0m[2m inventory *[0m[2mbefore*[0m[2m charging.[0m[2m If payment[0m[2m fails,[0m[2m the reserved[0m[2m stock[0m[2m is immediately[0m[2m released via[0m[2m `inventory[0m[2m.increment()[0m[2m`. This[0m[2m eliminates[0m[2m both[0m[2m overs[0m[2melling ([0m[2mres[0m[2mervation is[0m[2m atomic)[0m[2m and ghost[0m[2m charges ([0m[2myou cannot[0m[2m be[0m[2m charged for[0m[2m an item[0m[2m you didn't[0m[2m reserve).[0m[2m
+     **[0m[2m`inventory[0m[2m.py`[0m[2m**
+     -[0m[2m Added `[0m[2masyncio[0m[2m.Lock`[0m[2m to protect[0m[2m `_[0m[2mstock`[0m[2m operations.[0m[2m
+     - Wrapped[0m[2m `de[0m[2mcrement`[0m[2m and `[0m[2mincrement`[0m[2m with `[0m[2masync with[0m[2m self._[0m[2mlock`[0m[2m so stock[0m[2m checks[0m[2m and mutations[0m[2m are atomic[0m[2m.[0m[2m This guarantees[0m[2m inventory never[0m[2m drops[0m[2m below zero[0m[2m.
      
-     -[0m[2m Inventory[0m[2m never drops[0m[2m below zero[0m[2m
-     - `[0m[2mTotal charged[0m[2m` ==[0m[2m `Successful[0m[2m orders ×[0m[2m price`[0m[2m on[0m[2m every run[0m[2m
-     -[0m[2m Duplicate charges[0m[2m stay[0m[2m at zero[0m[2m
-  💸 (Requests: 5 | Tool Calls: 9 | Total: 66755) Input: 61639 | Audio Input: 0 | Output: 5116 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     **[0m[2m`payments[0m[2m.py`[0m[2m**
+     -[0m[2m Added `_[0m[2mcharged_order[0m[2m_ids:[0m[2m Set[str[0m[2m]` to[0m[2m track successfully[0m[2m processed[0m[2m orders[0m[2m.
+     -[0m[2m In[0m[2m `charge[0m[2m()`, if[0m[2m an `[0m[2morder_id[0m[2m` was[0m[2m already charged[0m[2m, return[0m[2m `True[0m[2m` immediately[0m[2m without double[0m[2m-charging[0m[2m.
+     -[0m[2m Added `[0m[2mwas_ch[0m[2marged(order[0m[2m_id)`[0m[2m helper[0m[2m for[0m[2m callers[0m[2m.[0m[2m
+     
+     **`[0m[2mcheckout.py[0m[2m`**[0m[2m
+     - Re[0m[2mordered[0m[2m the flow[0m[2m to **[0m[2mdecrement[0m[2m inventory first[0m[2m,[0m[2m then charge[0m[2m**:[0m[2m
+       1.[0m[2m `inventory[0m[2m.decrement[0m[2m(quantity[0m[2m)` —[0m[2m reserves[0m[2m stock[0m[2m atom[0m[2mically.[0m[2m
+       2.[0m[2m If out[0m[2m of stock[0m[2m, return[0m[2m `False[0m[2m` immediately[0m[2m — no[0m[2m charge attempted[0m[2m.[0m[2m
+       3[0m[2m. `[0m[2mgateway.ch[0m[2marge(...[0m[2m)` —[0m[2m charge the[0m[2m customer.[0m[2m
+       4.[0m[2m If payment[0m[2m fails,[0m[2m call[0m[2m `inventory[0m[2m.increment([0m[2mquantity)`[0m[2m to release[0m[2m the reserved[0m[2m stock back[0m[2m.[0m[2m
+       5[0m[2m. Added[0m[2m a[0m[2m `[0m[2mwas_ch[0m[2marged`[0m[2m guard at[0m[2m the top[0m[2m for[0m[2m idempot[0m[2mency.[0m[2m
+     
+     ###[0m[2m Verification[0m[2m
+     
+     Ran[0m[2m the concurrent[0m[2m simulation[0m[2m 10 times[0m[2m. Every[0m[2m run[0m[2m now[0m[2m passes[0m[2m cleanly[0m[2m:
+     -[0m[2m **Inventory[0m[2m never negative[0m[2m**[0m[2m
+     - **[0m[2mTotal charged[0m[2m ==[0m[2m successful[0m[2m orders ×[0m[2m price**[0m[2m
+     - **[0m[2mDuplicate charges[0m[2m =[0m[2m 0**[0m[2m
+     - No[0m[2m more[0m[2m "inventory[0m[2m error after[0m[2m payment"[0m[2m ghost[0m[2m messages[0m[2m
+  💸 (Requests: 8 | Tool Calls: 12 | Total: 137452) Input: 124208 | Audio Input: 0 | Output: 13244 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "# E-Commerce Checkout Service
 
 Users have reported two production incidents:
@@ -577,14 +1301,36 @@ Fix the checkout logic. The fix must ensure:
 Do not change the public interfaces of `Inventory` or `PaymentGateway`. You may add methods to them.
 " --model ollama:kimi-k2.6:cloud --session ollama_kimi-k2.6_cloud-integration-bug-trial-1 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_kimi-k2.6_cloud-integration-bug-trial-1[0m[0m
-The fix is verified across 10 runs with no errors. Here's what changed:
+All three issues are fixed. Here's a summary of the root causes and the changes made:
 
-**`inventory.py`** — Added `asyncio.Lock()` and an atomic `reserve()` method. Existing `check_stock`, `decrement`, and `increment` are also protected by the lock so concurrent tasks cannot interleave between a check and a mutation.
+### Root Causes
 
-**`payments.py`** — Added `asyncio.Lock()` and a `_charged_order_ids` set. The `charge` method is now idempotent: if an `order_id` was already successfully charged, it returns `True` without adding a duplicate entry.
+1. **Overselling & Ghost Charges**: `checkout.py` used a non-atomic two-step stock check (`check_stock` → `charge` → `decrement`). In between checking stock and decrementing it, concurrent orders could pass the stock check, get charged, and then find inventory already gone — creating ghost charges.
+2. **Duplicate Charges**: `PaymentGateway` had no idempotency tracking. Retrying the same `order_id` would charge again.
 
-**`checkout.py`** — Reordered the flow to reserve inventory *before* charging. If payment fails, the reserved stock is immediately released via `inventory.increment()`. This eliminates both overselling (reservation is atomic) and ghost charges (you cannot be charged for an item you didn't reserve).
+### Fixes Applied
 
-- Inventory never drops below zero
-- `Total charged` == `Successful orders × price` on every run
-- Duplicate charges stay at zero
+**`inventory.py`**
+- Added `asyncio.Lock` to protect `_stock` operations.
+- Wrapped `decrement` and `increment` with `async with self._lock` so stock checks and mutations are atomic. This guarantees inventory never drops below zero.
+
+**`payments.py`**
+- Added `_charged_order_ids: Set[str]` to track successfully processed orders.
+- In `charge()`, if an `order_id` was already charged, return `True` immediately without double-charging.
+- Added `was_charged(order_id)` helper for callers.
+
+**`checkout.py`**
+- Reordered the flow to **decrement inventory first, then charge**:
+  1. `inventory.decrement(quantity)` — reserves stock atomically.
+  2. If out of stock, return `False` immediately — no charge attempted.
+  3. `gateway.charge(...)` — charge the customer.
+  4. If payment fails, call `inventory.increment(quantity)` to release the reserved stock back.
+  5. Added a `was_charged` guard at the top for idempotency.
+
+### Verification
+
+Ran the concurrent simulation 10 times. Every run now passes cleanly:
+- **Inventory never negative**
+- **Total charged == successful orders × price**
+- **Duplicate charges = 0**
+- No more "inventory error after payment" ghost messages

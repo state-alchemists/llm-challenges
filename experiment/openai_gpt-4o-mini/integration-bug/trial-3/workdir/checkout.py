@@ -2,6 +2,7 @@ import asyncio
 from inventory import Inventory
 from payments import PaymentGateway
 
+
 async def checkout(
     order_id: str,
     quantity: int,
@@ -19,11 +20,9 @@ async def checkout(
         print(f"Order {order_id}: payment failed")
         return False
 
-    # Only decrement inventory after a successful charge
     decremented = await inventory.decrement(quantity)
     if not decremented:
         print(f"Order {order_id}: inventory error after payment — item not delivered")
-        await gateway.increment_charge(order_id, quantity * price)  # Increment back the payment
         return False
 
     print(f"Order {order_id}: SUCCESS")

@@ -7,6 +7,7 @@ class JobQueue:
         self._jobs: Dict[int, Dict[str, Any]] = {}
         self._next_id = 1
         self.max_retries = max_retries
+        self._job_locks: Dict[int, asyncio.Lock] = {}
 
     def enqueue(self, payload: dict) -> int:
         job_id = self._next_id
@@ -23,9 +24,20 @@ class JobQueue:
     async def dequeue(self) -> Optional[Dict]:
         for job in self._jobs.values():
             if job["status"] == "pending":
-                job["status"] = "processing"  # Immediately mark as processing
-                await asyncio.sleep(0.01)
-                return job
+                # Ensure the lock exists before trying to acquire it
+                if job["id"] not in self._job_locks:
+                    self._job_locks[job["id"]] = asyncio.Lock()
+                async with self._job_locks[job["id"]]:  # Lock the job for processing
+                    job["status"] = "processing"
+                    await asyncio.sleep(0.01)  # Simulate some processing time
+                    return job
+        return None
+        for job in self._jobs.values():
+            if job["status"] == "pending":
+                async with self._job_locks[job["id"]]:  # Lock the job for processing
+                    job["status"] = "processing"
+                    await asyncio.sleep(0.01)  # Simulate some processing time
+                    return job
         return None
         for job in self._jobs.values():
             if job["status"] == "pending":
@@ -39,17 +51,6 @@ class JobQueue:
         self._jobs[job_id]["result"] = result
 
     def fail(self, job_id: int, error: str) -> None:
-        # Logging the error for debugging
-        print(f"Job {job_id} failed with error: {error}. Retries: {self._jobs[job_id]['retries']}/{self.max_retries}.")
-        # Correctly retrieve job before handling failures. handling after updating the jobs.
-        job = self._jobs[job_id]
-        if job["retries"] < self.max_retries:
-            job["retries"] += 1
-            job["status"] = "pending"  # Re-queue for later processing
-        else:
-            job["status"] = "failed"
-            job["result"] = error
-        # Correctly retrieve job before handling failures. handling after updating the jobs.
         job = self._jobs[job_id]
         if job["retries"] < self.max_retries:
             job["retries"] += 1

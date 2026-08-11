@@ -2,5 +2,5 @@
 
 settings = {
     "source": "events.csv",
-    "batch_size": 0,
+    "batch_size": 4,
 }

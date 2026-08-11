@@ -1,75 +1,58 @@
 [2m
-  🧠 The[0m[2m user is reporting two issues with a background job processor[0m[2m:
+  🧠 The user[0m[2m wants me to investigate and fix two issues in a background job processor:
      1. Duplicate processing - jobs executed more than once
-     2. Vanishing failures - jobs that[0m[2m crash disappear instead of being marked as failed
+     2. Vanishing failures - jobs that crash never show[0m[2m up as failed
      
-     Let[0m[2m me start by reading the relevant files to understand the codebase and find the root causes.
+     Let me start by reading the relevant files to understand the codebase.
 [0m[2m
-  I'll[0m[2m investigate both issues. Let me start by reading the relevant files to understand the system.
+  I'll start by reading the relevant files to understand the codebase and reproduce the issues.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m  🔄 Prepare tool parameters ⠋[0m[2m[0m[2m
-  🧰 call_287ebc4cc72247098a052ae5 | ReadReadRead {"path":"job_queue.py"}{"path":"worker.py"}{"path":"main.py"}
+  🧰 call_function_l2cb4m29q63a_3 | ReadReadRead {"path":"/Users/gofrendigunawan/llm-challenges/experiment/ollama_minimax-m2.7_cloud/bug-fix/trial-3/workdir/job_queue.py"}{"path":"/Users/gofrendigunawan/llm-challenges/experiment/ollama_minimax-m2.7_cloud/bug-fix/trial-3/workdir/worker.py"}{"path":"/Users/gofrendigunawan/llm-challenges/experiment/ollama_minimax-m2.7_cloud/bug-fix/trial-3/workdir/main.py"}
 [0m[2m
-  🔠 call_287ebc4cc72247098a052ae5 Executed
-[0m
-[SYSTEM] Invalid tool call detected, asking model to retry...
-[2m
-  🧠 The[0m[2m user is asking me to find and fix bugs in a background job processor. Let me start by reading[0m[2m the relevant files to understand the codebase and then identify[0m[2m the root causes of the two issues:
-     1. Duplicate processing
-     2. Vanishing failures (jobs[0m[2m that crash with exceptions disappear)
-     
-     Let me first read the files to understand the system.
+  🔠 call_function_l2cb4m29q63a_3 Executed
+[0m[2m
+  🧠 I[0m[2m need to use the Read tool properly, not "ReadReadRead". Let me read the files one by one.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_d4429f84d8c54383ac40d700 | Read {'path': 'job_queue.py'}
+  🧰 call_function_qyas52a2pcww_1 | Read {'path': '/Users/gofrendigunawan/llm-...'}
 [0m[2m
-  🔠 call_d4429f84d8c54383ac40d700 Executed
+  🔠 call_function_qyas52a2pcww_1 Executed
 [0m[2m
-  🧠 Now[0m[2m let me read worker.py to understand how jobs are processed.
-[0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_322538a27e7f49b390d5cd2b | Read {'path': 'worker.py'}
-[0m[2m
-  🔠 call_322538a27e7f49b390d5cd2b Executed
-[0m[2m
-  🧠 Now[0m[2m I can see the bugs clearly:
-     
-     **Bug 1 - Duplicate processing:**
-     In `job_queue.py[0m[2m:23-28`, the `dequeue`[0m[2m method has a race condition. When it finds a[0m[2m pending job, it does `await asyncio.sleep(0.01)` BEFORE setting `job["status"] = "processing"`. This means:
-     1. Worker A calls dequeue, finds job 1 with status "pending"
-     2. Worker A hits `await asyncio.sleep(0.01)` - control yields
-     3. Worker B calls dequeue, finds SAME job 1 with status "pending" (not yet changed!)
-     4. Worker B hits `await asyncio.sleep(0.01[0m[2m)` - control yields
-     5. Worker A sets job["status"] = "processing" and returns job
-     6. Worker B sets job["status"] = "processing" and returns SAME job
-[0m[2m7. Both workers now process the same job!
-     
-[0m[2mThe fix is to set `job["status"] = "processing"` BEFORE the `await asyncio.sleep[0m[2m(0.01)`.
-     
-     **Bug 2[0m[2m - Vanishing failures:**
-     In `worker.py:19-20`, when an exception occurs, the worker catches it and prints a message, but it[0m[2m NEVER calls `queue.fail(job_id, error)`. So the job stays in "processing" status[0m[2m forever and is never retried or marked as failed.
-     
-     The fix is to call `queue.fail(job[0m[2m["id"], str(e))` in the except[0m[2m block.
-     
-     Let me read main.py to understand the simulation better before fixing.
+  🧠 Now[0m[2m let me read worker.py and main.py.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_ae9f1c7ce4464e6db6d60dc0 | Read {'path': 'main.py'}
+  🧰 call_function_g1meyqg96y2c_1 | Read {'path': '/Users/gofrendigunawan/llm-...'}
 [0m[2m
-  🔠 call_ae9f1c7ce4464e6db6d60dc0 Executed
+  🔠 call_function_g1meyqg96y2c_1 Executed
 [0m[2m
-  🧠 Let[0m[2m me analyze the two bugs:
-     
-     **Bug 1: Duplicate processing**
-     In `job_queue.py`, the `dequeue` method has a race condition. It iterates over `self._jobs.values[0m[2m()` and checks `if job["status"] ==[0m[2m "pending"`, then immediately sets `job["status"] = "processing"` and returns the job. But there's an `await asyncio.sleep(0.01)` between the check and the status update[0m[2m. If two workers call `dequeue()` concurrently, they can both see the same pending job before[0m[2m either has marked it as "processing". Both will[0m[2m then set it to "processing" and return the same job.
-     
-     **Bug 2: Vanishing[0m[2m failures**
-     In `worker.py`, when an exception is caught, the code prints the error but never calls `queue.fail(job["id"], str(e[0m[2m))`. This means failed jobs never get their status updated to "failed" - they remain in "[0m[2mprocessing" status forever (or get retried without[0m[2m actually being re-queued properly).
-     
-     Let me run[0m[2m the simulation to confirm my analysis.
+  🧠 Now[0m[2m let me read main.py to understand the simulation.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_141abdd169b7477b8eed0492 | Shell {'command': 'python main.py'}
+  🧰 call_function_o5ce3zp4h07o_1 | Read {'path': '/Users/gofrendigunawan/llm-...'}
+[0m[2m
+  🔠 call_function_o5ce3zp4h07o_1 Executed
+[0m[2m
+  🧠 Now[0m[2m I can see both issues clearly:
+     
+     **Issue 1: Duplicate processing**
+     In `job_queue.py:dequeue()`, there's an `await asyncio.sleep(0.01)` AFTER[0m[2m checking `if job["status"] == "pending"` but BEFORE setting `job["status"] = "processing"`. This is a classic TO[0m[2mCTOU (time-of-check-time-of-use) race condition.
+     
+     Between the check and the set, another worker can[0m[2m pick up the same job because it's still marked as "pending". The fix is to move the `await[0m[2m asyncio.sleep(0.01)` AFTER setting the status to "processing", or better yet, use a lock for atomicity.
+     
+     **Issue 2:[0m[2m Vanishing failures**
+     In `worker.py:process_job()`, when an exception occurs (line 19), the exception is caught and printed, but `queue.fail(job["id"], str[0m[2m(e))` is never called. So the job stays in "processing" status forever and is never retried or marked as failed.
+     
+     Let me verify my understanding by running[0m[2m the simulation first, then fix the issues.
+[0m[2m
+  I've identified both bugs. Let me run the simulation first to confirm, then fix them.
+     
+     **Bug [0m[2m1 - Duplicate processing (race condition)**: In `job_queue.py:dequeue()`, there's an `await asyncio.sleep(0.01)` between checking `status[0m[2m == "pending"` and setting `status = "processing"`. This creates a TOCTOU race window where multiple workers can pick up the same job.
+     
+     **Bug 2 - Vanishing[0m[2m failures**: In `worker.py:process_job()`, when an exception occurs, the code only prints the error but **never calls `queue.fail()`[0m[2m**, so failed jobs stay stuck in "processing" status and are never retried or marked as failed.
+[0m[2m
+  🔄 Prepare tool parameters...[0m[2m
+  🧰 call_function_j8j45vn1pyzn_1 | Shell {'command': 'cd /Users/gofrendigunawan/l...', 'description': 'Run simulation to confirm bugs'}
 [0m  [2m[Worker 0] picked up job 1
 [0m  [2m[Worker 1] picked up job 1
 [0m  [2m[Worker 2] picked up job 1
@@ -196,63 +179,83 @@
 [0m  [2mFailed: 0 (expected 2)
 [0m  [2mStuck:  2 (expected 0)
 [0m[2m
-  🔠 call_141abdd169b7477b8eed0492 Executed
+  🔠 call_function_j8j45vn1pyzn_1 Executed
 [0m[2m
-  🧠 Now[0m[2m I can see both issues clearly:
+  🧠 Both bugs[0m[2m confirmed:
+     1. **Duplicate processing**: All 5 workers picked up every single job
+     2. **Vanishing failures**: 0 failed,[0m[2m 2 stuck in "processing" status - the error jobs never got marked as failed
      
-     **Issue 1: Duplicate processing**
-     - `dequeue()`[0m[2m at `job_queue.py:24-28` iterates over `self._jobs.values()` and finds the first pending job, sets it to "[0m[2mprocessing", and returns it.
-     - Problem: It's[0m[2m a regular `for` loop, not an atomic operation. Between the time a worker checks `job[0m[2m["status"] == "pending"` and sets `[0m[2mjob["status"] = "processing"`, other[0m[2m workers can also see the same pending job and grab[0m[2m it.
-     - The `await asyncio.sleep(0.01)` at line 26 is a yield[0m[2m point that makes this worse — it allows other cor[0m[2moutines to interleave.
-     - Fix: Need to use a lock or atomic check-and-set. The standard pattern is to acquire a lock before iterating, find a job, mark it processing, then release. Or use `asyncio.Lock`.
-     
-     
-     - The `fail()` method at line 35-42 resets a job to "pending" for retry[0m[2m, but `worker.py:19` only prints[0m[2m the error without calling it, so failed jobs never get queued for retry and just stay stuck in "[0m[2mprocessing" state forever.
-     
-     **Issue 2: Vanishing failures (jobs stuck in "processing")[0m[2m**
-     - `worker.py:19-20` catches exceptions but only prints them — it never calls `queue.fail()` to mark the job as failed[0m[2m or trigger a retry.
-     - Since the job stays[0m[2m in "processing" status and the worker doesn't call[0m[2m `fail()`, the job is effectively orphaned and never moves to a terminal state.
-     - Fix: need[0m[2m to call `queue.fail(job["id"], str(e))` in the exception handler so the job actually transitions to failed or gets rescheduled for retry.
-     - The `dequeue()` method is also problematic — it finds a pending job, yields control[0m[2m with `asyncio.sleep(0.01)[0m[2m`, then marks it as processing. This creates a race condition where multiple workers can pick up the same job before any of them mark it as processing.
-[0m[2m- The fix is to use an `asyncio.Lock` in `dequeue()` to ensure the[0m[2m check-and-assign operation is atomic, preventing concurrent[0m[2m workers from grabbing the same pending job.
-     - Additionally[0m[2m, `fail()` should be called in the exception[0m[2m handler so that when a job fails, it's properly[0m[2m marked as failed and can be retried if needed.
-     - There's also the issue of a race condition when calling `fail()` after `complete()` —[0m[2m if the job was already marked done, `fail()` would operate on the wrong job state.
-     - For `dequeue()`, I need to use an[0m[2m `asyncio.Lock` to ensure the check-and[0m[2m-update is atomic.
-     - For `fail()` to[0m[2m be called in the exception handler, the worker needs[0m[2m access to the queue object, which it has.
-[0m[2m- The lock needs to be acquired before checking for[0m[2m pending jobs and released after marking one as processing, so the operation is atomic and no other worker caninterleave mid-operation. For the exception handler, `queue.fail(job["id"], str(e))` needs to be called so failures are properly tracked[0m[2m.
+     Now let me fix both bugs:
 [0m[2m
-  Two bugs confirmed:
+     **Fix 1 (job_queue.py)**: Remove the `await asyncio.sleep(0.01)` and the TOCTOU race condition by doing an[0m[2m atomic update. I'll restructure dequeue to use a list comprehension to find all pending jobs and pick one, or[0m[2m use a different approach.
      
-     1. **Duplicate processing** (`job_queue.py:24-28`): `dequeue()` iterates over jobs without holding a lock. The `await asyncio[0m[2m.sleep(0.01)` at line 26 is a yield point where other workers interleave and[0m[2m grab the same pending job before the first worker marks[0m[2m it as "processing". All 5 workers pick[0m[2m up every job.
+     Actually, the cleanest fix is to restructure `dequeue` to:
+     1. Find a pending job[0m[2m
+     2. Atomically mark it as processing (no await in between)
+     3. Return it
      
-     2. **Vanishing failures** (`worker.py:19-20`): The `except` block only prints the error and[0m[2m exits the loop — it never calls `queue.fail[0m[2m()`. Jobs that crash stay in "processing" forever (showing as "Stuck: 2" in the output). The correct jobs (11[0m[2m, 12) were never marked failed.
+     The issue is the await is between the check[0m[2m and the set. We can fix this by:
+     1. First, find all pending jobs
+     2. Then, mark the first one[0m[2m as processing (without await in between)
      
-     Fix[0m[2ming both now:
+     But actually, since it's single-threaded async code, the issue is that another coroutine can[0m[2m interleave between the check and the set. In Python async, only one coroutine runs at a time unless there's an[0m[2m `await`. So removing the `await` between the check and set should fix this.
+     
+     Let me restructure to:
+     ```python
+     async def dequeue(self[0m[2m) -> Optional[Dict]:
+         for job in self._jobs.values():
+             if job["status"] == "pending":
+                 job["status"] = "processing"  # No await between check and set[0m[2m!
+                 return job
+         return None
+     ```
+     
+     But wait, I need to think about why the sleep was there in the first place. Maybe it was meant to simulate some kind of delay?[0m[2m But it's clearly causing the bug. I'll just remove it.
+     
+     Actually, the issue is also that even after[0m[2m removing the sleep, the iteration itself is not atomic. 
+     
+     Consider this scenario: if we have jobs[0m[2m 1 and 2 both pending:
+     - Worker A iterates, sees job 1 pending, marks it processing[0m[2m
+     - Worker A awaits (e.g., in the caller)
+     - Worker B starts dequeue,[0m[2m sees job 2 pending (job 1 is now processing), marks job 2 processing
+     
+     This is fine because each worker marks a different[0m[2m job. The real problem was the sleep between the check and the mark, which allowed multiple workers to see the same job as pending before any of them marked it.
+     
+     With the[0m[2m fix removing that sleep, I need to trace through more carefully. In a single-threaded async environment[0m[2m, when worker A marks job 1 as processing and returns it, that coroutine yields to the event loop. Then worker B calls dequeue and sees[0m[2m job 1 is no longer pending, so it moves to job 2. This should work correctly without duplicate processing.
+     
+     To be extra safe though, I[0m[2m could do a single atomic operation where I find all pending jobs, take the first one, and mark it processing[0m[2m in one step. But the simpler approach should actually be fine here since marking a dict value[0m[2m is synchronous and atomic in Python.
+     
+     Let me just go with the straightforward fix first.
+[0m[2m
+  Bugs confirmed:
+     -[0m[2m **Duplicate processing**: All 5 workers picked up every job
+     - **Vanishing failures**: 0 failed, 2 stuck in "processing"
+     
+     Now applying the fixes:
+     
+     **Fix 1**: Remove the `[0m[2mawait asyncio.sleep(0.01)` between the status check and the status update in `dequeue()` — this closes the race window.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_e4f2d69c12884d05b996bca9 | Edit {'path': 'job_queue.py', 'old_text': 'class JobQueue:\n    def __ ...', 'new_text': 'class JobQueue:\n    def __ ...'}
+  🧰 call_function_qzb1laya5zg4_1 | Edit {'path': '/Users/gofrendigunawan/llm-...', 'old_text': '    async def dequeue(self)...', 'new_text': '    async def dequeue(self)...'}
 [0m  ✓ LSP server 'pyright' started for /Users/gofrendigunawan/llm-challenges
 [2m
-  🔠 call_e4f2d69c12884d05b996bca9 Executed
+  🔠 call_function_qzb1laya5zg4_1 Executed
 [0m[2m
-  🧠 Now[0m[2m I need to update the dequeue method to use the lock. I need to change the `await[0m[2m asyncio.sleep(0.01)` behavior inside the[0m[2m lock - the lock should be acquired before checking and[0m[2m updating the job status.
+  🧠 Now[0m[2m fix the second bug in worker.py - add queue.fail() call in the exception handler.
 [0m[2m
-  🔄 Prepare tool parameters...[0m[2m
-  🧰 call_1f6c4d6f789146598f95c5cc | Edit {'path': 'job_queue.py', 'old_text': '    async def dequeue(self ...', 'new_text': '    async def dequeue(self ...'}
-[0m[2m
-  🔠 call_1f6c4d6f789146598f95c5cc Executed
-[0m[2m
-  🧠 Now[0m[2m fix the worker.py to call queue.fail() when[0m[2m an exception occurs.
+  **Fix 2**: Add `queue.fail(job[0m[2m["id"], str(e))` in the exception handler so failures are properly recorded and retried.
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_bb87c1af3f234028b24af161 | Edit {'path': 'worker.py', 'old_text': '        except Exception a ...', 'new_text': '        except Exception a ...'}
+  🧰 call_function_aye8z2vwdjl5_1 | Edit {'path': '/Users/gofrendigunawan/llm-...', 'old_text': '        except Exception as...', 'new_text': '        except Exception as...'}
 [0m[2m
-  🔠 call_bb87c1af3f234028b24af161 Executed
+  🔠 call_function_aye8z2vwdjl5_1 Executed
 [0m[2m
-  🧠 Now[0m[2m let me verify by running main.py again.
+  🧠 Now[0m[2m let me run the simulation again to verify the fixes work.
+[0m[2m
+  Now verifying the fixes:
 [0m[2m
   🔄 Prepare tool parameters...[0m[2m
-  🧰 call_591a324632bb402c80d34e9d | Shell {'command': 'python main.py'}
+  🧰 call_function_ne5kwdo4gmqi_1 | Shell {'command': 'cd /Users/gofrendigunawan/l...', 'description': 'Run simulation to verify fixes'}
 [0m  [2m[Worker 0] picked up job 1
 [0m  [2m[Worker 1] picked up job 2
 [0m  [2m[Worker 2] picked up job 3
@@ -291,26 +294,40 @@
 [0m  [2mFailed: 2 (expected 2)
 [0m  [2mStuck:  0 (expected 0)
 [0m[2m
-  🔠 call_591a324632bb402c80d34e9d Executed
+  🔠 call_function_ne5kwdo4gmqi_1 Executed
 [0m[2m
-  🧠 The[0m[2m fix works. Let me verify the final state of[0m[2m both files to make sure everything is correct.
-     
-     Done[0m[2m: 10, Failed: 2, Stuck[0m[2m: 0 - exactly as expected.
-     
-     The two[0m[2m bugs are fixed:
-     1. **Duplicate processing**: Now uses an `asyncio.Lock()` around the dequeue operation, so only one worker can pick up a given job.
-     2. **Vanishing failures**: Now calls `queue.fail()` when an exception occurs, properly marking the job as failed ([0m[2mafter 2 retries for job 11 and job[0m[2m 12, they end up as "failed").
-     
-[0m[2mThe public method signatures are unchanged - `enqueue[0m[2m`, `dequeue`, `complete`, `fail`, and `all_jobs` are all the same.
+  🧠 The[0m[2m output looks correct now:
+     - Done: 10 (expected 10) ✓
+     - Failed: 2 (expected 2) ✓
+     - Stuck: 0 (expected 0) ✓
 [0m[2m
-  Both bugs are fixed. Results:[0m[2m `Done: 10`, `Failed: 2`, `Stuck: 0` — all as expected.
+     Each job is picked up by exactly one worker (no duplicates), and failed jobs are properly retried max_retries times (2[0m[2m in this case) and then marked as failed.
      
-     **Root causes and fixes:**
+     Let me provide a summary.
+[0m[2m
+  All counts match expectations. Here's a summary of the fixes:
      
-[0m[2m1. **Duplicate processing** (`job_queue.py[0m[2m:23-29`): `dequeue()`[0m[2m iterated over pending jobs without mutual exclusion. The `[0m[2mawait asyncio.sleep(0.01)` at line[0m[2m 26 was a yield point where all 5 workers could grab the same job before any marked it "processing". Added `asyncio.Lock()` to make the find-and-mark atomic.
+     ---
      
-     2. **Vanishing failures** (`worker.py:19-[0m[2m20`): The `except` block printed the[0m[2m error but never called `queue.fail()`. Jobs[0m[2m that crashed stayed in "processing" forever (the[0m[2m "Stuck: 2" in the original[0m[2m output). Added `queue.fail(job["id"], str(e))` so failures are properly recorded and retried up to `max_retries` before being marked permanently failed.[0m[2m
-  💸 (Requests: 9 | Tool Calls: 8 | Total: 103779) Input: 101372 | Audio Input: 0 | Output: 2407 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
+     ### Bug[0m[2m 1: Duplicate Processing — `job_queue.py:dequeue()`
+     
+     **Root cause**: An `await asyncio.sleep(0.01)` between checking `status == "pending"` and setting `status = "processing"` created[0m[2m a classic TOCTOU (time-of-check-to-time-of-use) race condition. Multiple workers could pass the check before any of them set[0m[2m the status to `"processing"`.
+     
+     **Fix**: Removed the `await asyncio.sleep(0.01)`. The status check and update are now atomic.
+     
+     ###[0m[2m Bug 2: Vanishing Failures — `worker.py:process_job()`
+     
+     **Root cause**: The exception handler printed the error but **never called `queue.fail()`**, so the job remained stuck in `"[0m[2mprocessing"` status forever. It was never retried and never marked as failed.
+     
+     **Fix**: Added `queue.fail(job["id"], str(e))` in the exception handler so the queue properly[0m[2m records the failure and handles retry logic.
+     
+     ---
+     
+     The simulation now shows correct behavior:
+     - Each job is picked up by **exactly one[0m[2m worker** (no duplicates)
+     - Failed jobs are retried up to `max_retries` times (2), then moved to `"[0m[2mfailed"` status
+     - No jobs are stuck in `"processing"`[0m[2m
+  💸 (Requests: 9 | Tool Calls: 7 | Total: 76155) Input: 73683 | Audio Input: 0 | Output: 2472 | Audio Output: 0 | Cache Read: 0 | Cache Write: 0 | Details: {}
 [0m[2mTo run again:[0m [1;33mzrb chat --message "Our background job processor has been acting up in production. Two separate issues have been reported:
 
 1. **Duplicate processing**: Some jobs appear to be executed more than once. We've seen side effects (emails, charges) triggered twice for a single job ID.
@@ -321,10 +338,25 @@ The system is in `job_queue.py` (the queue) and `worker.py` (the processor). `ma
 Find the root causes and fix them. Do not change the public method signatures.
 " --model ollama:minimax-m2.7:cloud --session ollama_minimax-m2.7_cloud-bug-fix-trial-3 --yolo true --attach "" --interactive false --sandbox ""[0m
 [2m[2mSession[0m: [1;33mollama_minimax-m2.7_cloud-bug-fix-trial-3[0m[0m
-Both bugs are fixed. Results: `Done: 10`, `Failed: 2`, `Stuck: 0` — all as expected.
+All counts match expectations. Here's a summary of the fixes:
 
-**Root causes and fixes:**
+---
 
-1. **Duplicate processing** (`job_queue.py:23-29`): `dequeue()` iterated over pending jobs without mutual exclusion. The `await asyncio.sleep(0.01)` at line 26 was a yield point where all 5 workers could grab the same job before any marked it "processing". Added `asyncio.Lock()` to make the find-and-mark atomic.
+### Bug 1: Duplicate Processing — `job_queue.py:dequeue()`
 
-2. **Vanishing failures** (`worker.py:19-20`): The `except` block printed the error but never called `queue.fail()`. Jobs that crashed stayed in "processing" forever (the "Stuck: 2" in the original output). Added `queue.fail(job["id"], str(e))` so failures are properly recorded and retried up to `max_retries` before being marked permanently failed.
+**Root cause**: An `await asyncio.sleep(0.01)` between checking `status == "pending"` and setting `status = "processing"` created a classic TOCTOU (time-of-check-to-time-of-use) race condition. Multiple workers could pass the check before any of them set the status to `"processing"`.
+
+**Fix**: Removed the `await asyncio.sleep(0.01)`. The status check and update are now atomic.
+
+### Bug 2: Vanishing Failures — `worker.py:process_job()`
+
+**Root cause**: The exception handler printed the error but **never called `queue.fail()`**, so the job remained stuck in `"processing"` status forever. It was never retried and never marked as failed.
+
+**Fix**: Added `queue.fail(job["id"], str(e))` in the exception handler so the queue properly records the failure and handles retry logic.
+
+---
+
+The simulation now shows correct behavior:
+- Each job is picked up by **exactly one worker** (no duplicates)
+- Failed jobs are retried up to `max_retries` times (2), then moved to `"failed"` status
+- No jobs are stuck in `"processing"`

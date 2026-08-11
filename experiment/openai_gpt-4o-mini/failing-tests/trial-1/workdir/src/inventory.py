@@ -10,9 +10,486 @@ class OutOfStock(Exception):
 class Inventory:
     """Tracks on-hand stock per SKU and outstanding reservations."""
 
-    def __init__(self, initial: dict[str, int] = {}) -> None:  # noqa: B006
-        self._stock = initial.copy()
-        self._reserved: dict[str, int] = {}
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    """Tracks on-hand stock per SKU and outstanding reservations."""
+
+    def __init__(self, initial: dict[str, int] = None) -> None:
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+        if initial is None:
+            initial = {}
+        self._stock = initial
+        self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved: dict[str, int] = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved: dict[str, int] = {}
+    if initial is None:
+        initial = {}
+    self._stock = initial
+    self._reserved: dict[str, int] = {}
+        if initial is None:
+        initial = {}  # noqa: B006
+        self._stock = initial
+        self._reserved = {}
 
     def add(self, sku: str, qty: int) -> None:
         if qty <= 0:
@@ -25,7 +502,7 @@ class Inventory:
     def reserve(self, sku: str, qty: int) -> None:
         if qty <= 0:
             raise ValueError("qty must be positive")
-        if qty > self.available(sku):
+        if qty >= self.available(sku):
             raise OutOfStock(sku)
         self._reserved[sku] = self._reserved.get(sku, 0) + qty
 

@@ -1,8 +1,7 @@
 """Configuration constants for the pipeline."""
 
-CONFIG = {
+
+settings = {
     "source": "events.csv",
     "batch_size": 1,
 }
-
-settings = CONFIG  # Define settings to fix ImportError

@@ -2,7 +2,6 @@ import asyncio
 import random
 from typing import List
 
-
 class PaymentGateway:
     def __init__(self, failure_rate: float = 0.25):
         self._failure_rate = failure_rate
@@ -16,8 +15,6 @@ class PaymentGateway:
         self.total_charged += amount
         self.charges.append({"order_id": order_id, "amount": amount})
         return True
-        return True
 
-    async def confirm_payment(self, order_id: str) -> bool:
-        charged_record = next((charge for charge in self.charges if charge["order_id"] == order_id), None)
-        return charged_record is not None
+    def is_order_charged(self, order_id: str) -> bool:
+        return any(charge["order_id"] == order_id for charge in self.charges)

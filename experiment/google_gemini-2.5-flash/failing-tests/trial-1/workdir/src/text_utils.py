@@ -1,7 +1,6 @@
 """Text normalization helpers."""
 
 from __future__ import annotations
-import re
 
 
 def slugify(text: str) -> str:
@@ -14,14 +13,16 @@ def slugify(text: str) -> str:
     >>> slugify("  multiple   spaces  ")
     'multiple-spaces'
     """
-    # Convert to lowercase and replace non-alphanumeric with hyphens
-    # Then collapse multiple hyphens and strip leading/trailing hyphens
-    processed_text = text.lower()
-    # Replace non-alphanumeric (except spaces and hyphens) with nothing
-    processed_text = re.sub(r"[^a-z0-9\s-]", "", processed_text)
-    # Replace spaces and multiple hyphens with a single hyphen
-    processed_text = re.sub(r"[\s-]+", "-", processed_text)
-    return processed_text.strip("-")
+    text = text.lower()
+    result_chars: list[str] = []
+    for char in text:
+        if char.isalnum():
+            result_chars.append(char)
+        elif char.isspace() or char == "-":
+            if result_chars and result_chars[-1] != "-":
+                result_chars.append("-")
+    collapsed = "".join(result_chars)
+    return collapsed.strip("-")
 
 
 def truncate(text: str, max_len: int, suffix: str = "…") -> str:
@@ -32,8 +33,7 @@ def truncate(text: str, max_len: int, suffix: str = "…") -> str:
     if len(text) <= max_len:
         return text
     
-    # Ensure that max_len is at least the length of the suffix
-    if max_len <= len(suffix):
-        return suffix
-        
+    if max_len < len(suffix):
+        return suffix[:max_len]
+
     return text[:max_len - len(suffix)] + suffix
